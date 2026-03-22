@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 import { LoginToast } from "./login-toast";
@@ -38,7 +39,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       </div>
 
-      <LoginToast reason={params.reason} />
+      <Suspense><LoginToast /></Suspense>
       <LoginForm
         callbackUrl={params.callbackUrl || "/dashboard"}
         error={params.error}

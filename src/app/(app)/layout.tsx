@@ -1,5 +1,4 @@
 import { auth, signOut } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
 export default async function AppLayout({
   children,
@@ -7,10 +6,6 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -29,7 +24,7 @@ export default async function AppLayout({
         </h1>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <span style={{ fontSize: "0.875rem" }}>
-            {session.user.name} ({session.user.username})
+            {session?.user?.name} ({session?.user?.username})
           </span>
           <form
             action={async () => {

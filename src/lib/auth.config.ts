@@ -1,37 +1,14 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Auth config used by middleware (Edge runtime compatible).
- * Does not include the credentials provider since that needs Node.js APIs.
+ * Auth config shared between main NextAuth instance and middleware.
+ * Route protection is handled by src/middleware.ts using getToken().
  */
 export const authConfig = {
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isLoginPage = nextUrl.pathname === "/login";
-      const isAuthApi = nextUrl.pathname.startsWith("/api/auth");
-
-      // Allow auth API routes
-      if (isAuthApi) return true;
-
-      // Allow login page for everyone
-      if (isLoginPage) return true;
-
-      // Protect everything else
-      if (!isLoggedIn) {
-        const callbackUrl = encodeURIComponent(nextUrl.pathname + nextUrl.search);
-        const loginUrl = new URL(
-          `/login?callbackUrl=${callbackUrl}&reason=auth-required`,
-          nextUrl.origin
-        );
-        return Response.redirect(loginUrl);
-      }
-
-      return true;
-    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
