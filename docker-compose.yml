@@ -4,7 +4,7 @@ services:
     container_name: siletravel-db
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5435:5432"
     environment:
       POSTGRES_USER: siletravel
       POSTGRES_PASSWORD: siletravel_dev
