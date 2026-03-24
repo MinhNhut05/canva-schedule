@@ -61,7 +61,7 @@ Plans:
 Plans:
 - [x] 02-01: Foundation — shadcn/ui init, types, fixtures, Prisma schema (Wave 0)
 - [x] 02-02: File validation module and Route Handler with transitional stub (Wave 1)
-- [ ] 02-03: Sidebar navigation and upload page UI (Wave 1, parallel with 02-02)
+- [x] 02-03: Sidebar navigation and upload page UI (Wave 1, parallel with 02-02)
 - [ ] 02-04: Text extractors and normalization — PDF, DOCX, normalize (Wave 2)
 - [ ] 02-05: Quality scoring, extraction pipeline, and route integration (Wave 3)
 - [ ] 02-06: Extraction result UI and core unit tests (Wave 4)
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Capability Gate & Secure Access | 0/3 | Not started | - |
-| 2. Document Intake & Parsing | 1/7 | In Progress | 2026-03-24 |
+| 2. Document Intake & Parsing | 3/7 | In Progress | 2026-03-24 |
 | 3. Structured AI Extraction, Rules & Human Review | 0/3 | Not started | - |
 | 4. Editable Canva Generation | 0/3 | Not started | - |
 | 5. History & Admin Control | 0/2 | Not started | - |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-24T02:20:39.815Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-03-24T02:32:33.929Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 10
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 ## Current Position
 
 Phase: 02 (document-intake-parsing) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 7
 *Updated after each plan completion*
 | Phase 02 P01 | 9 min | 4 tasks | 23 files |
 | Phase 02 P02 | 7 min | 2 tasks | 3 files |
+| Phase 02 P03 | 6 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Embedded Liberation Sans into generated PDF fixtures so Vietnamese diacritics remain reliable for extraction tests.
 - [Phase 02]: Use binary signature sniffing via file-type after extension validation so renamed files cannot bypass intake checks.
 - [Phase 02]: Persist accepted uploads immediately with PENDING status and return a clearly marked transitional stub until Plan 02-05 wires the real extraction pipeline.
+- [Phase 02]: Use one shared sidebar content component for desktop and mobile so navigation labels, active state, and sign-out behavior stay consistent.
+- [Phase 02]: Validate upload extension and size immediately in the client before POSTing FormData to /api/uploads so users get fast Vietnamese feedback without waiting for a server round trip.
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T02:19:28.817Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-03-24T02:30:31.074Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
