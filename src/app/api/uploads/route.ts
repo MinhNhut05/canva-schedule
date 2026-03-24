@@ -2,15 +2,20 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validateFile } from "@/lib/documents/intake";
-import type { UploadApiResponse } from "@/lib/documents/types";
+import { runExtractionPipeline } from "@/lib/documents/pipeline";
+import type { UploadApiResponse, UploadStatus } from "@/lib/documents/types";
 
 export const runtime = "nodejs";
 
 const AUTH_ERROR =
   "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.";
 const GENERIC_ERROR = "Có lỗi xảy ra khi xử lý file. Vui lòng thử lại sau.";
+const EXTRACTION_ERROR =
+  "Không thể trích xuất nội dung từ file này. Vui lòng thử lại hoặc dùng file nguồn rõ hơn.";
 
 export async function POST(request: Request) {
+  let uploadId: string | null = null;
+
   try {
     const session = await auth();
 
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
     const file = formFile instanceof File ? formFile : null;
     const validation = await validateFile(file);
 
-    if (!validation.valid || !file) {
+    if (!validation.valid || !file || !validation.kind || !validation.detectedMime) {
       return NextResponse.json<UploadApiResponse>(
         {
           success: false,
@@ -50,30 +55,75 @@ export async function POST(request: Request) {
       },
     });
 
-    // TRANSITIONAL: Plan 02-05 replaces this stub with runExtractionPipeline() output
+    uploadId = upload.id;
+
+    await prisma.upload.update({
+      where: { id: upload.id },
+      data: {
+        status: "PROCESSING",
+        errorMessage: null,
+      },
+    });
+
+    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    const result = await runExtractionPipeline(
+      fileBytes,
+      file.name,
+      validation.kind,
+      validation.detectedMime,
+      file.size
+    );
+
+    const finalStatus: UploadStatus =
+      result.quality.level === "good" ? "COMPLETED" : "COMPLETED_WITH_WARNING";
+
+    await prisma.upload.update({
+      where: { id: upload.id },
+      data: {
+        status: finalStatus,
+        rawText: result.rawText,
+        normalizedText: result.normalizedText,
+        qualityScore: result.quality.score,
+        qualityLevel: result.quality.level,
+        qualityFlags: result.quality.flags,
+        warningMessages: result.warnings,
+        processingTimeMs: result.processingTimeMs,
+        errorMessage: null,
+      },
+    });
+
     return NextResponse.json<UploadApiResponse>(
       {
         success: true,
         data: {
           uploadId: upload.id,
-          kind: validation.kind!,
-          originalFileName: file.name,
-          mime: validation.detectedMime!,
-          sizeBytes: file.size,
-          rawText: "", // TRANSITIONAL: empty until extraction pipeline
-          normalizedText: "", // TRANSITIONAL: empty until extraction pipeline
-          warnings: [],
-          quality: { score: 0, level: "good", flags: [] }, // TRANSITIONAL
-          processingTimeMs: 0,
+          ...result,
         },
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    if (uploadId) {
+      const errorMessage =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : EXTRACTION_ERROR;
+
+      await prisma.upload.update({
+        where: { id: uploadId },
+        data: {
+          status: "FAILED",
+          errorMessage,
+        },
+      });
+    }
+
+    const message = uploadId ? EXTRACTION_ERROR : GENERIC_ERROR;
+
     return NextResponse.json<UploadApiResponse>(
       {
         success: false,
-        error: GENERIC_ERROR,
+        error: message,
       },
       { status: 500 }
     );
