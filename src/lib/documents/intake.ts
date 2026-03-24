@@ -11,7 +11,7 @@ import {
 const ERRORS = {
   unsupportedFormat:
     "Định dạng file không được hỗ trợ. Vui lòng chọn file PDF hoặc DOCX.",
-  tooLarge: "File vượt quá 10MB. Vui lòng chọn file nhỏ hơn.",
+  tooLarge: "File vượt quá 30MB. Vui lòng chọn file nhỏ hơn.",
   missingFile: "Vui lòng chọn một file trước khi xử lý.",
 } as const;
 

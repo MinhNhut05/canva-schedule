@@ -105,7 +105,7 @@ grep -q "Chọn file" src/app/\(app\)/upload/upload-form.tsx
 
 # Error messages
 grep -q "Định dạng file không được hỗ trợ" src/lib/documents/intake.ts
-grep -q "File vượt quá 10MB" src/lib/documents/intake.ts
+grep -q "File vượt quá 30MB" src/lib/documents/intake.ts
 
 # Result display
 grep -q "Kết quả trích xuất" src/app/\(app\)/upload/extraction-result.tsx

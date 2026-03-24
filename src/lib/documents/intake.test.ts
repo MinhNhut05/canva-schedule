@@ -28,7 +28,7 @@ describe("validateFile", () => {
     expect(result.error).toContain("Vui lòng chọn");
   });
 
-  it("trả về lỗi tiếng Việt có dấu khi file vượt quá 10MB", async () => {
+  it("trả về lỗi tiếng Việt có dấu khi file vượt quá 30MB", async () => {
     const oversizedFile = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "tour.pdf", {
       type: "application/pdf",
     });
@@ -41,7 +41,7 @@ describe("validateFile", () => {
     const result = await validateFile(oversizedFile);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toBe("File vượt quá 10MB. Vui lòng chọn file nhỏ hơn.");
+    expect(result.error).toBe("File vượt quá 30MB. Vui lòng chọn file nhỏ hơn.");
     expect(result.error).toContain("vượt quá");
   });
 

@@ -43,6 +43,13 @@ function validateStartupEnv(): void {
 
 validateStartupEnv();
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "32mb",
+    },
+    middlewareClientMaxBodySize: "32mb",
+  },
+};
 
 export default nextConfig;

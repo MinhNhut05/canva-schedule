@@ -57,6 +57,6 @@ export const ALLOWED_MIMES: Record<string, DocumentKind> = {
 
 export const ALLOWED_EXTENSIONS = [".pdf", ".docx"] as const;
 
-export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+export const MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024;
 
-export const MAX_FILE_SIZE_LABEL = "10MB";
+export const MAX_FILE_SIZE_LABEL = "30MB";

@@ -166,13 +166,13 @@ States:
 Required copy inside zone:
 - Headline: `Kéo và thả file vào đây`
 - Support line: `Hoặc chọn file từ máy tính của bạn`
-- Format hint: `Hỗ trợ: PDF, DOCX · Tối đa 10MB · Mỗi lần chỉ 1 file`
+- Format hint: `Hỗ trợ: PDF, DOCX · Tối đa 30MB · Mỗi lần chỉ 1 file`
 - Trigger button: `Chọn file`
 
 Behavior rules:
 - Accept only one file.
 - Reject unsupported file before upload with Vietnamese inline message.
-- Reject over-10MB file before upload with Vietnamese inline message.
+- Reject over-30MB file before upload with Vietnamese inline message.
 - Keep dropped file name visible immediately after selection.
 
 ### 4. File Preview Panel
@@ -265,7 +265,7 @@ Required error surfaces:
 
 Approved Vietnamese error copy:
 - Unsupported format: `Định dạng file không được hỗ trợ. Vui lòng chọn file PDF hoặc DOCX.`
-- Too large: `File vượt quá 10MB. Vui lòng chọn file nhỏ hơn.`
+- Too large: `File vượt quá 30MB. Vui lòng chọn file nhỏ hơn.`
 - Missing file: `Vui lòng chọn một file trước khi xử lý.`
 - Extraction failed: `Không thể trích xuất nội dung từ file này. Vui lòng thử lại hoặc dùng file nguồn rõ hơn.`
 - Session/auth issue: `Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.`

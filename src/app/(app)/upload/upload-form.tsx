@@ -48,7 +48,7 @@ function SpinnerIcon() {
 
 const SUPPORTED_FORMAT_ERROR =
   "Định dạng file không được hỗ trợ. Vui lòng chọn file PDF hoặc DOCX.";
-const FILE_TOO_LARGE_ERROR = "File vượt quá 10MB. Vui lòng chọn file nhỏ hơn.";
+const FILE_TOO_LARGE_ERROR = "File vượt quá 30MB. Vui lòng chọn file nhỏ hơn.";
 const MISSING_FILE_ERROR = "Vui lòng chọn một file trước khi xử lý.";
 const GENERIC_ERROR = "Có lỗi xảy ra khi xử lý file. Vui lòng thử lại sau.";
 
@@ -251,7 +251,7 @@ export function UploadForm() {
               Hoặc chọn file từ máy tính của bạn
             </p>
             <p className="mt-3 text-sm font-medium text-muted-foreground">
-              Hỗ trợ: PDF, DOCX · Tối đa 10MB · Mỗi lần chỉ 1 file
+              Hỗ trợ: PDF, DOCX · Tối đa 30MB · Mỗi lần chỉ 1 file
             </p>
             <Button className="mt-6 focus-visible:ring-2 focus-visible:ring-primary" disabled={isProcessing}>
               Chọn file
