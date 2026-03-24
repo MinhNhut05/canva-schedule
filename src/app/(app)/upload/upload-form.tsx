@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
+import { ExtractionResult } from "./extraction-result";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +103,9 @@ export function UploadForm() {
       status: isProcessing
         ? "Đang xử lý"
         : result
-          ? "Đã trích xuất"
+          ? result.quality.level === "good"
+            ? "Đã trích xuất"
+            : "Đã trích xuất kèm cảnh báo"
           : error
             ? "Xử lý thất bại"
             : "Sẵn sàng xử lý",
@@ -118,6 +121,10 @@ export function UploadForm() {
     if (inputRef.current) {
       inputRef.current.value = "";
     }
+  }
+
+  function resetExtractionResult() {
+    resetFile();
   }
 
   function handleFile(file: File | null) {
@@ -273,7 +280,7 @@ export function UploadForm() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-muted-foreground">Tên file</p>
-                    <p className="text-base text-foreground break-all">{fileDetails?.fileName}</p>
+                    <p className="break-all text-base text-foreground">{fileDetails?.fileName}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-muted-foreground">Kích thước</p>
@@ -292,7 +299,11 @@ export function UploadForm() {
                           ? "bg-primary text-primary-foreground"
                           : error
                             ? "bg-destructive text-destructive-foreground"
-                            : "bg-emerald-600 text-white",
+                            : result?.quality.level === "good"
+                              ? "bg-emerald-600 text-white"
+                              : result
+                                ? "bg-amber-400 text-amber-950"
+                                : "bg-emerald-600 text-white",
                       )}
                     >
                       {fileDetails?.status}
@@ -327,6 +338,8 @@ export function UploadForm() {
               </CardContent>
             </Card>
           ) : null}
+
+          {result ? <ExtractionResult data={result} onReset={resetExtractionResult} /> : null}
         </CardContent>
       </Card>
     </div>
