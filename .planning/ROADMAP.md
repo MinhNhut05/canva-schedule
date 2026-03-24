@@ -60,7 +60,7 @@ Plans:
 
 Plans:
 - [x] 02-01: Foundation — shadcn/ui init, types, fixtures, Prisma schema (Wave 0)
-- [ ] 02-02: File validation module and Route Handler with transitional stub (Wave 1)
+- [x] 02-02: File validation module and Route Handler with transitional stub (Wave 1)
 - [ ] 02-03: Sidebar navigation and upload page UI (Wave 1, parallel with 02-02)
 - [ ] 02-04: Text extractors and normalization — PDF, DOCX, normalize (Wave 2)
 - [ ] 02-05: Quality scoring, extraction pipeline, and route integration (Wave 3)

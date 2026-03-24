@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-24T01:50:16.718Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-24T02:20:39.815Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 10
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 ## Current Position
 
 Phase: 02 (document-intake-parsing) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 7
 
 *Updated after each plan completion*
 | Phase 02 P01 | 9 min | 4 tasks | 23 files |
+| Phase 02 P02 | 7 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 4]: Keep Canva integration replaceable so output strategy can adapt if capability constraints appear.
 - [Phase 02]: Bootstrapped the Tailwind and shadcn baseline manually after shadcn CLI preflight failed without Tailwind setup.
 - [Phase 02]: Embedded Liberation Sans into generated PDF fixtures so Vietnamese diacritics remain reliable for extraction tests.
+- [Phase 02]: Use binary signature sniffing via file-type after extension validation so renamed files cannot bypass intake checks.
+- [Phase 02]: Persist accepted uploads immediately with PENDING status and return a clearly marked transitional stub until Plan 02-05 wires the real extraction pipeline.
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T01:50:16.715Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-24T02:19:28.817Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
