@@ -13,11 +13,11 @@
 
 ### Document Intake
 
-- [ ] **DOC-01**: User can upload a PDF tour program file from the web interface
-- [ ] **DOC-02**: User can upload a DOCX tour program file from the web interface
-- [ ] **DOC-03**: System validates file type before processing and rejects unsupported formats with a human-readable error
-- [ ] **DOC-04**: System extracts readable Vietnamese text from supported PDF/DOCX inputs for downstream processing
-- [ ] **DOC-05**: System detects low-quality or unreadable extraction and informs the user when manual retry or better source file is needed
+- [x] **DOC-01**: User can upload a PDF tour program file from the web interface
+- [x] **DOC-02**: User can upload a DOCX tour program file from the web interface
+- [x] **DOC-03**: System validates file type before processing and rejects unsupported formats with a human-readable error
+- [x] **DOC-04**: System extracts readable Vietnamese text from supported PDF/DOCX inputs for downstream processing
+- [x] **DOC-05**: System detects low-quality or unreadable extraction and informs the user when manual retry or better source file is needed
 
 ### AI Extraction & Review
 
@@ -108,11 +108,11 @@
 | AUTH-01 | Phase 1 | Pending |
 | AUTH-02 | Phase 1 | Pending |
 | AUTH-03 | Phase 1 | Pending |
-| DOC-01 | Phase 2 | Pending |
-| DOC-02 | Phase 2 | Pending |
-| DOC-03 | Phase 2 | Pending |
-| DOC-04 | Phase 2 | Pending |
-| DOC-05 | Phase 2 | Pending |
+| DOC-01 | Phase 2 | Complete |
+| DOC-02 | Phase 2 | Complete |
+| DOC-03 | Phase 2 | Complete |
+| DOC-04 | Phase 2 | Complete |
+| DOC-05 | Phase 2 | Complete |
 | AI-01 | Phase 3 | Pending |
 | AI-02 | Phase 3 | Pending |
 | AI-03 | Phase 3 | Pending |
