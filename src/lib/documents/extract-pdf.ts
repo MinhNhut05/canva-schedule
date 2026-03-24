@@ -1,5 +1,8 @@
 import "server-only";
 
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
 interface PdfExtractionOutput {
   rawText: string;
   pageCount: number;
@@ -7,13 +10,22 @@ interface PdfExtractionOutput {
   textItemCount: number;
 }
 
+async function loadPdfJs() {
+  const pdfModulePath = resolve(
+    process.cwd(),
+    "node_modules/pdfjs-dist/legacy/build/pdf.mjs"
+  );
+
+  return import(/* webpackIgnore: true */ pathToFileURL(pdfModulePath).href);
+}
+
 export async function extractPdfText(
   data: Uint8Array
 ): Promise<PdfExtractionOutput> {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfjsLib = await loadPdfJs();
   const { getDocument } = pdfjsLib;
 
-  const pdf = await getDocument({ data }).promise;
+  const pdf = await getDocument({ data, disableWorker: true }).promise;
   const pages: string[] = [];
   const warnings: string[] = [];
   let totalTextItems = 0;
