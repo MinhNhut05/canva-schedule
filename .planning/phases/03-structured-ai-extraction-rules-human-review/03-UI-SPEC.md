@@ -95,6 +95,12 @@ Additional semantic rule for this phase:
   - secondary action `Trích xuất lại`.
 - Keep the primary approval action in a sticky bottom action bar on long pages so the user can confirm without scrolling back to the top.
 
+### Visual hierarchy and focal points
+- Primary visual anchor: the editable 2-column content area containing the itinerary editor and menu editor.
+- Highest scan priority within that content area: flagged or warning fields that require review.
+- Secondary focal point: the sticky bottom approval bar containing `Xác nhận & Tạo Canva`.
+- The top page header provides context only and must not visually compete with editable content.
+
 ### Visual style adaptation from Canva sample
 - Mirror the Canva sample’s clean white content area and dark blue framing, but avoid decorative image-heavy elements inside the review workspace.
 - Use dark blue only as structural emphasis: section headers, primary button, selected states, and divider accents.
@@ -166,7 +172,6 @@ Secondary action label: `Trích xuất lại`.
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
 | shadcn official | `button`, `card`, `input`, `badge`, `alert`, `separator`, `sheet`, optional `alert-dialog` | not required |
-| magic-ui | none required for Phase 3 baseline; exclude from core contract | excluded from contract — no block declared or vetted — 2026-03-24 |
 
 ---
 
