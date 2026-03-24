@@ -1,4 +1,6 @@
-import { auth, signOut } from "@/lib/auth";
+import { AppSidebar } from "@/components/app-sidebar";
+import { auth } from "@/lib/auth";
+import { signOutAction } from "./actions";
 
 export default async function AppLayout({
   children,
@@ -8,48 +10,16 @@ export default async function AppLayout({
   const session = await auth();
 
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <header
-        style={{
-          padding: "0.75rem 1.5rem",
-          backgroundColor: "#1e40af",
-          color: "white",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h1 style={{ fontSize: "1.25rem", fontWeight: "bold", margin: 0 }}>
-          SileTravel
-        </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <span style={{ fontSize: "0.875rem" }}>
-            {session?.user?.name} ({session?.user?.username})
-          </span>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button
-              type="submit"
-              style={{
-                padding: "0.375rem 0.75rem",
-                backgroundColor: "transparent",
-                color: "white",
-                border: "1px solid rgba(255,255,255,0.3)",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
-              Đăng xuất
-            </button>
-          </form>
-        </div>
-      </header>
-      <main style={{ padding: "1.5rem" }}>{children}</main>
+    <div className="min-h-screen bg-background text-foreground">
+      <AppSidebar
+        fullName={session?.user?.name}
+        username={session?.user?.username}
+        signOutAction={signOutAction}
+      />
+
+      <main className="px-4 py-8 md:ml-60 md:px-8">
+        <div className="mx-auto w-full max-w-[960px]">{children}</div>
+      </main>
     </div>
   );
 }

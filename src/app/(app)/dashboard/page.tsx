@@ -6,7 +6,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem" }}>
-        Dashboard
+        Bảng điều khiển
       </h2>
       <p>
         Xin chào, <strong>{session?.user?.name}</strong>! Đây là trang quản lý
