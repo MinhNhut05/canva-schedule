@@ -19,6 +19,10 @@ interface CanvaResultCardProps {
   errorMessage?: string;
   onRetry: () => void;
   onRegenerate: () => void;
+  disableRetry?: boolean;
+  disableRegenerate?: boolean;
+  disableCopy?: boolean;
+  showRegenerate?: boolean;
 }
 
 function getArtifactTitle(artifactType: ArtifactType) {
@@ -39,6 +43,10 @@ export function CanvaResultCard({
   errorMessage,
   onRetry,
   onRegenerate,
+  disableRetry = false,
+  disableRegenerate = false,
+  disableCopy = false,
+  showRegenerate = true,
 }: CanvaResultCardProps) {
   const title = getArtifactTitle(artifactType);
   const isSucceeded = status === "SUCCEEDED";
@@ -112,21 +120,35 @@ export function CanvaResultCard({
           : null,
         React.createElement(
           Button,
-          { variant: "outline", onClick: () => void handleCopy() },
+          {
+            variant: "outline",
+            onClick: () => void handleCopy(),
+            disabled: disableCopy,
+          },
           "Sao chép link",
         ),
         isFailed
           ? React.createElement(
               Button,
-              { variant: "destructive", onClick: onRetry },
+              {
+                variant: "destructive",
+                onClick: onRetry,
+                disabled: disableRetry,
+              },
               "Thử lại",
             )
           : null,
-        React.createElement(
-          Button,
-          { variant: "secondary", onClick: onRegenerate },
-          "Tạo lại",
-        ),
+        showRegenerate
+          ? React.createElement(
+              Button,
+              {
+                variant: "secondary",
+                onClick: onRegenerate,
+                disabled: disableRegenerate,
+              },
+              "Tạo lại",
+            )
+          : null,
       ),
     ),
   );

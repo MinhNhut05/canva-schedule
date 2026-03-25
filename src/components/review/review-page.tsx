@@ -1,18 +1,27 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { approveDraft, reExtractDraft, saveDraftField } from "@/app/(app)/review/[id]/actions";
+import {
+  approveDraft,
+  generateCanva,
+  reExtractDraft,
+  retryCanvaArtifact,
+  saveDraftField,
+} from "@/app/(app)/review/[id]/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { StructuredDraft } from "@/lib/ai/extraction-schema";
 
+import { CanvaGenerationPanel } from "./canva-generation-panel";
+import { CanvaResultCard } from "./canva-result-card";
 import { ItineraryEditor } from "./itinerary-editor";
 import { MenuEditor } from "./menu-editor";
 import { ReviewActions } from "./review-actions";
 import { ReviewHeader } from "./review-header";
+import { TemplateConfirmation } from "./template-confirmation";
 
 function WarningIcon() {
   return (
@@ -43,6 +52,10 @@ export interface ReviewPageUpload {
   tourDuration: string | null;
 }
 
+type ReviewArtifactKind = "ITINERARY" | "MENU";
+type ReviewArtifactStatus = "SUCCEEDED" | "FAILED" | "PROCESSING";
+type ReviewDuration = "ONE_DAY" | "TWO_DAY";
+
 interface InitialCanvaArtifact {
   id: string;
   uploadId: string;
@@ -54,6 +67,20 @@ interface InitialCanvaArtifact {
   errorMessage?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
+  editUrl?: string;
+  viewUrl?: string;
+  thumbnailUrl?: string;
+}
+
+interface ReviewArtifact {
+  id?: string;
+  uploadId?: string;
+  artifactType: ReviewArtifactKind;
+  status: ReviewArtifactStatus;
+  templateId?: string | null;
+  jobId?: string | null;
+  designId?: string | null;
+  errorMessage?: string | null;
   editUrl?: string;
   viewUrl?: string;
   thumbnailUrl?: string;
@@ -73,20 +100,113 @@ interface ReviewPageProps {
   templatePair?: TemplatePairSummary | null;
 }
 
+function isArtifactKind(value: string): value is ReviewArtifactKind {
+  return value === "ITINERARY" || value === "MENU";
+}
+
+function isArtifactStatus(value: string): value is ReviewArtifactStatus {
+  return value === "SUCCEEDED" || value === "FAILED" || value === "PROCESSING";
+}
+
+function isReviewDuration(value: string | null): value is ReviewDuration {
+  return value === "ONE_DAY" || value === "TWO_DAY";
+}
+
+function normalizeArtifact(
+  artifact: InitialCanvaArtifact | ReviewArtifact,
+): ReviewArtifact | null {
+  if (!isArtifactKind(artifact.artifactType) || !isArtifactStatus(artifact.status)) {
+    return null;
+  }
+
+  return {
+    id: artifact.id,
+    uploadId: artifact.uploadId,
+    artifactType: artifact.artifactType,
+    status: artifact.status,
+    templateId: artifact.templateId,
+    jobId: artifact.jobId,
+    designId: artifact.designId,
+    errorMessage: artifact.errorMessage,
+    editUrl: artifact.editUrl,
+    viewUrl: artifact.viewUrl,
+    thumbnailUrl: artifact.thumbnailUrl,
+  };
+}
+
+function normalizeArtifacts(artifacts?: InitialCanvaArtifact[]): ReviewArtifact[] {
+  return (artifacts ?? [])
+    .map((artifact) => normalizeArtifact(artifact))
+    .filter((artifact): artifact is ReviewArtifact => artifact !== null)
+    .sort((a, b) => a.artifactType.localeCompare(b.artifactType));
+}
+
+function mergeArtifactResult(
+  previous: ReviewArtifact[],
+  nextArtifact: ReviewArtifact,
+): ReviewArtifact[] {
+  const remaining = previous.filter(
+    (artifact) => artifact.artifactType !== nextArtifact.artifactType,
+  );
+
+  return [...remaining, nextArtifact].sort((a, b) =>
+    a.artifactType.localeCompare(b.artifactType),
+  );
+}
+
 export function ReviewPage({
   upload,
   draft,
   canvaArtifacts,
   templatePair,
 }: ReviewPageProps) {
-  void canvaArtifacts;
-  void templatePair;
   const router = useRouter();
+  const [isApproved, setIsApproved] = useState(upload.reviewStatus === "APPROVED");
   const [isApproving, setIsApproving] = useState(false);
   const [isReExtracting, setIsReExtracting] = useState(false);
   const [hasUserEdits, setHasUserEdits] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
+  const [artifacts, setArtifacts] = useState<ReviewArtifact[]>(() =>
+    normalizeArtifacts(canvaArtifacts),
+  );
+  const [pendingRetryKinds, setPendingRetryKinds] = useState<ReviewArtifactKind[]>([]);
 
-  const isApproved = upload.reviewStatus === "APPROVED";
+  useEffect(() => {
+    setArtifacts(normalizeArtifacts(canvaArtifacts));
+  }, [canvaArtifacts]);
+
+  useEffect(() => {
+    setIsApproved(upload.reviewStatus === "APPROVED");
+  }, [upload.reviewStatus]);
+
+  useEffect(() => {
+    if (!isRateLimited || cooldownMinutes <= 0) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setCooldownMinutes((current) => {
+        if (current <= 1) {
+          setIsRateLimited(false);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 60_000);
+
+    return () => window.clearTimeout(timer);
+  }, [cooldownMinutes, isRateLimited]);
+
+  const hasCompletedAttempt = useMemo(
+    () => artifacts.some((artifact) => artifact.status === "SUCCEEDED" || artifact.status === "FAILED"),
+    [artifacts],
+  );
+
+  const hasPersistedResults = artifacts.length > 0;
+  const generationDisabled = isGenerating || isRateLimited || !templatePair;
 
   const handleSaveField = useCallback(
     async (
@@ -101,7 +221,7 @@ export function ReviewPage({
 
   const handleSaveSuccess = useCallback(() => {
     setHasUserEdits(true);
-    toast.success("Da luu thay doi.");
+    toast.success("Đã lưu thay đổi.");
     router.refresh();
   }, [router]);
 
@@ -109,22 +229,104 @@ export function ReviewPage({
     toast.error(error);
   }, []);
 
+  const applyCooldown = useCallback((cooldownSeconds?: number) => {
+    const minutes = Math.max(1, Math.ceil((cooldownSeconds ?? 60) / 60));
+    setIsRateLimited(true);
+    setCooldownMinutes(minutes);
+  }, []);
+
   const handleApprove = useCallback(async () => {
     setIsApproving(true);
     try {
       const result = await approveDraft(upload.id);
       if (result.success) {
-        toast.success("Da duyet thanh cong! San sang tao Canva.");
+        setIsApproved(true);
+        toast.success("Đã duyệt thành công. Sẵn sàng tạo Canva.");
         router.refresh();
       } else {
-        toast.error(result.error || "Khong the duyet.");
+        toast.error(result.error || "Không thể duyệt.");
       }
     } catch {
-      toast.error("Co loi xay ra khi duyet.");
+      toast.error("Có lỗi xảy ra khi duyệt.");
     } finally {
       setIsApproving(false);
     }
   }, [router, upload.id]);
+
+  const handleGenerate = useCallback(async () => {
+    if (!templatePair || !isApproved) {
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const result = await generateCanva(upload.id);
+
+      if (result.results.length > 0) {
+        setArtifacts(
+          result.results
+            .map((artifact) => normalizeArtifact(artifact))
+            .filter((artifact): artifact is ReviewArtifact => artifact !== null)
+            .sort((a, b) => a.artifactType.localeCompare(b.artifactType)),
+        );
+      }
+
+      if (result.isRateLimited) {
+        applyCooldown(result.cooldownSeconds);
+      }
+
+      if (result.success) {
+        toast.success("Đã tạo liên kết Canva.");
+      } else if (result.error) {
+        toast.error(result.error);
+      } else if (result.results.length > 0) {
+        toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+      }
+
+      router.refresh();
+    } catch {
+      toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [applyCooldown, isApproved, router, templatePair, upload.id]);
+
+  const handleRetryArtifact = useCallback(
+    async (kind: ReviewArtifactKind) => {
+      if (isRateLimited) {
+        return;
+      }
+
+      setPendingRetryKinds((current) => [...current, kind]);
+
+      try {
+        const result = await retryCanvaArtifact(upload.id, kind);
+        const normalized = normalizeArtifact(result);
+
+        if (normalized) {
+          setArtifacts((current) => mergeArtifactResult(current, normalized));
+        }
+
+        if (result.isRateLimited) {
+          applyCooldown(result.cooldownSeconds);
+        }
+
+        if (result.status === "SUCCEEDED") {
+          toast.success(`Đã tạo lại ${kind === "ITINERARY" ? "Lịch trình" : "Thực đơn"}.`);
+        } else {
+          toast.error(result.errorMessage || "Không thể tạo Canva lúc này. Hãy thử lại.");
+        }
+
+        router.refresh();
+      } catch {
+        toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+      } finally {
+        setPendingRetryKinds((current) => current.filter((value) => value !== kind));
+      }
+    },
+    [applyCooldown, isRateLimited, router, upload.id],
+  );
 
   const handleReExtract = useCallback(async () => {
     setIsReExtracting(true);
@@ -132,13 +334,13 @@ export function ReviewPage({
       const result = await reExtractDraft(upload.id);
       if (result.success) {
         setHasUserEdits(false);
-        toast.success("Da trich xuat lai thanh cong.");
+        toast.success("Đã trích xuất lại thành công.");
         router.refresh();
       } else {
-        toast.error(result.error || "Khong the trich xuat lai.");
+        toast.error(result.error || "Không thể trích xuất lại.");
       }
     } catch {
-      toast.error("Co loi xay ra khi trich xuat lai.");
+      toast.error("Có lỗi xảy ra khi trích xuất lại.");
     } finally {
       setIsReExtracting(false);
     }
@@ -158,10 +360,10 @@ export function ReviewPage({
         />
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-[#F8FAFC] px-6 py-16 text-center">
           <h2 className="text-xl font-semibold text-foreground">
-            Chua co noi dung de duyet
+            Chưa có nội dung để duyệt
           </h2>
           <p className="mt-2 max-w-md text-base text-muted-foreground">
-            Ban trich xuat co cau truc chua san sang. Hay thu Trich xuat lai hoac quay ve Tai tai lieu de kiem tra file nguon.
+            Bản trích xuất có cấu trúc chưa sẵn sàng. Hãy thử Trích xuất lại hoặc quay về Tải tài liệu để kiểm tra file nguồn.
           </p>
           <div className="mt-6 flex gap-3">
             <Button
@@ -169,10 +371,10 @@ export function ReviewPage({
               disabled={isReExtracting}
               className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
             >
-              {isReExtracting ? "Dang trich xuat..." : "Trich xuat lai"}
+              {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
             </Button>
             <Button variant="outline" onClick={() => router.push("/upload")}>
-              Quay ve Tai tai lieu
+              Quay về Tải tài liệu
             </Button>
           </div>
         </div>
@@ -198,11 +400,11 @@ export function ReviewPage({
             <div className="space-y-3">
               <div className="space-y-1">
                 <AlertTitle className="text-destructive">
-                  Khong the trich xuat noi dung
+                  Không thể trích xuất nội dung
                 </AlertTitle>
                 <AlertDescription className="text-destructive/80">
                   {upload.aiErrorMessage ||
-                    "Khong the trich xuat noi dung luc nay. Hay thu Trich xuat lai. Neu loi van tiep dien, hay quay ve Tai tai lieu va kiem tra chat luong tai lieu nguon."}
+                    "Không thể trích xuất nội dung lúc này. Hãy thử Trích xuất lại. Nếu lỗi vẫn tiếp diễn, hãy quay về Tải tài liệu và kiểm tra chất lượng tài liệu nguồn."}
                 </AlertDescription>
               </div>
               <div className="flex gap-3">
@@ -211,10 +413,10 @@ export function ReviewPage({
                   disabled={isReExtracting}
                   className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
                 >
-                  {isReExtracting ? "Dang trich xuat..." : "Trich xuat lai"}
+                  {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
                 </Button>
                 <Button variant="outline" onClick={() => router.push("/upload")}>
-                  Quay ve Tai tai lieu
+                  Quay về Tải tài liệu
                 </Button>
               </div>
             </div>
@@ -230,20 +432,11 @@ export function ReviewPage({
         fileName={upload.originalFileName}
         tourDuration={upload.tourDuration}
         clientType={upload.clientType}
-        reviewStatus={upload.reviewStatus}
+        reviewStatus={isApproved ? "APPROVED" : upload.reviewStatus}
         hasUserEdits={hasUserEdits}
         isReExtracting={isReExtracting}
         onReExtract={() => void handleReExtract()}
       />
-
-      {isApproved ? (
-        <Alert className="border-emerald-300 bg-emerald-50">
-          <AlertTitle className="text-emerald-800">Noi dung da duoc duyet</AlertTitle>
-          <AlertDescription className="text-emerald-700">
-            Ban co the chuyen sang buoc tao Canva (Phase 4).
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ItineraryEditor
@@ -262,11 +455,80 @@ export function ReviewPage({
         />
       </div>
 
+      {isApproved ? (
+        <div className="space-y-6">
+          <Alert className="border-emerald-300 bg-emerald-50">
+            <AlertTitle className="text-emerald-800">Nội dung đã được duyệt</AlertTitle>
+            <AlertDescription className="text-emerald-700">
+              Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.
+            </AlertDescription>
+          </Alert>
+
+          {templatePair && isReviewDuration(upload.tourDuration) ? (
+            <TemplateConfirmation
+              duration={upload.tourDuration}
+              templatePair={templatePair as never}
+              onConfirm={() => void handleGenerate()}
+              disabled={generationDisabled}
+            />
+          ) : null}
+
+          <CanvaGenerationPanel
+            isGenerating={isGenerating}
+            isRateLimited={isRateLimited}
+            cooldownMinutes={cooldownMinutes}
+          />
+
+          {hasPersistedResults ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {artifacts.map((artifact) => {
+                  const isRetrying = pendingRetryKinds.includes(artifact.artifactType);
+
+                  return (
+                    <CanvaResultCard
+                      key={artifact.artifactType}
+                      artifactType={artifact.artifactType}
+                      status={artifact.status}
+                      editUrl={artifact.editUrl}
+                      viewUrl={artifact.viewUrl}
+                      thumbnailUrl={artifact.thumbnailUrl}
+                      errorMessage={artifact.errorMessage ?? undefined}
+                      onRetry={() => void handleRetryArtifact(artifact.artifactType)}
+                      onRegenerate={() => void handleGenerate()}
+                      disableRetry={isRetrying || isRateLimited || isGenerating}
+                      disableRegenerate={generationDisabled}
+                      showRegenerate={false}
+                    />
+                  );
+                })}
+              </div>
+
+              {hasCompletedAttempt ? (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => void handleGenerate()}
+                    disabled={generationDisabled}
+                    className="bg-[#3B82F6] text-white hover:bg-[#3B82F6]/90"
+                  >
+                    Tạo lại
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <ReviewActions
         isApproving={isApproving}
         isApproved={isApproved}
         hasDraft={!!draft}
+        isGenerating={isGenerating}
+        hasResults={hasCompletedAttempt}
+        isRateLimited={isRateLimited}
         onApprove={() => void handleApprove()}
+        onGenerate={() => void handleGenerate()}
       />
     </section>
   );
