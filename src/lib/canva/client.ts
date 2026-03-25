@@ -2,7 +2,8 @@ import "server-only";
 
 import { getValidAccessToken } from "./oauth";
 
-const CANVA_API_BASE = "https://api.canva.com/rest/v1";
+const CANVA_API_BASE =
+  process.env.CANVA_API_BASE_URL || "https://api.canva.com/rest/v1";
 
 export class CanvaRateLimitError extends Error {
   constructor(public cooldownSeconds: number) {

@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 
 import { getCanvaConfig } from "./server-client";
 
-const CANVA_TOKEN_URL = "https://api.canva.com/rest/v1/oauth/token";
+const CANVA_TOKEN_URL =
+  process.env.CANVA_TOKEN_URL || "https://api.canva.com/rest/v1/oauth/token";
 const TOKEN_EXPIRY_BUFFER_MS = 60_000;
 
 interface TokenResponse {

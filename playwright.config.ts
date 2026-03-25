@@ -21,7 +21,18 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT}`,
+    command:
+      `CANVA_API_BASE_URL=http://127.0.0.1:4010/rest/v1 ` +
+      `CANVA_TOKEN_URL=http://127.0.0.1:4010/rest/v1/oauth/token ` +
+      `CANVA_CLIENT_ID=test-client-id ` +
+      `CANVA_CLIENT_SECRET=test-client-secret ` +
+      `CANVA_ACCESS_TOKEN=test-access-token ` +
+      `CANVA_REFRESH_TOKEN=test-refresh-token ` +
+      `CANVA_TEMPLATE_1DAY_ITINERARY=tpl-1day-itinerary ` +
+      `CANVA_TEMPLATE_1DAY_MENU=tpl-1day-menu ` +
+      `CANVA_TEMPLATE_2DAY_ITINERARY=tpl-2day-itinerary ` +
+      `CANVA_TEMPLATE_2DAY_MENU=tpl-2day-menu ` +
+      `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
