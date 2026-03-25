@@ -1,0 +1,77 @@
+import { z } from "zod";
+
+// --- Activity schema (shared) ---
+export const activitySchema = z.object({
+  timeLabel: z.string().optional(),
+  text: z.string().min(1),
+  sourceConfidence: z.enum(["high", "medium", "low"]).default("high"),
+  needsReview: z.boolean().default(false),
+});
+
+export type Activity = z.infer<typeof activitySchema>;
+
+// --- Menu item schema ---
+export const menuItemSchema = z.object({
+  text: z.string().min(1),
+  needsReview: z.boolean().default(false),
+});
+
+export type MenuItem = z.infer<typeof menuItemSchema>;
+
+// --- Client type ---
+export const clientTypeSchema = z.enum(["SCHOOL", "GROUP"]);
+export type ClientType = z.infer<typeof clientTypeSchema>;
+
+// --- Duration ---
+export const tourDurationSchema = z.enum(["ONE_DAY", "TWO_DAY"]);
+export type TourDuration = z.infer<typeof tourDurationSchema>;
+
+// --- Common fields (shared between 1-day and 2-day) ---
+const commonFieldsSchema = z.object({
+  title: z.string().optional(),
+  clientName: z.string().optional(),
+  clientType: clientTypeSchema.optional(),
+  schoolName: z.string().optional(),
+  tourDate: z.string().optional(),
+  greetingText: z.string().optional(),
+  pickupLocation: z.string().optional(),
+  returnLocation: z.string().optional(),
+  reviewFlags: z.array(z.string()).default([]),
+});
+
+// --- One-day tour schema ---
+export const oneDaySchema = commonFieldsSchema.extend({
+  duration: z.literal("ONE_DAY"),
+  itinerary: z.object({
+    morning: z.array(activitySchema),
+    afternoon: z.array(activitySchema),
+  }),
+  menu: z.object({
+    morning: z.array(menuItemSchema).default([]),
+    lunch: z.array(menuItemSchema).default([]),
+    afternoon: z.array(menuItemSchema).default([]),
+  }),
+});
+
+// --- Two-day tour schema ---
+export const twoDaySchema = commonFieldsSchema.extend({
+  duration: z.literal("TWO_DAY"),
+  itinerary: z.object({
+    day1: z.array(activitySchema),
+    day2: z.array(activitySchema),
+  }),
+  menu: z.object({
+    day1: z.array(menuItemSchema).default([]),
+    day2: z.array(menuItemSchema).default([]),
+  }),
+});
+
+// --- Discriminated union ---
+export const structuredDraftSchema = z.discriminatedUnion("duration", [
+  oneDaySchema,
+  twoDaySchema,
+]);
+
+export type StructuredDraft = z.infer<typeof structuredDraftSchema>;
+export type OneDayDraft = z.infer<typeof oneDaySchema>;
+export type TwoDayDraft = z.infer<typeof twoDaySchema>;
