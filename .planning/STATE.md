@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-24T07:46:06.317Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-25T03:39:16.889Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 10
-  completed_plans: 7
+  total_plans: 13
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 02 — document-intake-parsing
+**Current focus:** Phase 03 — structured-ai-extraction-rules-human-review
 
 ## Current Position
 
-Phase: 02 (document-intake-parsing) — EXECUTING
-Plan: 7 of 7
+Phase: 03 (structured-ai-extraction-rules-human-review) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: 7 of 7
 | Phase 02 P05 | 8min | 3 tasks | 3 files |
 | Phase 02 P06 | 3min | 3 tasks | 4 files |
 | Phase 02 P07 | 21m | 2 tasks | 3 files |
+| Phase 03 P01 | 14 min | 5 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Keep extraction quality messaging advisory in the UI so users can continue reviewing results without being blocked by warning or poor quality states.
 - [Phase 02]: Load pdfjs-dist through a file URL with webpackIgnore so PDF extraction works reliably inside the Next server runtime used by API routes and Playwright.
 - [Phase 02]: Delay window.fetch in the browser for the upload submission test instead of fulfilling the route manually so the real multipart request still exercises the extraction pipeline.
+- [Phase 03]: Resolve both AI_API_* and ANTHROPIC_* env names through one server-only adapter so Phase 1 secret handling and Phase 3 gateway decisions stay compatible.
+- [Phase 03]: Persist one canonical structuredDraft JSON payload plus workflow metadata on Upload instead of introducing new relational draft tables in v1.
+- [Phase 03]: Treat AI extraction failure as non-fatal to upload success so parsed text remains available and users can retry extraction later.
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T07:46:06.314Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-structured-ai-extraction-rules-human-review/03-CONTEXT.md
+Last session: 2026-03-25T03:39:16.885Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
