@@ -8,6 +8,7 @@ import { getAiEnv } from "@/lib/env";
  */
 export function getAiConfig() {
   const { AI_API_URL, AI_API_KEY } = getAiEnv();
+
   return {
     baseUrl: AI_API_URL,
     apiKey: AI_API_KEY,

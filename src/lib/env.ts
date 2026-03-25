@@ -9,6 +9,8 @@ const FORBIDDEN_PUBLIC_PREFIXES = [
   "NEXT_PUBLIC_AUTH_SECRET",
   "NEXT_PUBLIC_AI_API_KEY",
   "NEXT_PUBLIC_AI_API_URL",
+  "NEXT_PUBLIC_ANTHROPIC_API_KEY",
+  "NEXT_PUBLIC_ANTHROPIC_BASE_URL",
   "NEXT_PUBLIC_CANVA_CLIENT_ID",
   "NEXT_PUBLIC_CANVA_CLIENT_SECRET",
   "NEXT_PUBLIC_CANVA_ACCESS_TOKEN",
@@ -68,7 +70,14 @@ export const env = {
  */
 export function getAiEnv() {
   rejectPublicSecrets();
-  return aiEnvSchema.parse(process.env);
+
+  // Support both AI_API_URL/AI_API_KEY and ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY
+  const resolved = {
+    AI_API_URL: process.env.AI_API_URL || process.env.ANTHROPIC_BASE_URL,
+    AI_API_KEY: process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY,
+  };
+
+  return aiEnvSchema.parse(resolved);
 }
 
 /**
