@@ -13,6 +13,11 @@ export function getCanvaConfig() {
     clientSecret: env.CANVA_CLIENT_SECRET,
     accessToken: env.CANVA_ACCESS_TOKEN,
     refreshToken: env.CANVA_REFRESH_TOKEN,
-    templateId: env.CANVA_TEMPLATE_ID,
+    templates: {
+      ONE_DAY_ITINERARY: env.CANVA_TEMPLATE_1DAY_ITINERARY,
+      ONE_DAY_MENU: env.CANVA_TEMPLATE_1DAY_MENU,
+      TWO_DAY_ITINERARY: env.CANVA_TEMPLATE_2DAY_ITINERARY,
+      TWO_DAY_MENU: env.CANVA_TEMPLATE_2DAY_MENU,
+    },
   };
 }
