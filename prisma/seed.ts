@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedCompanyRules } from "../src/lib/rules/seed";
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,8 @@ const seedUsers: SeedUser[] = [
 
 async function main() {
   console.log("🌱 Seeding database...\n");
+
+  await seedCompanyRules(prisma);
 
   for (const user of seedUsers) {
     const passwordHash = await bcrypt.hash(user.password, SALT_ROUNDS);
