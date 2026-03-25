@@ -9,6 +9,32 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("@/components/ui/button", () => ({
+  Button: ({ children, asChild, ...props }: Record<string, unknown>) => {
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, props as Record<string, unknown>);
+    }
+
+    return React.createElement("button", props, children);
+  },
+}));
+
+vi.mock("@/components/ui/badge", () => ({
+  Badge: ({ children, ...props }: Record<string, unknown>) =>
+    React.createElement("span", props, children),
+}));
+
+vi.mock("@/components/ui/card", () => ({
+  Card: ({ children, ...props }: Record<string, unknown>) =>
+    React.createElement("div", props, children),
+  CardHeader: ({ children, ...props }: Record<string, unknown>) =>
+    React.createElement("div", props, children),
+  CardTitle: ({ children, ...props }: Record<string, unknown>) =>
+    React.createElement("h3", props, children),
+  CardContent: ({ children, ...props }: Record<string, unknown>) =>
+    React.createElement("div", props, children),
+}));
+
 import { CanvaResultCard } from "@/components/review/canva-result-card";
 
 function renderResultCard(
