@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-25T04:08:50.272Z"
+status: ready_for_verification
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-25T04:20:54.749Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 
 ## Current Position
 
-Phase: 03 (structured-ai-extraction-rules-human-review) — EXECUTING
-Plan: 3 of 3
+Phase: 03 (structured-ai-extraction-rules-human-review) — READY_FOR_VERIFICATION
+Plan: 3 of 3 (complete)
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: 3 of 3
 | Phase 02 P07 | 21m | 2 tasks | 3 files |
 | Phase 03 P01 | 14 min | 5 tasks | 15 files |
 | Phase 03 P02 | 14 min | 7 tasks | 15 files |
+| Phase 03 P03 | 33 min | 6 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Made /review/[id] the canonical review URL so uploads can be bookmarked and resumed before Canva generation.
 - [Phase 03]: Persist inline review edits by dot-path patching the canonical structuredDraft JSON with Zod revalidation instead of creating a separate draft model.
 - [Phase 03]: Redirect successful uploads directly into the review page so extraction cannot bypass the mandatory approval gate.
+- [Phase 03]: Run applyRules immediately after extractTour so only corrected drafts and explicit violations are persisted.
+- [Phase 03]: Merge rule-derived flags into Upload.reviewFlags using rule:{ruleId}:{severity} markers for downstream review UI.
+- [Phase 03]: Seed canonical CompanyRule rows now so Phase 5 admin tooling can evolve from stored metadata.
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T04:08:50.270Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-25T04:20:54.746Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None

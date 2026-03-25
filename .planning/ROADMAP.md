@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Capability Gate & Secure Access** - Verify the real Canva autofill path early and establish protected internal access.
 - [ ] **Phase 2: Document Intake & Parsing** - Accept supported tour files and produce readable Vietnamese text for downstream use.
-- [ ] **Phase 3: Structured AI Extraction, Rules & Human Review** - Turn parsed text into editable, rule-aware itinerary and menu content.
+- [x] **Phase 3: Structured AI Extraction, Rules & Human Review** - Turn parsed text into editable, rule-aware itinerary and menu content. (completed 2026-03-25)
 - [ ] **Phase 4: Editable Canva Generation** - Map reviewed content into supported Canva templates and return editable links.
 - [ ] **Phase 5: History & Admin Control** - Persist jobs and let authorized users maintain rules and template mappings safely.
 - [ ] **Phase 6: Operational Polish & Reliability** - Make the weekly internal workflow clear, resilient, and stable at v1 volume.
@@ -83,7 +83,7 @@ Plans:
 Plans:
 - [x] 03-01: Integrate structured AI extraction with schema validation.
 - [x] 03-02: Build the review and inline edit step as a hard gate before generation.
-- [ ] 03-03: Implement the company rules layer for itinerary and menu preparation.
+- [x] 03-03: Implement the company rules layer for itinerary and menu preparation.
 
 ### Phase 4: Editable Canva Generation
 **Goal**: Users can generate editable Canva outputs from reviewed content using the supported template sets for v1 tours.
@@ -143,7 +143,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Capability Gate & Secure Access | 0/3 | Not started | - |
 | 2. Document Intake & Parsing | 7/7 | Complete | 2026-03-24 |
-| 3. Structured AI Extraction, Rules & Human Review | 2/3 | In Progress|  |
+| 3. Structured AI Extraction, Rules & Human Review | 3/3 | Complete   | 2026-03-25 |
 | 4. Editable Canva Generation | 0/3 | Not started | - |
 | 5. History & Admin Control | 0/2 | Not started | - |
 | 6. Operational Polish & Reliability | 0/2 | Not started | - |

@@ -29,13 +29,13 @@
 
 ### Tour Layout Rules
 
-- [ ] **RULE-01**: For 1-day tours, itinerary output is organized into 2 columns: Buổi sáng and Buổi chiều
-- [ ] **RULE-02**: For 2-day tours, itinerary output is organized into 2 columns: Ngày 1 and Ngày 2
-- [ ] **RULE-03**: For school tours (tiểu học, THCS, THPT), greeting uses the school audience wording "Quý thầy cô và các bạn học sinh"
-- [ ] **RULE-04**: For business or group tours, greeting uses business audience wording such as "Quý khách" or "Quý đoàn"
-- [ ] **RULE-05**: School name must stay logically intact and not be split into separate broken lines in generated content preparation
-- [ ] **RULE-06**: Phrases about returning to school must include the specific school name when the source document indicates a school-based tour
-- [ ] **RULE-07**: Menu content is generated separately from itinerary content and follows the selected template structure for 1-day or 2-day tours
+- [x] **RULE-01**: For 1-day tours, itinerary output is organized into 2 columns: Buổi sáng and Buổi chiều
+- [x] **RULE-02**: For 2-day tours, itinerary output is organized into 2 columns: Ngày 1 and Ngày 2
+- [x] **RULE-03**: For school tours (tiểu học, THCS, THPT), greeting uses the school audience wording "Quý thầy cô và các bạn học sinh"
+- [x] **RULE-04**: For business or group tours, greeting uses business audience wording such as "Quý khách" or "Quý đoàn"
+- [x] **RULE-05**: School name must stay logically intact and not be split into separate broken lines in generated content preparation
+- [x] **RULE-06**: Phrases about returning to school must include the specific school name when the source document indicates a school-based tour
+- [x] **RULE-07**: Menu content is generated separately from itinerary content and follows the selected template structure for 1-day or 2-day tours
 
 ### Canva Generation
 
@@ -118,13 +118,13 @@
 | AI-03 | Phase 3 | Complete |
 | AI-04 | Phase 3 | Complete |
 | AI-05 | Phase 3 | Complete |
-| RULE-01 | Phase 3 | Pending |
-| RULE-02 | Phase 3 | Pending |
-| RULE-03 | Phase 3 | Pending |
-| RULE-04 | Phase 3 | Pending |
-| RULE-05 | Phase 3 | Pending |
-| RULE-06 | Phase 3 | Pending |
-| RULE-07 | Phase 3 | Pending |
+| RULE-01 | Phase 3 | Complete |
+| RULE-02 | Phase 3 | Complete |
+| RULE-03 | Phase 3 | Complete |
+| RULE-04 | Phase 3 | Complete |
+| RULE-05 | Phase 3 | Complete |
+| RULE-06 | Phase 3 | Complete |
+| RULE-07 | Phase 3 | Complete |
 | CANVA-01 | Phase 4 | Pending |
 | CANVA-02 | Phase 4 | Pending |
 | CANVA-03 | Phase 4 | Pending |
