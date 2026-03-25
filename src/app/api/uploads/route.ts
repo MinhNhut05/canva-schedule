@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validateFile } from "@/lib/documents/intake";
 import { runExtractionPipeline } from "@/lib/documents/pipeline";
 import { extractTour } from "@/lib/ai/extract-tour";
+import { applyRules } from "@/lib/rules/engine";
 import { saveDraft, saveAiFailure } from "@/lib/review/draft";
 import { AI_STATUS } from "@/lib/review/status";
 import type { UploadApiResponse, UploadStatus } from "@/lib/documents/types";
@@ -104,7 +105,15 @@ export async function POST(request: Request) {
     if (result.normalizedText && result.normalizedText.trim().length > 0) {
       try {
         const aiResult = await extractTour(result.normalizedText);
-        await saveDraft(upload.id, aiResult.draft, aiResult.model, aiResult.attemptCount);
+        const ruleResult = applyRules(aiResult.draft);
+
+        await saveDraft(
+          upload.id,
+          ruleResult.correctedDraft,
+          aiResult.model,
+          aiResult.attemptCount,
+          ruleResult.violations,
+        );
       } catch (aiError) {
         const aiMessage =
           aiError instanceof Error

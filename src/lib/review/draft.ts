@@ -6,6 +6,8 @@ import {
   structuredDraftSchema,
   type StructuredDraft,
 } from "@/lib/ai/extraction-schema";
+import { violationsToReviewFlags } from "@/lib/rules/engine";
+import type { RuleViolation } from "@/lib/rules/types";
 import { AI_STATUS, REVIEW_STATUS } from "./status";
 
 export async function saveDraft(
@@ -13,14 +15,17 @@ export async function saveDraft(
   draft: StructuredDraft,
   aiModel: string,
   attemptCount: number,
+  ruleViolations: RuleViolation[] = [],
 ) {
   const reviewFlags = collectReviewFlags(draft);
+  const ruleFlags = violationsToReviewFlags(ruleViolations);
+  const mergedFlags = [...new Set([...reviewFlags, ...ruleFlags])];
 
   await prisma.upload.update({
     where: { id: uploadId },
     data: {
       structuredDraft: draft as Prisma.InputJsonValue,
-      reviewFlags: reviewFlags,
+      reviewFlags: mergedFlags,
       aiStatus: AI_STATUS.READY_FOR_REVIEW,
       reviewStatus: REVIEW_STATUS.PENDING_REVIEW,
       aiModel,
