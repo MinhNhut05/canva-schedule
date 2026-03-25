@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-25T04:39:45.372Z"
+stopped_at: Phase 4 Plan 04-01 completed
+last_updated: "2026-03-25T20:29:30.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 13
-  completed_plans: 10
+  total_plans: 16
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 03 — structured-ai-extraction-rules-human-review
+**Current focus:** Phase 04 — editable-canva-generation
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (editable-canva-generation) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Plan: Not started
 | Phase 03 P01 | 14 min | 5 tasks | 15 files |
 | Phase 03 P02 | 14 min | 7 tasks | 15 files |
 | Phase 03 P03 | 33 min | 6 tasks | 9 files |
+| Phase 04 P01 | 15 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Merge rule-derived flags into Upload.reviewFlags using rule:{ruleId}:{severity} markers for downstream review UI.
 - [Phase 03]: Seed canonical CompanyRule rows now so Phase 5 admin tooling can evolve from stored metadata.
 
+- [Phase 04]: Add CanvaToken and CanvaArtifact Prisma models for OAuth token persistence and per-artifact generation tracking with unique constraint on [uploadId, artifactType].
+- [Phase 04]: Replace single CANVA_TEMPLATE_ID with four per-template env vars to support independent 1-day/2-day itinerary/menu template configuration.
+- [Phase 04]: Template resolver, field-map manifest, and payload builders implemented as adapter boundary so Canva API path (autofill vs copy+edit) can be swapped in Plan 04-02.
+
 ### Pending Todos
 
 None yet.
@@ -103,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T04:20:54.746Z
-Stopped at: Completed 03-03-PLAN.md
-Resume file: None
+Last session: 2026-03-25T20:29:30.000Z
+Stopped at: Phase 4 Plan 04-01 completed
+Resume file: .planning/phases/04-editable-canva-generation/04-02-PLAN.md

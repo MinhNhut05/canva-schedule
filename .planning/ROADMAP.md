@@ -99,7 +99,7 @@ Plans:
 **Notes/Risks**: This phase only proceeds on the production path validated in Phase 1. Treat Canva integration as an adapter so the output layer can change if account capability constraints surface.
 
 Plans:
-- [ ] 04-01: Define externalized template mappings for supported v1 tour types.
+- [x] 04-01: Define externalized template mappings for supported v1 tour types.
 - [ ] 04-02: Implement Canva async generation, polling, and token lifecycle handling.
 - [ ] 04-03: Ship the reviewed-content-to-editable-link flow end to end.
 
@@ -144,7 +144,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Capability Gate & Secure Access | 0/3 | Not started | - |
 | 2. Document Intake & Parsing | 7/7 | Complete | 2026-03-24 |
 | 3. Structured AI Extraction, Rules & Human Review | 3/3 | Complete   | 2026-03-25 |
-| 4. Editable Canva Generation | 0/3 | Not started | - |
+| 4. Editable Canva Generation | 1/3 | In progress | - |
 | 5. History & Admin Control | 0/2 | Not started | - |
 | 6. Operational Polish & Reliability | 0/2 | Not started | - |
 
