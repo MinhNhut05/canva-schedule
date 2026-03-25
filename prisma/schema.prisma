@@ -44,6 +44,19 @@ model Upload {
   warningMessages  String[]     @default([])
   errorMessage     String?
   processingTimeMs Int?
+
+  // --- Phase 3: AI Extraction & Review ---
+  aiStatus         String?      // PENDING | PROCESSING | READY_FOR_REVIEW | FAILED
+  reviewStatus     String?      // PENDING_REVIEW | REVIEWED | APPROVED
+  structuredDraft  Json?
+  reviewFlags      Json?
+  aiModel          String?
+  aiAttemptCount   Int          @default(0)
+  approvedAt       DateTime?
+  clientType       String?      // SCHOOL | GROUP
+  tourDuration     String?      // ONE_DAY | TWO_DAY
+  aiErrorMessage   String?
+
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
