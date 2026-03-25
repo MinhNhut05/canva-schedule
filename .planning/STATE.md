@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-25T03:39:16.889Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-25T04:08:50.272Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 ## Current Position
 
 Phase: 03 (structured-ai-extraction-rules-human-review) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Plan: 2 of 3
 | Phase 02 P06 | 3min | 3 tasks | 4 files |
 | Phase 02 P07 | 21m | 2 tasks | 3 files |
 | Phase 03 P01 | 14 min | 5 tasks | 15 files |
+| Phase 03 P02 | 14 min | 7 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Resolve both AI_API_* and ANTHROPIC_* env names through one server-only adapter so Phase 1 secret handling and Phase 3 gateway decisions stay compatible.
 - [Phase 03]: Persist one canonical structuredDraft JSON payload plus workflow metadata on Upload instead of introducing new relational draft tables in v1.
 - [Phase 03]: Treat AI extraction failure as non-fatal to upload success so parsed text remains available and users can retry extraction later.
+- [Phase 03]: Made /review/[id] the canonical review URL so uploads can be bookmarked and resumed before Canva generation.
+- [Phase 03]: Persist inline review edits by dot-path patching the canonical structuredDraft JSON with Zod revalidation instead of creating a separate draft model.
+- [Phase 03]: Redirect successful uploads directly into the review page so extraction cannot bypass the mandatory approval gate.
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T03:39:16.885Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-25T04:08:50.270Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

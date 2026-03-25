@@ -82,7 +82,7 @@ Plans:
 
 Plans:
 - [x] 03-01: Integrate structured AI extraction with schema validation.
-- [ ] 03-02: Build the review and inline edit step as a hard gate before generation.
+- [x] 03-02: Build the review and inline edit step as a hard gate before generation.
 - [ ] 03-03: Implement the company rules layer for itinerary and menu preparation.
 
 ### Phase 4: Editable Canva Generation
@@ -143,7 +143,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Capability Gate & Secure Access | 0/3 | Not started | - |
 | 2. Document Intake & Parsing | 7/7 | Complete | 2026-03-24 |
-| 3. Structured AI Extraction, Rules & Human Review | 1/3 | In Progress | 2026-03-25 |
+| 3. Structured AI Extraction, Rules & Human Review | 2/3 | In Progress|  |
 | 4. Editable Canva Generation | 0/3 | Not started | - |
 | 5. History & Admin Control | 0/2 | Not started | - |
 | 6. Operational Polish & Reliability | 0/2 | Not started | - |

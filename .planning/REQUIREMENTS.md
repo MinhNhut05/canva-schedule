@@ -23,8 +23,8 @@
 
 - [x] **AI-01**: System sends extracted document text to the configured external AI API for structured itinerary extraction
 - [x] **AI-02**: AI extraction returns a structured result suitable for itinerary and menu generation, not free-form unvalidated text
-- [ ] **AI-03**: User can review extracted content before Canva generation
-- [ ] **AI-04**: User can edit extracted fields inline before final generation
+- [x] **AI-03**: User can review extracted content before Canva generation
+- [x] **AI-04**: User can edit extracted fields inline before final generation
 - [x] **AI-05**: System does not invent missing tour facts when source text is incomplete; uncertain fields are left blank or flagged for review
 
 ### Tour Layout Rules
@@ -115,8 +115,8 @@
 | DOC-05 | Phase 2 | Complete |
 | AI-01 | Phase 3 | Complete |
 | AI-02 | Phase 3 | Complete |
-| AI-03 | Phase 3 | Pending |
-| AI-04 | Phase 3 | Pending |
+| AI-03 | Phase 3 | Complete |
+| AI-04 | Phase 3 | Complete |
 | AI-05 | Phase 3 | Complete |
 | RULE-01 | Phase 3 | Pending |
 | RULE-02 | Phase 3 | Pending |
