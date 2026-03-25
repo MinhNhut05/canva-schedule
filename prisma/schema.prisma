@@ -60,9 +60,42 @@ model Upload {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
+  canvaArtifacts CanvaArtifact[]
+
   user User @relation(fields: [userId], references: [id])
 
   @@map("uploads")
+}
+
+model CanvaToken {
+  id           String   @id @default(cuid())
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  expiresAt    DateTime
+  scope        String?
+  tokenType    String   @default("Bearer")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("canva_tokens")
+}
+
+model CanvaArtifact {
+  id           String   @id @default(cuid())
+  uploadId     String
+  artifactType String   // "ITINERARY" | "MENU"
+  status       String   @default("PENDING") // "PENDING" | "PROCESSING" | "SUCCEEDED" | "FAILED"
+  templateId   String?
+  jobId        String?
+  designId     String?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  upload Upload @relation(fields: [uploadId], references: [id])
+
+  @@unique([uploadId, artifactType])
+  @@map("canva_artifacts")
 }
 
 model CompanyRule {
