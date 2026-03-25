@@ -17,12 +17,12 @@ Team members can transform a detailed tour program into a professional, condense
 - [x] Support for 1-day tours (Morning/Afternoon columns) — Validated in Phase 3 (Zod schema + RULE-01)
 - [x] Support for 2-day tours (Day 1/Day 2 columns) — Validated in Phase 3 (Zod schema + RULE-02)
 - [x] Company-specific formatting rules engine — Validated in Phase 3 (RULE-01 through RULE-07)
+- [x] Automatic filling of Canva templates via Canva Connect API — Validated in Phase 4 (CANVA-01 through CANVA-06)
+- [x] Separate Canva templates for Itinerary and Menu (2 templates per tour) — Validated in Phase 4 (CANVA-02)
+- [x] Return editable Canva links after generation — Validated in Phase 4 (CANVA-03, CANVA-04, UX-03)
 
 ### Active
 
-- [ ] Automatic filling of Canva templates via Canva Connect API
-- [ ] Separate Canva templates for Itinerary and Menu (2 templates per tour)
-- [ ] Return editable Canva links after generation
 - [ ] Multi-user access for SOHA Travel team (~10 tours/week)
 
 ### Out of Scope
@@ -83,10 +83,10 @@ Team members can transform a detailed tour program into a professional, condense
 |----------|-----------|---------|
 | Use dual-layer AI + rules engine | AI prompt hardcodes rules; server-side engine verifies/fixes deterministically | ✓ Phase 3 — 7 rules auto-fix/flag |
 | Human review gate before Canva generation | Mandatory /review/[id] page with inline editing before proceeding | ✓ Phase 3 |
-| Use Canva Connect API for template filling | User wants editable Canva links, not static images | — Pending |
+| Use Canva Connect API for template filling | User wants editable Canva links, not static images | ✓ Phase 4 — copy+populate with autofill fallback |
 | AI-powered extraction over rule-based parsing | Tour documents vary in format; AI handles flexibility better | ✓ Phase 3 |
 | Web app over CLI | Team of multiple users needs simple UI | — Pending |
-| 2 separate Canva templates per tour (Itinerary + Menu) | Matches existing workflow and template structure | — Pending |
+| 2 separate Canva templates per tour (Itinerary + Menu) | Matches existing workflow and template structure | ✓ Phase 4 — parallel generation via adapter |
 | Start with 1-day and 2-day tours only | Most common tour types; 3-4 day support added later | — Pending |
 
 ## Evolution
@@ -107,4 +107,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after Phase 3 completion*
+*Last updated: 2026-03-25 after Phase 4 completion*
