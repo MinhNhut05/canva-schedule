@@ -43,12 +43,44 @@ export interface ReviewPageUpload {
   tourDuration: string | null;
 }
 
+interface InitialCanvaArtifact {
+  id: string;
+  uploadId: string;
+  artifactType: string;
+  status: string;
+  templateId?: string | null;
+  jobId?: string | null;
+  designId?: string | null;
+  errorMessage?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  editUrl?: string;
+  viewUrl?: string;
+  thumbnailUrl?: string;
+}
+
+interface TemplatePairSummary {
+  duration: string;
+  itineraryTemplateId: string;
+  menuTemplateId: string;
+  displayLabel: string;
+}
+
 interface ReviewPageProps {
   upload: ReviewPageUpload;
   draft: StructuredDraft | null;
+  canvaArtifacts?: InitialCanvaArtifact[];
+  templatePair?: TemplatePairSummary | null;
 }
 
-export function ReviewPage({ upload, draft }: ReviewPageProps) {
+export function ReviewPage({
+  upload,
+  draft,
+  canvaArtifacts,
+  templatePair,
+}: ReviewPageProps) {
+  void canvaArtifacts;
+  void templatePair;
   const router = useRouter();
   const [isApproving, setIsApproving] = useState(false);
   const [isReExtracting, setIsReExtracting] = useState(false);

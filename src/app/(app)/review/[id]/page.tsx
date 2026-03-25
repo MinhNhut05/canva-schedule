@@ -1,9 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 
+import { loadCanvaArtifacts } from "@/app/(app)/review/[id]/actions";
 import { ReviewPage } from "@/components/review/review-page";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDraft } from "@/lib/review/draft";
+import {
+  resolveTemplatePair,
+  type TourDuration,
+} from "@/lib/canva/template-resolver";
 
 interface ReviewPageRouteProps {
   params: Promise<{ id: string }>;
@@ -38,6 +43,10 @@ export default async function ReviewPageRoute({
   }
 
   const draft = await getDraft(id);
+  const canvaArtifacts = await loadCanvaArtifacts(upload.id);
+  const templatePair = upload.tourDuration
+    ? resolveTemplatePair(upload.tourDuration as TourDuration)
+    : null;
 
   return (
     <ReviewPage
@@ -51,6 +60,8 @@ export default async function ReviewPageRoute({
         tourDuration: upload.tourDuration,
       }}
       draft={draft}
+      canvaArtifacts={canvaArtifacts}
+      templatePair={templatePair}
     />
   );
 }

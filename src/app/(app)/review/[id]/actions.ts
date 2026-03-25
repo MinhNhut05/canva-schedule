@@ -6,9 +6,27 @@ import { revalidatePath } from "next/cache";
 import { structuredDraftSchema } from "@/lib/ai/extraction-schema";
 import { extractTour } from "@/lib/ai/extract-tour";
 import { auth } from "@/lib/auth";
+import {
+  generateArtifact,
+  getArtifactsForUpload,
+  resolveArtifactUrls,
+  type ArtifactResult,
+} from "@/lib/canva/adapter";
+import {
+  resolveTemplatePair,
+  type ArtifactKind,
+  type TourDuration,
+} from "@/lib/canva/template-resolver";
+import {
+  buildOneDayItineraryPayload,
+  buildOneDayMenuPayload,
+  buildTwoDayItineraryPayload,
+  buildTwoDayMenuPayload,
+} from "@/lib/canva/payload";
 import { prisma } from "@/lib/db";
 import {
   approveDraft as persistApproval,
+  getDraft,
   saveDraft as persistDraft,
 } from "@/lib/review/draft";
 import { AI_STATUS } from "@/lib/review/status";
@@ -36,6 +54,26 @@ function setByPath(obj: unknown, path: string, value: unknown): unknown {
   return clone;
 }
 
+function isTourDuration(value: string | null | undefined): value is TourDuration {
+  return value === "ONE_DAY" || value === "TWO_DAY";
+}
+
+function getArtifactLabel(kind: ArtifactKind) {
+  return kind === "ITINERARY" ? "Lịch trình" : "Thực đơn";
+}
+
+function buildArtifactPayload(duration: TourDuration, kind: ArtifactKind, draft: Awaited<ReturnType<typeof getDraft>>) {
+  if (kind === "ITINERARY") {
+    return duration === "ONE_DAY"
+      ? buildOneDayItineraryPayload(draft)
+      : buildTwoDayItineraryPayload(draft);
+  }
+
+  return duration === "ONE_DAY"
+    ? buildOneDayMenuPayload(draft)
+    : buildTwoDayMenuPayload(draft);
+}
+
 async function requireAuth() {
   const session = await auth();
 
@@ -44,6 +82,25 @@ async function requireAuth() {
   }
 
   return session.user.id;
+}
+
+async function getAuthorizedUpload(uploadId: string) {
+  const userId = await requireAuth();
+
+  if (!userId) {
+    return { userId: null, upload: null };
+  }
+
+  const upload = await prisma.upload.findFirst({
+    where: { id: uploadId, userId },
+    select: {
+      id: true,
+      reviewStatus: true,
+      tourDuration: true,
+    },
+  });
+
+  return { userId, upload };
 }
 
 export async function saveDraftField(
@@ -115,6 +172,213 @@ export async function approveDraft(
 
   revalidatePath(`/review/${uploadId}`);
   return { success: true };
+}
+
+export async function generateCanva(uploadId: string): Promise<{
+  success: boolean;
+  results: ArtifactResult[];
+  error?: string;
+  isRateLimited?: boolean;
+  cooldownSeconds?: number;
+}> {
+  const { userId, upload } = await getAuthorizedUpload(uploadId);
+
+  if (!userId) {
+    return {
+      success: false,
+      results: [],
+      error: "Phiên đăng nhập hết hạn.",
+    };
+  }
+
+  if (!upload) {
+    return {
+      success: false,
+      results: [],
+      error: "Không tìm thấy tài liệu.",
+    };
+  }
+
+  if (upload.reviewStatus !== "APPROVED") {
+    return {
+      success: false,
+      results: [],
+      error: "Nội dung chưa được duyệt.",
+    };
+  }
+
+  const draft = await getDraft(uploadId);
+
+  if (!draft) {
+    return {
+      success: false,
+      results: [],
+      error: "Không tìm thấy bản nháp.",
+    };
+  }
+
+  if (!isTourDuration(upload.tourDuration)) {
+    return {
+      success: false,
+      results: [],
+      error: "Loại tour không hợp lệ.",
+    };
+  }
+
+  const pair = resolveTemplatePair(upload.tourDuration);
+  const itineraryPayload = buildArtifactPayload(
+    upload.tourDuration,
+    "ITINERARY",
+    draft,
+  );
+  const menuPayload = buildArtifactPayload(upload.tourDuration, "MENU", draft);
+
+  const [itineraryResult, menuResult] = await Promise.allSettled([
+    generateArtifact({
+      uploadId,
+      duration: upload.tourDuration,
+      kind: "ITINERARY",
+      data: itineraryPayload,
+      title: `SileTravel - ${pair.displayLabel} - Lịch trình`,
+    }),
+    generateArtifact({
+      uploadId,
+      duration: upload.tourDuration,
+      kind: "MENU",
+      data: menuPayload,
+      title: `SileTravel - ${pair.displayLabel} - Thực đơn`,
+    }),
+  ]);
+
+  const results: ArtifactResult[] = [
+    itineraryResult.status === "fulfilled"
+      ? itineraryResult.value
+      : {
+          artifactType: "ITINERARY",
+          status: "FAILED",
+          errorMessage:
+            itineraryResult.reason instanceof Error
+              ? itineraryResult.reason.message
+              : "Lỗi không xác định",
+        },
+    menuResult.status === "fulfilled"
+      ? menuResult.value
+      : {
+          artifactType: "MENU",
+          status: "FAILED",
+          errorMessage:
+            menuResult.reason instanceof Error
+              ? menuResult.reason.message
+              : "Lỗi không xác định",
+        },
+  ];
+
+  const rateLimited = results.find((result) => result.isRateLimited);
+
+  revalidatePath(`/review/${uploadId}`);
+
+  return {
+    success: results.some((result) => result.status === "SUCCEEDED"),
+    results,
+    isRateLimited: Boolean(rateLimited),
+    cooldownSeconds: rateLimited?.cooldownSeconds,
+  };
+}
+
+export async function retryCanvaArtifact(
+  uploadId: string,
+  kind: ArtifactKind,
+): Promise<ArtifactResult> {
+  const { userId, upload } = await getAuthorizedUpload(uploadId);
+
+  if (!userId) {
+    return {
+      artifactType: kind,
+      status: "FAILED",
+      errorMessage: "Phiên đăng nhập hết hạn.",
+    };
+  }
+
+  if (!upload || upload.reviewStatus !== "APPROVED") {
+    return {
+      artifactType: kind,
+      status: "FAILED",
+      errorMessage: "Nội dung chưa được duyệt.",
+    };
+  }
+
+  const draft = await getDraft(uploadId);
+
+  if (!draft) {
+    return {
+      artifactType: kind,
+      status: "FAILED",
+      errorMessage: "Không tìm thấy bản nháp.",
+    };
+  }
+
+  if (!isTourDuration(upload.tourDuration)) {
+    return {
+      artifactType: kind,
+      status: "FAILED",
+      errorMessage: "Loại tour không hợp lệ.",
+    };
+  }
+
+  const pair = resolveTemplatePair(upload.tourDuration);
+  const payload = buildArtifactPayload(upload.tourDuration, kind, draft);
+
+  const result = await generateArtifact({
+    uploadId,
+    duration: upload.tourDuration,
+    kind,
+    data: payload,
+    title: `SileTravel - ${pair.displayLabel} - ${getArtifactLabel(kind)}`,
+  });
+
+  revalidatePath(`/review/${uploadId}`);
+  return result;
+}
+
+export async function loadCanvaArtifacts(uploadId: string) {
+  const { userId, upload } = await getAuthorizedUpload(uploadId);
+
+  if (!userId || !upload) {
+    return [];
+  }
+
+  const artifacts = await getArtifactsForUpload(uploadId);
+
+  return Promise.all(
+    artifacts.map(async (artifact) => {
+      if (artifact.status === "SUCCEEDED" && artifact.designId) {
+        try {
+          const urls = await resolveArtifactUrls(artifact.designId);
+
+          return {
+            ...artifact,
+            editUrl: urls.editUrl,
+            viewUrl: urls.viewUrl,
+            thumbnailUrl: urls.thumbnailUrl,
+          };
+        } catch {
+          return {
+            ...artifact,
+            editUrl: "",
+            viewUrl: "",
+            thumbnailUrl: undefined,
+          };
+        }
+      }
+
+      return {
+        ...artifact,
+        editUrl: "",
+        viewUrl: "",
+        thumbnailUrl: undefined,
+      };
+    }),
+  );
 }
 
 export async function reExtractDraft(
