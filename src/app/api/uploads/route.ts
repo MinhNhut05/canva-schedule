@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validateFile } from "@/lib/documents/intake";
 import { runExtractionPipeline } from "@/lib/documents/pipeline";
+import { extractTour } from "@/lib/ai/extract-tour";
+import { saveDraft, saveAiFailure } from "@/lib/review/draft";
+import { AI_STATUS } from "@/lib/review/status";
 import type { UploadApiResponse, UploadStatus } from "@/lib/documents/types";
 
 export const runtime = "nodejs";
@@ -52,6 +55,7 @@ export async function POST(request: Request) {
         sourceKind: validation.kind,
         sizeBytes: file.size,
         status: "PENDING",
+        aiStatus: AI_STATUS.PENDING,
       },
     });
 
@@ -91,6 +95,25 @@ export async function POST(request: Request) {
         errorMessage: null,
       },
     });
+
+    await prisma.upload.update({
+      where: { id: upload.id },
+      data: { aiStatus: AI_STATUS.PROCESSING },
+    });
+
+    if (result.normalizedText && result.normalizedText.trim().length > 0) {
+      try {
+        const aiResult = await extractTour(result.normalizedText);
+        await saveDraft(upload.id, aiResult.draft, aiResult.model, aiResult.attemptCount);
+      } catch (aiError) {
+        const aiMessage =
+          aiError instanceof Error
+            ? aiError.message
+            : "Có lỗi xảy ra khi trích xuất AI.";
+        await saveAiFailure(upload.id, aiMessage, 1);
+        // AI failure is non-fatal — upload still succeeds, user can re-extract later
+      }
+    }
 
     return NextResponse.json<UploadApiResponse>(
       {
