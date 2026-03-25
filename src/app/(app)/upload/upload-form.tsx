@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { ExtractionResult } from "./extraction-result";
@@ -90,6 +91,7 @@ export function UploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<UploadApiResponse["data"]>();
   const [isDragActive, setIsDragActive] = useState(false);
+  const router = useRouter();
 
   const fileDetails = useMemo(() => {
     if (!selectedFile) {
@@ -205,7 +207,8 @@ export function UploadForm() {
       }
 
       setResult(payload.data);
-      toast.success("Tải tài liệu thành công.");
+      toast.success("Tải tài liệu thành công. Đang chuyển đến trang duyệt...");
+      router.push(`/review/${payload.data.uploadId}`);
     } catch {
       setError(GENERIC_ERROR);
       toast.error(GENERIC_ERROR);
