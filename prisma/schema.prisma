@@ -20,6 +20,7 @@ model User {
   username           String   @unique
   name               String
   passwordHash       String
+  role               String   @default("member")
   mustChangePassword Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -110,4 +111,18 @@ model CompanyRule {
   updatedAt   DateTime @updatedAt
 
   @@map("company_rules")
+}
+
+model CanvaTemplate {
+  id           String   @id @default(cuid())
+  tourDuration String
+  artifactType String
+  templateId   String
+  fieldMapping Json     @default("{}")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tourDuration, artifactType])
+  @@map("canva_templates")
 }
