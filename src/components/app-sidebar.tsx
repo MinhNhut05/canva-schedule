@@ -36,12 +36,14 @@ function MenuIcon() {
 interface AppSidebarProps {
   fullName?: string | null;
   username?: string | null;
+  role: "admin" | "member";
   signOutAction: () => Promise<void>;
 }
 
 interface MobileSidebarProps {
   fullName?: string | null;
   username?: string | null;
+  role: "admin" | "member";
   signOutAction: () => Promise<void>;
 }
 
@@ -55,11 +57,12 @@ const primaryItems: NavItem[] = [
   { href: "/dashboard", label: "Bảng điều khiển" },
   { href: "/upload", label: "Tải tài liệu" },
   { href: "/review", label: "Duyet noi dung" },
+  { href: "/history", label: "Lich su" },
 ];
 
-const secondaryItems: NavItem[] = [
-  { label: "Lịch sử", disabled: true },
-  { label: "Cài đặt", disabled: true },
+const adminItems: NavItem[] = [
+  { href: "/admin/rules", label: "Quy tac" },
+  { href: "/admin/templates", label: "Mau Canva" },
 ];
 
 function SidebarLink({
@@ -102,12 +105,14 @@ function SidebarContent({
   pathname,
   fullName,
   username,
+  role,
   signOutAction,
   onNavigate,
 }: {
   pathname: string;
   fullName?: string | null;
   username?: string | null;
+  role: "admin" | "member";
   signOutAction: () => Promise<void>;
   onNavigate?: () => void;
 }) {
@@ -135,11 +140,18 @@ function SidebarContent({
           ))}
         </nav>
 
-        <div className="space-y-2" aria-label="Mục dự kiến">
-          {secondaryItems.map((item) => (
-            <SidebarLink key={item.label} item={item} pathname={pathname} />
-          ))}
-        </div>
+        {role === "admin" && (
+          <div className="pt-2">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Quan ly
+            </p>
+            <nav aria-label="Quan tri" className="space-y-2">
+              {adminItems.map((item) => (
+                <SidebarLink key={item.label} item={item} pathname={pathname} onNavigate={onNavigate} />
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
 
       <Separator />
@@ -164,7 +176,7 @@ function SidebarContent({
   );
 }
 
-function MobileSidebar({ fullName, username, signOutAction }: MobileSidebarProps) {
+function MobileSidebar({ fullName, username, role, signOutAction }: MobileSidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -195,6 +207,7 @@ function MobileSidebar({ fullName, username, signOutAction }: MobileSidebarProps
               pathname={pathname}
               fullName={fullName}
               username={username}
+              role={role}
               signOutAction={signOutAction}
               onNavigate={() => setOpen(false)}
             />
@@ -205,7 +218,7 @@ function MobileSidebar({ fullName, username, signOutAction }: MobileSidebarProps
   );
 }
 
-export function AppSidebar({ fullName, username, signOutAction }: AppSidebarProps) {
+export function AppSidebar({ fullName, username, role, signOutAction }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -213,6 +226,7 @@ export function AppSidebar({ fullName, username, signOutAction }: AppSidebarProp
       <MobileSidebar
         fullName={fullName}
         username={username}
+        role={role}
         signOutAction={signOutAction}
       />
 
@@ -221,6 +235,7 @@ export function AppSidebar({ fullName, username, signOutAction }: AppSidebarProp
           pathname={pathname}
           fullName={fullName}
           username={username}
+          role={role}
           signOutAction={signOutAction}
         />
       </aside>

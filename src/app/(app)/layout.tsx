@@ -14,6 +14,7 @@ export default async function AppLayout({
       <AppSidebar
         fullName={session?.user?.name}
         username={session?.user?.username}
+        role={session?.user?.role ?? "member"}
         signOutAction={signOutAction}
       />
 
