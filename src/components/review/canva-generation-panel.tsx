@@ -2,13 +2,11 @@
 
 import React from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface CanvaGenerationPanelProps {
   isGenerating: boolean;
-  isRateLimited: boolean;
-  cooldownMinutes?: number;
+  isRateLimited?: boolean;
 }
 
 function SpinnerIcon() {
@@ -30,26 +28,7 @@ function SpinnerIcon() {
 
 export function CanvaGenerationPanel({
   isGenerating,
-  isRateLimited,
-  cooldownMinutes,
 }: CanvaGenerationPanelProps) {
-  if (isRateLimited) {
-    return React.createElement(
-      Alert,
-      { className: "border-destructive/40 bg-destructive/5" },
-      React.createElement(
-        AlertTitle,
-        { className: "text-base font-semibold text-destructive" },
-        `Canva đang bận, vui lòng thử lại sau ${cooldownMinutes ?? 1} phút.`,
-      ),
-      React.createElement(
-        AlertDescription,
-        { className: "text-base text-destructive/80" },
-        `Thời gian chờ còn lại: ${cooldownMinutes ?? 1} phút.`,
-      ),
-    );
-  }
-
   if (!isGenerating) {
     return null;
   }
