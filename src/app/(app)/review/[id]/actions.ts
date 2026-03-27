@@ -103,6 +103,26 @@ async function getAuthorizedUpload(uploadId: string) {
   return { userId, upload };
 }
 
+async function getUploadForRead(uploadId: string) {
+  const userId = await requireAuth();
+
+  if (!userId) {
+    return { userId: null, upload: null };
+  }
+
+  const upload = await prisma.upload.findFirst({
+    where: { id: uploadId },
+    select: {
+      id: true,
+      reviewStatus: true,
+      tourDuration: true,
+      userId: true,
+    },
+  });
+
+  return { userId, upload };
+}
+
 export async function saveDraftField(
   uploadId: string,
   fieldPath: string,
@@ -341,7 +361,7 @@ export async function retryCanvaArtifact(
 }
 
 export async function loadCanvaArtifacts(uploadId: string) {
-  const { userId, upload } = await getAuthorizedUpload(uploadId);
+  const { userId, upload } = await getUploadForRead(uploadId);
 
   if (!userId || !upload) {
     return [];

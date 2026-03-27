@@ -26,7 +26,7 @@ export default async function ReviewPageRoute({
   const { id } = await params;
 
   const upload = await prisma.upload.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id },
     select: {
       id: true,
       originalFileName: true,
@@ -35,6 +35,7 @@ export default async function ReviewPageRoute({
       aiErrorMessage: true,
       clientType: true,
       tourDuration: true,
+      userId: true,
     },
   });
 
