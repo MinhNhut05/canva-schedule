@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-27T10:27:14.162Z"
+stopped_at: Phase 6 Plan 02 complete
+last_updated: "2026-03-27T17:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 18
-  completed_plans: 15
+  total_plans: 20
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 05 — history-admin-control
+**Current focus:** Phase 06 — operational-polish-reliability
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (operational-polish-reliability) — EXECUTING
+Plan: 2 of 2 — COMPLETE (all plans in Phase 06 done)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Plan: Not started
 | Phase 04 P03 | 55 min | 4 tasks | 14 files |
 | Phase 05 P01 | 20 min | 8 tasks | 20 files |
 | Phase 05 P02 | 25 min | 11 tasks | 19 files |
+| Phase 06 P01 | — | — | — |
+| Phase 06 P02 | 20 min | 5 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -116,6 +118,12 @@ Recent decisions affecting current work:
 - [Phase 05-02]: Template verification calls GET /designs/{id} before persisting admin templateId changes.
 - [Phase 05-02]: No create/delete for CanvaTemplate — fixed 4 slots (2 durations × 2 artifact types) are admin-editable only.
 
+- [Phase 06-02]: Use db push (not migrate dev) for CanvaToken.cooldownUntil addition — consistent with Phase 05-01 decision to avoid blocked reset prompts.
+- [Phase 06-02]: Global cooldown persisted in DB via canva_tokens.cooldownUntil so all users and server instances see the same rate-limit state.
+- [Phase 06-02]: AI extraction uses exponential backoff (2^(attempt-1) * 1000ms) with 30s AbortController timeout per attempt — AbortError is retryable.
+- [Phase 06-02]: Canva polling has 2-minute wall-clock deadline checked before each poll iteration, not after full POLL_DELAYS_MS exhaustion.
+- [Phase 06-02]: cooldownUntil state in ReviewPage driven by Date object (not minutes) for precision; 30s setInterval tick updates displayed minutes.
+
 ### Pending Todos
 
 None yet.
@@ -127,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T10:27:14.154Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-operational-polish-reliability/06-CONTEXT.md
+Last session: 2026-03-27T17:00:00.000Z
+Stopped at: Phase 6 Plan 02 complete — all Phase 06 plans done
+Resume file: .planning/phases/06-operational-polish-reliability/06-02-SUMMARY.md
