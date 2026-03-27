@@ -3,6 +3,7 @@ import "server-only";
 import { db } from "@/lib/db";
 
 import { CanvaRateLimitError } from "./client";
+import { setGlobalCooldown } from "./cooldown";
 import { getFreshDesignUrls, type DesignUrls } from "./designs";
 import {
   createDesignFromTemplate,
@@ -120,6 +121,9 @@ export async function generateArtifact(
           errorMessage: "RATE_LIMITED",
         },
       });
+
+      // Write global cooldown to DB (D-10)
+      await setGlobalCooldown(error.cooldownSeconds);
 
       return {
         artifactType: input.kind,

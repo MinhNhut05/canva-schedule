@@ -17,6 +17,7 @@ import {
   type ArtifactKind,
   type TourDuration,
 } from "@/lib/canva/template-resolver";
+import { getGlobalCooldown, getRemainingCooldownSeconds } from "@/lib/canva/cooldown";
 import {
   buildOneDayItineraryPayload,
   buildOneDayMenuPayload,
@@ -245,6 +246,19 @@ export async function generateCanva(uploadId: string): Promise<{
     };
   }
 
+  // Check global cooldown (D-10)
+  const cooldownUntil = await getGlobalCooldown();
+  if (cooldownUntil) {
+    const remaining = getRemainingCooldownSeconds(cooldownUntil);
+    return {
+      success: false,
+      results: [],
+      error: "Canva dang trong thoi gian cho. Vui long doi.",
+      isRateLimited: true,
+      cooldownSeconds: remaining,
+    };
+  }
+
   const pair = await resolveTemplatePair(upload.tourDuration);
   const itineraryPayload = buildArtifactPayload(
     upload.tourDuration,
@@ -342,6 +356,18 @@ export async function retryCanvaArtifact(
       artifactType: kind,
       status: "FAILED",
       errorMessage: "Loại tour không hợp lệ.",
+    };
+  }
+
+  // Check global cooldown (D-10)
+  const cooldownUntil = await getGlobalCooldown();
+  if (cooldownUntil) {
+    return {
+      artifactType: kind,
+      status: "FAILED",
+      errorMessage: "Canva dang trong thoi gian cho.",
+      isRateLimited: true,
+      cooldownSeconds: getRemainingCooldownSeconds(cooldownUntil),
     };
   }
 
