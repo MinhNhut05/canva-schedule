@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-25T17:20:04.169Z"
+status: in_progress
+stopped_at: Phase 5 Plan 05-01 complete
+last_updated: "2026-03-27T15:47:30.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 16
-  completed_plans: 13
+  total_plans: 18
+  completed_plans: 14
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 04 — editable-canva-generation
+**Current focus:** Phase 05 — history-admin-control
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (history-admin-control) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: Not started
 | Phase 04 P01 | 15 min | 3 tasks | 9 files |
 | Phase 04 P02 | 11 min | 3 tasks | 9 files |
 | Phase 04 P03 | 55 min | 4 tasks | 14 files |
+| Phase 05 P01 | 20 min | 8 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,11 @@ Recent decisions affecting current work:
 - [Phase 04]: Keep approval and Canva generation separate while hydrating persisted artifact results on revisit.
 - [Phase 04]: Allow Canva API and token URL overrides only through server env so Playwright can exercise the review generation flow against a local mock server.
 
+- [Phase 05-01]: Add User.role field to DB with default "member" and propagate through Auth.js JWT/session pipeline.
+- [Phase 05-01]: Use db push (not migrate dev) for schema changes when agent is running to avoid blocked reset prompts.
+- [Phase 05-01]: Relax review page upload lookup to team-wide (no userId filter) for read; keep owner-only for mutations.
+- [Phase 05-01]: Create CanvaTemplate model with @@unique([tourDuration, artifactType]) for DB-backed template registry.
+
 ### Pending Todos
 
 None yet.
@@ -115,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T17:20:04.166Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-history-admin-control/05-CONTEXT.md
+Last session: 2026-03-27T15:47:30.000Z
+Stopped at: Phase 5 Plan 05-01 complete — ready for 05-02
+Resume file: .planning/phases/05-history-admin-control/05-02-PLAN.md
