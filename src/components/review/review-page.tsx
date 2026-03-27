@@ -98,6 +98,7 @@ interface ReviewPageProps {
   draft: StructuredDraft | null;
   canvaArtifacts?: InitialCanvaArtifact[];
   templatePair?: TemplatePairSummary | null;
+  initialCooldownUntil?: string | null;
 }
 
 function isArtifactKind(value: string): value is ReviewArtifactKind {
@@ -159,6 +160,7 @@ export function ReviewPage({
   draft,
   canvaArtifacts,
   templatePair,
+  initialCooldownUntil,
 }: ReviewPageProps) {
   const router = useRouter();
   const [isApproved, setIsApproved] = useState(upload.reviewStatus === "APPROVED");
@@ -166,8 +168,22 @@ export function ReviewPage({
   const [isReExtracting, setIsReExtracting] = useState(false);
   const [hasUserEdits, setHasUserEdits] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isRateLimited, setIsRateLimited] = useState(false);
-  const [cooldownMinutes, setCooldownMinutes] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<Date | null>(() => {
+    if (!initialCooldownUntil) return null;
+    const date = new Date(initialCooldownUntil);
+    return date.getTime() > Date.now() ? date : null;
+  });
+  const [isRateLimited, setIsRateLimited] = useState(() => {
+    if (!initialCooldownUntil) return false;
+    return new Date(initialCooldownUntil).getTime() > Date.now();
+  });
+  const [cooldownMinutes, setCooldownMinutes] = useState(() => {
+    if (!initialCooldownUntil) return 0;
+    const date = new Date(initialCooldownUntil);
+    return date.getTime() > Date.now()
+      ? Math.max(1, Math.ceil((date.getTime() - Date.now()) / 60000))
+      : 0;
+  });
   const [artifacts, setArtifacts] = useState<ReviewArtifact[]>(() =>
     normalizeArtifacts(canvaArtifacts),
   );
@@ -182,23 +198,27 @@ export function ReviewPage({
   }, [upload.reviewStatus]);
 
   useEffect(() => {
-    if (!isRateLimited || cooldownMinutes <= 0) {
+    if (!cooldownUntil) {
+      setIsRateLimited(false);
+      setCooldownMinutes(0);
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      setCooldownMinutes((current) => {
-        if (current <= 1) {
-          setIsRateLimited(false);
-          return 0;
-        }
+    function tick() {
+      const remaining = cooldownUntil!.getTime() - Date.now();
+      if (remaining <= 0) {
+        setIsRateLimited(false);
+        setCooldownUntil(null);
+        setCooldownMinutes(0);
+        return;
+      }
+      setCooldownMinutes(Math.max(1, Math.ceil(remaining / 60000)));
+    }
 
-        return current - 1;
-      });
-    }, 60_000);
-
-    return () => window.clearTimeout(timer);
-  }, [cooldownMinutes, isRateLimited]);
+    tick();
+    const interval = setInterval(tick, 30_000);
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
 
   const hasCompletedAttempt = useMemo(
     () => artifacts.some((artifact) => artifact.status === "SUCCEEDED" || artifact.status === "FAILED"),
@@ -230,9 +250,11 @@ export function ReviewPage({
   }, []);
 
   const applyCooldown = useCallback((cooldownSeconds?: number) => {
-    const minutes = Math.max(1, Math.ceil((cooldownSeconds ?? 60) / 60));
+    const seconds = cooldownSeconds ?? 60;
+    const until = new Date(Date.now() + seconds * 1000);
+    setCooldownUntil(until);
     setIsRateLimited(true);
-    setCooldownMinutes(minutes);
+    setCooldownMinutes(Math.max(1, Math.ceil(seconds / 60)));
   }, []);
 
   const handleApprove = useCallback(async () => {

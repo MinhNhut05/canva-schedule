@@ -9,6 +9,7 @@ import {
   resolveTemplatePair,
   type TourDuration,
 } from "@/lib/canva/template-resolver";
+import { getGlobalCooldown } from "@/lib/canva/cooldown";
 
 interface ReviewPageRouteProps {
   params: Promise<{ id: string }>;
@@ -48,6 +49,7 @@ export default async function ReviewPageRoute({
   const templatePair = upload.tourDuration
     ? await resolveTemplatePair(upload.tourDuration as TourDuration)
     : null;
+  const cooldownUntil = await getGlobalCooldown();
 
   return (
     <ReviewPage
@@ -63,6 +65,7 @@ export default async function ReviewPageRoute({
       draft={draft}
       canvaArtifacts={canvaArtifacts}
       templatePair={templatePair}
+      initialCooldownUntil={cooldownUntil?.toISOString() ?? null}
     />
   );
 }
