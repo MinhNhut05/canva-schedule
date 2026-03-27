@@ -131,7 +131,7 @@ Plans:
 **Notes/Risks**: This phase hardens the workflow after core value is proven. It does not expand scope into bulk upload, mobile, or in-app Canva editing.
 
 Plans:
-- [ ] 06-01: Add end-to-end step feedback and clearer recovery-oriented error UX.
+- [x] 06-01: Add end-to-end step feedback and clearer recovery-oriented error UX.
 - [x] 06-02: Harden the pipeline for routine volume, backoff, and external API limits.
 
 ## Progress
@@ -146,7 +146,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Structured AI Extraction, Rules & Human Review | 3/3 | Complete   | 2026-03-25 |
 | 4. Editable Canva Generation | 3/3 | Complete | 2026-03-25 |
 | 5. History & Admin Control | 2/2 | Complete | 2026-03-27 |
-| 6. Operational Polish & Reliability | 1/2 | In progress | - |
+| 6. Operational Polish & Reliability | 2/2 | Complete | 2026-03-27 |
 
 ## Recommended Next Command
 

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 6 Plan 02 complete
-last_updated: "2026-03-27T17:00:00.000Z"
+stopped_at: Phase 6 Plan 01 complete — all Phase 06 plans done
+last_updated: "2026-03-27T23:55:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 20
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 
 ## Current Position
 
-Phase: 06 (operational-polish-reliability) — EXECUTING
-Plan: 2 of 2 — COMPLETE (all plans in Phase 06 done)
+Phase: 06 (operational-polish-reliability) — COMPLETE
+Plan: 1 of 2 — COMPLETE (all plans in Phase 06 done)
 
 ## Performance Metrics
 
@@ -61,7 +61,7 @@ Plan: 2 of 2 — COMPLETE (all plans in Phase 06 done)
 | Phase 04 P03 | 55 min | 4 tasks | 14 files |
 | Phase 05 P01 | 20 min | 8 tasks | 20 files |
 | Phase 05 P02 | 25 min | 11 tasks | 19 files |
-| Phase 06 P01 | — | — | — |
+| Phase 06 P01 | 35 min | 7 tasks | 9 files |
 | Phase 06 P02 | 20 min | 5 tasks | 8 files |
 
 ## Accumulated Context
@@ -124,6 +124,10 @@ Recent decisions affecting current work:
 - [Phase 06-02]: Canva polling has 2-minute wall-clock deadline checked before each poll iteration, not after full POLL_DELAYS_MS exhaustion.
 - [Phase 06-02]: cooldownUntil state in ReviewPage driven by Date object (not minutes) for precision; 30s setInterval tick updates displayed minutes.
 
+- [Phase 06-01]: Alert component extended with variant prop (default | destructive) instead of adding cva — keeps component lightweight.
+- [Phase 06-01]: computedStep useMemo hoisted above early returns in ReviewPage so all 3 return branches share the same step/error state.
+- [Phase 06-01]: isRateLimited kept as optional prop in CanvaGenerationPanel for backward compatibility while rate-limit display ownership moves to CooldownBanner in ReviewPage.
+
 ### Pending Todos
 
 None yet.
@@ -135,6 +139,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:00:00.000Z
-Stopped at: Phase 6 Plan 02 complete — all Phase 06 plans done
-Resume file: .planning/phases/06-operational-polish-reliability/06-02-SUMMARY.md
+Last session: 2026-03-27T23:55:00.000Z
+Stopped at: Phase 6 Plan 01 complete — all Phase 06 plans done
+Resume file: .planning/phases/06-operational-polish-reliability/06-01-SUMMARY.md
