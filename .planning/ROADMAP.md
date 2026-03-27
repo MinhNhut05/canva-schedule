@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [x] 05-01: Persist generation history and expose per-user job retrieval.
-- [ ] 05-02: Add admin management for template mappings and maintainable company rules.
+- [x] 05-02: Add admin management for template mappings and maintainable company rules.
 
 ### Phase 6: Operational Polish & Reliability
 **Goal**: The internal weekly workflow is understandable, failure-tolerant, and stable enough for routine v1 use.
@@ -145,7 +145,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Document Intake & Parsing | 7/7 | Complete | 2026-03-24 |
 | 3. Structured AI Extraction, Rules & Human Review | 3/3 | Complete   | 2026-03-25 |
 | 4. Editable Canva Generation | 3/3 | Complete | 2026-03-25 |
-| 5. History & Admin Control | 1/2 | In progress | - |
+| 5. History & Admin Control | 2/2 | Complete | 2026-03-27 |
 | 6. Operational Polish & Reliability | 0/2 | Not started | - |
 
 ## Recommended Next Command

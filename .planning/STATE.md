@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 5 Plan 05-01 complete
-last_updated: "2026-03-27T15:47:30.000Z"
+stopped_at: Phase 5 Plan 05-02 complete — Phase 5 fully done
+last_updated: "2026-03-27T16:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2025-03-22)
 ## Current Position
 
 Phase: 05 (history-admin-control) — EXECUTING
-Plan: 2 of 2
+Plan: 2 of 2 — COMPLETE
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Plan: 2 of 2
 | Phase 04 P02 | 11 min | 3 tasks | 9 files |
 | Phase 04 P03 | 55 min | 4 tasks | 14 files |
 | Phase 05 P01 | 20 min | 8 tasks | 20 files |
+| Phase 05 P02 | 25 min | 11 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,11 @@ Recent decisions affecting current work:
 - [Phase 05-01]: Relax review page upload lookup to team-wide (no userId filter) for read; keep owner-only for mutations.
 - [Phase 05-01]: Create CanvaTemplate model with @@unique([tourDuration, artifactType]) for DB-backed template registry.
 
+- [Phase 05-02]: Migrate template resolver to DB — resolveTemplateId is now async, reads from db.canvaTemplate; CANVA_TEMPLATE_* env vars removed from runtime validation.
+- [Phase 05-02]: Admin actions use assertAdmin() pattern — every server action checks session.user.role === "admin".
+- [Phase 05-02]: Template verification calls GET /designs/{id} before persisting admin templateId changes.
+- [Phase 05-02]: No create/delete for CanvaTemplate — fixed 4 slots (2 durations × 2 artifact types) are admin-editable only.
+
 ### Pending Todos
 
 None yet.
@@ -121,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T15:47:30.000Z
-Stopped at: Phase 5 Plan 05-01 complete — ready for 05-02
-Resume file: .planning/phases/05-history-admin-control/05-02-PLAN.md
+Last session: 2026-03-27T16:30:00.000Z
+Stopped at: Phase 5 Plan 05-02 complete — Phase 5 fully done. Ready for Phase 6.
+Resume file: .planning/ROADMAP.md (check next phase)
