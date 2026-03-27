@@ -51,18 +51,17 @@ const COMPANY_RULES_SEED = [
   },
 ] as const;
 
+export const SEEDED_RULE_IDS = new Set(
+  COMPANY_RULES_SEED.map((r) => r.ruleId)
+);
+
 export async function seedCompanyRules(prisma: PrismaClient) {
   console.log("Seeding company rules...");
 
   for (const rule of COMPANY_RULES_SEED) {
     await prisma.companyRule.upsert({
       where: { ruleId: rule.ruleId },
-      update: {
-        name: rule.name,
-        description: rule.description,
-        category: rule.category,
-        isActive: true,
-      },
+      update: {},
       create: {
         ruleId: rule.ruleId,
         name: rule.name,
