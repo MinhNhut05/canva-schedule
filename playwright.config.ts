@@ -28,10 +28,6 @@ export default defineConfig({
       `CANVA_CLIENT_SECRET=test-client-secret ` +
       `CANVA_ACCESS_TOKEN=test-access-token ` +
       `CANVA_REFRESH_TOKEN=test-refresh-token ` +
-      `CANVA_TEMPLATE_1DAY_ITINERARY=tpl-1day-itinerary ` +
-      `CANVA_TEMPLATE_1DAY_MENU=tpl-1day-menu ` +
-      `CANVA_TEMPLATE_2DAY_ITINERARY=tpl-2day-itinerary ` +
-      `CANVA_TEMPLATE_2DAY_MENU=tpl-2day-menu ` +
       `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
