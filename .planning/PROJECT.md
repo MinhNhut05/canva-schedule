@@ -22,6 +22,9 @@ Team members can transform a detailed tour program into a professional, condense
 - [x] Return editable Canva links after generation — Validated in Phase 4 (CANVA-03, CANVA-04, UX-03)
 - [x] Team history of past generation jobs with status and Canva links — Validated in Phase 5 (HIST-01, HIST-02)
 - [x] Admin management for Canva template mappings and company rules — Validated in Phase 5 (ADMIN-01, ADMIN-02)
+- [x] Step-by-step workflow feedback with visual stepper — Validated in Phase 6 (UX-01)
+- [x] Persistent error UX with recovery actions at all failure points — Validated in Phase 6 (UX-02)
+- [x] Pipeline reliability: exponential backoff, timeouts, global Canva cooldown — Validated in Phase 6 (SAFE-04)
 
 ### Active
 
@@ -92,6 +95,8 @@ Team members can transform a detailed tour program into a professional, condense
 | Start with 1-day and 2-day tours only | Most common tour types; 3-4 day support added later | — Pending |
 
 | Use DB-backed template resolver + admin UI | Templates and rules editable from app without code changes | ✓ Phase 5 — admin CRUD, role-based access |
+| Replace toast.error with persistent inline Alerts | Toasts dismiss too quickly; persistent Alerts with recovery CTAs improve error recovery | ✓ Phase 6 — all failure points use Alert |
+| DB-persisted global Canva cooldown | All users must see same rate-limit state; DB ensures SSR-hydrated cooldown | ✓ Phase 6 — cooldownUntil on CanvaToken |
 
 ## Evolution
 
@@ -111,4 +116,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 5 completion*
+*Last updated: 2026-03-27 after Phase 6 completion*
