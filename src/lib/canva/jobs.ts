@@ -23,6 +23,7 @@ export type CreateDesignResult = DirectDesignResult | AutofillJobHandle;
 export type AutofillJobResult = GenerationJobResult;
 
 const POLL_DELAYS_MS = [2000, 3000, 5000, 5000, 5000, 5000] as const;
+const POLL_TIMEOUT_MS = 120_000; // 2 minutes (D-15)
 
 export async function createAutofillJob(
   templateId: string,
@@ -118,8 +119,14 @@ function sleep(delayMs: number): Promise<void> {
 }
 
 export async function pollAutofillJob(jobId: string): Promise<AutofillJobResult> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+
   for (const delayMs of POLL_DELAYS_MS) {
     await sleep(delayMs);
+
+    if (Date.now() > deadline) {
+      throw new Error("Canva tao thiet ke qua lau (vuot 2 phut). Vui long thu lai.");
+    }
 
     const response = await canvaFetch(`/autofills/${jobId}`);
     if (!response.ok) {
@@ -147,4 +154,4 @@ export async function pollAutofillJob(jobId: string): Promise<AutofillJobResult>
   throw new Error("Canva generation timed out after polling");
 }
 
-export { POLL_DELAYS_MS };
+export { POLL_DELAYS_MS, POLL_TIMEOUT_MS };
