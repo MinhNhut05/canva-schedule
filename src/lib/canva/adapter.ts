@@ -72,7 +72,7 @@ async function persistSuccess(
 export async function generateArtifact(
   input: GenerateArtifactInput
 ): Promise<ArtifactResult> {
-  const templateId = resolveTemplateId(input.duration, input.kind);
+  const templateId = await resolveTemplateId(input.duration, input.kind);
 
   await db.canvaArtifact.upsert({
     where: artifactWhere(input),

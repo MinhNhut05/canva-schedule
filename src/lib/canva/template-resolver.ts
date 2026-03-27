@@ -1,5 +1,6 @@
 import "server-only";
-import { getCanvaConfig } from "./server-client";
+
+import { db } from "@/lib/db";
 
 export type TourDuration = "ONE_DAY" | "TWO_DAY";
 export type ArtifactKind = "ITINERARY" | "MENU";
@@ -9,7 +10,7 @@ export interface TemplatePair {
   duration: TourDuration;
   itineraryTemplateId: string;
   menuTemplateId: string;
-  displayLabel: string; // e.g. "Tour 1 ngày" or "Tour 2 ngày"
+  displayLabel: string;
 }
 
 const DURATION_LABELS: Record<TourDuration, string> = {
@@ -17,22 +18,36 @@ const DURATION_LABELS: Record<TourDuration, string> = {
   TWO_DAY: "Tour 2 ngày",
 };
 
-export function resolveTemplateId(
+export async function resolveTemplateId(
   duration: TourDuration,
-  kind: ArtifactKind
-): string {
-  const config = getCanvaConfig();
-  const key: TemplateKey = `${duration}_${kind}`;
-  const templateId = config.templates[key];
-  if (!templateId) throw new Error(`Missing template config for ${key}`);
-  return templateId;
+  kind: ArtifactKind,
+): Promise<string> {
+  const template = await db.canvaTemplate.findUnique({
+    where: {
+      tourDuration_artifactType: {
+        tourDuration: duration,
+        artifactType: kind,
+      },
+    },
+  });
+
+  if (!template || !template.isActive) {
+    throw new Error(
+      `Missing active Canva template for ${duration}_${kind}. ` +
+      `Run prisma db seed or configure via admin panel.`
+    );
+  }
+
+  return template.templateId;
 }
 
-export function resolveTemplatePair(duration: TourDuration): TemplatePair {
+export async function resolveTemplatePair(
+  duration: TourDuration,
+): Promise<TemplatePair> {
   return {
     duration,
-    itineraryTemplateId: resolveTemplateId(duration, "ITINERARY"),
-    menuTemplateId: resolveTemplateId(duration, "MENU"),
+    itineraryTemplateId: await resolveTemplateId(duration, "ITINERARY"),
+    menuTemplateId: await resolveTemplateId(duration, "MENU"),
     displayLabel: DURATION_LABELS[duration],
   };
 }
