@@ -25,6 +25,8 @@ created: 2026-03-27
 
 **Source:** `components.json` + `npx shadcn info` + `src/app/globals.css`
 
+**Primary focal point:** WorkflowStepper — active step circle (`bg-primary`) draws the eye first, anchored at top of every workflow page.
+
 ---
 
 ## Spacing Scale
@@ -54,23 +56,25 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px (text-sm) | 400 (regular) | 1.5 |
-| Label | 14px (text-sm) | 500 (medium) | 1.25 |
+| Label | 14px (text-sm) | 600 (semibold) | 1.25 |
 | Heading | 18px (text-lg) | 600 (semibold) | 1.25 |
-| Display | 24px (text-2xl) | 700 (bold) | 1.2 |
+| Display | 24px (text-2xl) | 600 (semibold) | 1.2 |
+
+> **Weight constraint:** Exactly 2 weights used — `400 (regular)` for body/description text, `600 (semibold)` for all labels, headings, display, and UI controls.
 
 **Phase 6 component-specific typography:**
 
 | Component | Element | Size | Weight | Line Height |
 |-----------|---------|------|--------|-------------|
-| WorkflowStepper | Step label (desktop) | 12px (text-xs) | 500 (medium) | 1.25 |
+| WorkflowStepper | Step label (desktop) | 12px (text-xs) | 600 (semibold) | 1.25 |
 | WorkflowStepper | Step label (mobile) | hidden | — | — |
 | WorkflowStepper | Step number / icon | 14px (text-sm) | 600 (semibold) | 1 |
 | Alert (error) | AlertTitle | 14px (text-sm) | 600 (semibold) | 1.25 |
 | Alert (error) | AlertDescription | 14px (text-sm) | 400 (regular) | 1.5 |
-| CooldownBanner | Banner text | 14px (text-sm) | 500 (medium) | 1.5 |
+| CooldownBanner | Banner text | 14px (text-sm) | 400 (regular) | 1.5 |
 | CompletionBanner | Heading | 18px (text-lg) | 600 (semibold) | 1.25 |
 | CompletionBanner | Body text | 14px (text-sm) | 400 (regular) | 1.5 |
-| CompletionBanner | CTA button label | 14px (text-sm) | 500 (medium) | 1 |
+| CompletionBanner | CTA button label | 14px (text-sm) | 600 (semibold) | 1 |
 
 **Source:** globals.css (`font-family: Inter`), shadcn new-york defaults, CONTEXT.md D-05/D-20
 
@@ -224,9 +228,9 @@ alert-dialog, alert, badge, button, card, input, separator, sheet, switch, table
 
 | State | Circle Style | Icon | Text Style | Clickable |
 |-------|-------------|------|-----------|-----------|
-| Completed | `bg-primary/20 text-primary` | `Check` (lucide) | `text-primary font-medium` | Yes — step 1 → `/upload`, steps 2–3 on review page → no navigate (same page) |
+| Completed | `bg-primary/20 text-primary` | `Check` (lucide) | `text-primary font-semibold` | Yes — step 1 → `/upload`, steps 2–3 on review page → no navigate (same page) |
 | Active | `bg-primary text-primary-foreground` | step number | `text-foreground font-semibold` | No |
-| Error | `bg-destructive/20 text-destructive` | `AlertTriangle` (lucide) | `text-destructive font-medium` | No — shows Tooltip on hover |
+| Error | `bg-destructive/20 text-destructive` | `AlertTriangle` (lucide) | `text-destructive font-semibold` | No — shows Tooltip on hover |
 | Future | `bg-muted text-muted-foreground` | step number | `text-muted-foreground` | No |
 
 **Connector lines:**
@@ -236,6 +240,7 @@ alert-dialog, alert, badge, button, card, input, separator, sheet, switch, table
 **Responsive:**
 - Desktop (`md:` and above): Step circle + text label below each step
 - Mobile (below `md:`): Step circle + number/icon only, `hidden md:block` on labels
+- **Accessibility (mobile):** Clickable step circles MUST have `aria-label={stepLabel}` (e.g., `aria-label="Tải lên"`) for screen reader accessibility when labels are visually hidden.
 
 **Placement:** Inside `UploadForm` component (step 1 active) and `ReviewPage` component (step 2–5 based on upload status). NOT in shared `(app)/layout.tsx`.
 
