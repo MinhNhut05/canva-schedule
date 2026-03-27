@@ -20,6 +20,8 @@ Team members can transform a detailed tour program into a professional, condense
 - [x] Automatic filling of Canva templates via Canva Connect API — Validated in Phase 4 (CANVA-01 through CANVA-06)
 - [x] Separate Canva templates for Itinerary and Menu (2 templates per tour) — Validated in Phase 4 (CANVA-02)
 - [x] Return editable Canva links after generation — Validated in Phase 4 (CANVA-03, CANVA-04, UX-03)
+- [x] Team history of past generation jobs with status and Canva links — Validated in Phase 5 (HIST-01, HIST-02)
+- [x] Admin management for Canva template mappings and company rules — Validated in Phase 5 (ADMIN-01, ADMIN-02)
 
 ### Active
 
@@ -89,6 +91,8 @@ Team members can transform a detailed tour program into a professional, condense
 | 2 separate Canva templates per tour (Itinerary + Menu) | Matches existing workflow and template structure | ✓ Phase 4 — parallel generation via adapter |
 | Start with 1-day and 2-day tours only | Most common tour types; 3-4 day support added later | — Pending |
 
+| Use DB-backed template resolver + admin UI | Templates and rules editable from app without code changes | ✓ Phase 5 — admin CRUD, role-based access |
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
@@ -107,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after Phase 4 completion*
+*Last updated: 2026-03-27 after Phase 5 completion*
