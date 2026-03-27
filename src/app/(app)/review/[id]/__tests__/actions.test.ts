@@ -23,7 +23,7 @@ const {
   generateArtifact: vi.fn(),
   getArtifactsForUpload: vi.fn(),
   resolveArtifactUrls: vi.fn(),
-  resolveTemplatePair: vi.fn((duration: "ONE_DAY" | "TWO_DAY") => ({
+  resolveTemplatePair: vi.fn(async (duration: "ONE_DAY" | "TWO_DAY") => ({
     duration,
     itineraryTemplateId: `${duration}-itinerary-template`,
     menuTemplateId: `${duration}-menu-template`,

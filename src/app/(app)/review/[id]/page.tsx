@@ -46,7 +46,7 @@ export default async function ReviewPageRoute({
   const draft = await getDraft(id);
   const canvaArtifacts = await loadCanvaArtifacts(upload.id);
   const templatePair = upload.tourDuration
-    ? resolveTemplatePair(upload.tourDuration as TourDuration)
+    ? await resolveTemplatePair(upload.tourDuration as TourDuration)
     : null;
 
   return (

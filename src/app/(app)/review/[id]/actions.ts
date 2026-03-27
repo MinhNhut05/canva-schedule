@@ -245,7 +245,7 @@ export async function generateCanva(uploadId: string): Promise<{
     };
   }
 
-  const pair = resolveTemplatePair(upload.tourDuration);
+  const pair = await resolveTemplatePair(upload.tourDuration);
   const itineraryPayload = buildArtifactPayload(
     upload.tourDuration,
     "ITINERARY",
@@ -345,7 +345,7 @@ export async function retryCanvaArtifact(
     };
   }
 
-  const pair = resolveTemplatePair(upload.tourDuration);
+  const pair = await resolveTemplatePair(upload.tourDuration);
   const payload = buildArtifactPayload(upload.tourDuration, kind, draft);
 
   const result = await generateArtifact({
