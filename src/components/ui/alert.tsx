@@ -2,13 +2,27 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Alert = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+type AlertVariant = "default" | "destructive";
+
+interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: AlertVariant;
+}
+
+const variantClasses: Record<AlertVariant, string> = {
+  default:
+    "border-border bg-card text-card-foreground",
+  destructive:
+    "border-destructive/50 bg-destructive/5 text-destructive",
+};
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+  ({ className, variant = "default", ...props }, ref) => (
     <div
       ref={ref}
       role="alert"
       className={cn(
-        "relative w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-card-foreground",
+        "relative w-full rounded-lg border px-4 py-3 text-sm",
+        variantClasses[variant],
         className,
       )}
       {...props}

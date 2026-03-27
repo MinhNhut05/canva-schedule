@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 import { ExtractionResult } from "./extraction-result";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { WorkflowStepper } from "@/components/workflow-stepper";
 import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES, type UploadApiResponse } from "@/lib/documents/types";
+import { ERROR_MESSAGES } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 function FileUploadIcon() {
@@ -202,7 +206,7 @@ export function UploadForm() {
       if (!response.ok || !payload.success || !payload.data) {
         const message = payload.error || GENERIC_ERROR;
         setError(message);
-        toast.error(message);
+        // Removed toast.error — error now shown as persistent Alert below
         return;
       }
 
@@ -211,7 +215,7 @@ export function UploadForm() {
       router.push(`/review/${payload.data.uploadId}`);
     } catch {
       setError(GENERIC_ERROR);
-      toast.error(GENERIC_ERROR);
+      // Removed toast.error — error now shown as persistent Alert below
     } finally {
       setIsProcessing(false);
     }
@@ -219,6 +223,7 @@ export function UploadForm() {
 
   return (
     <div className="space-y-6">
+      <WorkflowStepper activeStep={1} activeLoading={isProcessing} />
       <Card className="border-border bg-white shadow-sm">
         <CardHeader className="space-y-2">
           <CardTitle>Tải tài liệu</CardTitle>
@@ -269,7 +274,13 @@ export function UploadForm() {
             />
           </div>
 
-          {error ? <p className="text-sm font-medium text-destructive">{error}</p> : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="size-4" />
+              <AlertTitle>{ERROR_MESSAGES.uploadParsing.title}</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
 
           {selectedFile ? (
             <Card className="border-border bg-slate-50/70 shadow-none">
