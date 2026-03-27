@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 
 import {
   approveDraft,
@@ -14,9 +15,13 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { StructuredDraft } from "@/lib/ai/extraction-schema";
+import { ERROR_MESSAGES } from "@/lib/messages";
+import { WorkflowStepper } from "@/components/workflow-stepper";
 
 import { CanvaGenerationPanel } from "./canva-generation-panel";
 import { CanvaResultCard } from "./canva-result-card";
+import { CooldownBanner } from "./cooldown-banner";
+import { CompletionBanner } from "./completion-banner";
 import { ItineraryEditor } from "./itinerary-editor";
 import { MenuEditor } from "./menu-editor";
 import { ReviewActions } from "./review-actions";
@@ -188,6 +193,7 @@ export function ReviewPage({
     normalizeArtifacts(canvaArtifacts),
   );
   const [pendingRetryKinds, setPendingRetryKinds] = useState<ReviewArtifactKind[]>([]);
+  const [canvaError, setCanvaError] = useState<string | null>(null);
 
   useEffect(() => {
     setArtifacts(normalizeArtifacts(canvaArtifacts));
@@ -219,6 +225,35 @@ export function ReviewPage({
     const interval = setInterval(tick, 30_000);
     return () => clearInterval(interval);
   }, [cooldownUntil]);
+
+  // Step computation from UI-SPEC step-to-status mapping
+  const computedStep = useMemo(() => {
+    const allSucceeded =
+      artifacts.length >= 2 && artifacts.every((a) => a.status === "SUCCEEDED");
+    const anyFailed = artifacts.some((a) => a.status === "FAILED");
+
+    if (allSucceeded) return { activeStep: 5, errorStep: null };
+    if (isApproved && anyFailed) return { activeStep: 4, errorStep: 4 };
+    if (isApproved && isGenerating) return { activeStep: 4, errorStep: null };
+    if (isApproved && artifacts.length > 0) return { activeStep: 4, errorStep: null };
+    if (isApproved) return { activeStep: 4, errorStep: null };
+    if (upload.aiStatus === "FAILED") return { activeStep: 2, errorStep: 2 };
+    if (upload.aiStatus === "PROCESSING" || isReExtracting)
+      return { activeStep: 2, errorStep: null };
+    if (upload.aiStatus === "READY_FOR_REVIEW") return { activeStep: 3, errorStep: null };
+    return { activeStep: 2, errorStep: null };
+  }, [artifacts, isApproved, isGenerating, isReExtracting, upload.aiStatus]);
+
+  // Completion detection
+  const completionVariant = useMemo(() => {
+    if (artifacts.length < 2) return null;
+    const allSucceeded = artifacts.every((a) => a.status === "SUCCEEDED");
+    const someSucceeded = artifacts.some((a) => a.status === "SUCCEEDED");
+    const someFailed = artifacts.some((a) => a.status === "FAILED");
+    if (allSucceeded) return "full" as const;
+    if (someSucceeded && someFailed) return "partial" as const;
+    return null;
+  }, [artifacts]);
 
   const hasCompletedAttempt = useMemo(
     () => artifacts.some((artifact) => artifact.status === "SUCCEEDED" || artifact.status === "FAILED"),
@@ -281,6 +316,7 @@ export function ReviewPage({
     }
 
     setIsGenerating(true);
+    setCanvaError(null);
 
     try {
       const result = await generateCanva(upload.id);
@@ -299,16 +335,17 @@ export function ReviewPage({
       }
 
       if (result.success) {
+        setCanvaError(null);
         toast.success("Đã tạo liên kết Canva.");
       } else if (result.error) {
-        toast.error(result.error);
+        setCanvaError(result.error);
       } else if (result.results.length > 0) {
-        toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+        setCanvaError(ERROR_MESSAGES.canvaGeneration.description);
       }
 
       router.refresh();
     } catch {
-      toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+      setCanvaError(ERROR_MESSAGES.canvaGeneration.description);
     } finally {
       setIsGenerating(false);
     }
@@ -321,6 +358,7 @@ export function ReviewPage({
       }
 
       setPendingRetryKinds((current) => [...current, kind]);
+      setCanvaError(null);
 
       try {
         const result = await retryCanvaArtifact(upload.id, kind);
@@ -335,14 +373,15 @@ export function ReviewPage({
         }
 
         if (result.status === "SUCCEEDED") {
+          setCanvaError(null);
           toast.success(`Đã tạo lại ${kind === "ITINERARY" ? "Lịch trình" : "Thực đơn"}.`);
         } else {
-          toast.error(result.errorMessage || "Không thể tạo Canva lúc này. Hãy thử lại.");
+          setCanvaError(result.errorMessage || ERROR_MESSAGES.canvaGeneration.description);
         }
 
         router.refresh();
       } catch {
-        toast.error("Không thể tạo Canva lúc này. Hãy thử lại.");
+        setCanvaError(ERROR_MESSAGES.canvaGeneration.description);
       } finally {
         setPendingRetryKinds((current) => current.filter((value) => value !== kind));
       }
@@ -371,6 +410,11 @@ export function ReviewPage({
   if (!draft && upload.aiStatus !== "FAILED") {
     return (
       <section className="space-y-6">
+        <WorkflowStepper
+          activeStep={computedStep.activeStep}
+          errorStep={computedStep.errorStep}
+          activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting}
+        />
         <ReviewHeader
           fileName={upload.originalFileName}
           tourDuration={upload.tourDuration}
@@ -407,6 +451,11 @@ export function ReviewPage({
   if (upload.aiStatus === "FAILED") {
     return (
       <section className="space-y-6">
+        <WorkflowStepper
+          activeStep={computedStep.activeStep}
+          errorStep={computedStep.errorStep}
+          activeLoading={isReExtracting}
+        />
         <ReviewHeader
           fileName={upload.originalFileName}
           tourDuration={upload.tourDuration}
@@ -450,6 +499,18 @@ export function ReviewPage({
 
   return (
     <section className="space-y-6 pb-24">
+      {/* Global cooldown banner — above everything */}
+      {isRateLimited && cooldownMinutes > 0 ? (
+        <CooldownBanner cooldownMinutes={cooldownMinutes} />
+      ) : null}
+
+      {/* Workflow stepper */}
+      <WorkflowStepper
+        activeStep={computedStep.activeStep}
+        errorStep={computedStep.errorStep}
+        activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting || isGenerating}
+      />
+
       <ReviewHeader
         fileName={upload.originalFileName}
         tourDuration={upload.tourDuration}
@@ -479,14 +540,20 @@ export function ReviewPage({
 
       {isApproved ? (
         <div className="space-y-6">
-          <Alert className="border-emerald-300 bg-emerald-50">
-            <AlertTitle className="text-emerald-800">Nội dung đã được duyệt</AlertTitle>
-            <AlertDescription className="text-emerald-700">
-              Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.
-            </AlertDescription>
-          </Alert>
+          {/* Completion banner — replaces approved alert when generation is done */}
+          {completionVariant ? (
+            <CompletionBanner variant={completionVariant} />
+          ) : (
+            <Alert className="border-emerald-300 bg-emerald-50">
+              <AlertTitle className="text-emerald-800">Nội dung đã được duyệt</AlertTitle>
+              <AlertDescription className="text-emerald-700">
+                Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.
+              </AlertDescription>
+            </Alert>
+          )}
 
-          {templatePair && isReviewDuration(upload.tourDuration) ? (
+          {/* Template confirmation — only if not completed */}
+          {!completionVariant && templatePair && isReviewDuration(upload.tourDuration) ? (
             <TemplateConfirmation
               duration={upload.tourDuration}
               templatePair={templatePair as never}
@@ -495,11 +562,16 @@ export function ReviewPage({
             />
           ) : null}
 
-          <CanvaGenerationPanel
-            isGenerating={isGenerating}
-            isRateLimited={isRateLimited}
-            cooldownMinutes={cooldownMinutes}
-          />
+          <CanvaGenerationPanel isGenerating={isGenerating} isRateLimited={isRateLimited} />
+
+          {/* Canva error alert — persistent, replaces toast.error */}
+          {canvaError && !isGenerating ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="size-4" />
+              <AlertTitle>{ERROR_MESSAGES.canvaGeneration.title}</AlertTitle>
+              <AlertDescription>{canvaError}</AlertDescription>
+            </Alert>
+          ) : null}
 
           {hasPersistedResults ? (
             <div className="space-y-6">
