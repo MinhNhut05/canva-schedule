@@ -69,14 +69,15 @@ model Upload {
 }
 
 model CanvaToken {
-  id           String   @id @default(cuid())
-  accessToken  String   @db.Text
-  refreshToken String   @db.Text
-  expiresAt    DateTime
-  scope        String?
-  tokenType    String   @default("Bearer")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(cuid())
+  accessToken   String    @db.Text
+  refreshToken  String    @db.Text
+  expiresAt     DateTime
+  cooldownUntil DateTime?
+  scope         String?
+  tokenType     String    @default("Bearer")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@map("canva_tokens")
 }
