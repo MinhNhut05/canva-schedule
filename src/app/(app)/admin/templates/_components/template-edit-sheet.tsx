@@ -20,7 +20,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { updateTemplate, getFieldsForTemplate } from "../actions";
+import { updateTemplate } from "../actions";
+import { getFieldsForTemplate } from "@/lib/canva/field-map";
 
 interface TemplateWithLabels {
   id: string;

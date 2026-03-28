@@ -4,12 +4,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { verifyCanvaTemplate } from "@/lib/canva/verify-template";
-import {
-  ONE_DAY_ITINERARY_FIELDS,
-  ONE_DAY_MENU_FIELDS,
-  TWO_DAY_ITINERARY_FIELDS,
-  TWO_DAY_MENU_FIELDS,
-} from "@/lib/canva/field-map";
 
 function assertAdmin(role: string | undefined) {
   if (role !== "admin") {
@@ -21,17 +15,6 @@ export type FieldMappingEntry = {
   sourceField: string;
   canvaElementName: string;
 };
-
-export function getFieldsForTemplate(
-  tourDuration: string,
-  artifactType: string,
-): readonly string[] {
-  if (tourDuration === "ONE_DAY" && artifactType === "ITINERARY") return ONE_DAY_ITINERARY_FIELDS;
-  if (tourDuration === "ONE_DAY" && artifactType === "MENU") return ONE_DAY_MENU_FIELDS;
-  if (tourDuration === "TWO_DAY" && artifactType === "ITINERARY") return TWO_DAY_ITINERARY_FIELDS;
-  if (tourDuration === "TWO_DAY" && artifactType === "MENU") return TWO_DAY_MENU_FIELDS;
-  return [];
-}
 
 export async function getTemplates() {
   const session = await auth();

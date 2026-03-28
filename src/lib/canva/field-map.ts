@@ -36,3 +36,18 @@ export const TWO_DAY_MENU_FIELDS = [
 ] as const;
 
 export const MAX_SLOTS_PER_SECTION = 7;
+
+/**
+ * Resolve which source fields apply for a given tourDuration + artifactType combo.
+ * Pure helper — safe to import from both client and server code.
+ */
+export function getFieldsForTemplate(
+  tourDuration: string,
+  artifactType: string,
+): readonly string[] {
+  if (tourDuration === "ONE_DAY" && artifactType === "ITINERARY") return ONE_DAY_ITINERARY_FIELDS;
+  if (tourDuration === "ONE_DAY" && artifactType === "MENU") return ONE_DAY_MENU_FIELDS;
+  if (tourDuration === "TWO_DAY" && artifactType === "ITINERARY") return TWO_DAY_ITINERARY_FIELDS;
+  if (tourDuration === "TWO_DAY" && artifactType === "MENU") return TWO_DAY_MENU_FIELDS;
+  return [];
+}

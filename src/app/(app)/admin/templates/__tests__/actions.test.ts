@@ -25,7 +25,8 @@ vi.mock("next/cache", () => ({
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { verifyCanvaTemplate } from "@/lib/canva/verify-template";
-import { updateTemplate, getFieldsForTemplate } from "../actions";
+import { updateTemplate } from "../actions";
+import { getFieldsForTemplate } from "@/lib/canva/field-map";
 
 describe("Admin templates actions", () => {
   beforeEach(() => {
