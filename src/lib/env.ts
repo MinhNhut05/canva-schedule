@@ -50,6 +50,30 @@ const canvaEnvSchema = z.object({
 // ---------------------------------------------------------------------------
 
 /**
+ * Validate required startup environment variables (AUTH_SECRET, DATABASE_URL).
+ * Also rejects NEXT_PUBLIC_ secret aliases per SAFE-01.
+ *
+ * Called from next.config.ts at startup (inline duplicate there because
+ * next.config.ts cannot import from src/lib/* with server-only).
+ * Also exported here so server code can invoke the canonical check.
+ */
+export function validateStartupEnv(): void {
+  rejectPublicSecrets();
+
+  const missing: string[] = [];
+  if (!process.env.AUTH_SECRET) missing.push("AUTH_SECRET");
+  if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables:\n` +
+        missing.map((v) => `  - ${v}`).join("\n") +
+        `\n\nCopy .env.example to .env and fill in the values.`
+    );
+  }
+}
+
+/**
  * Validated startup env (AUTH_SECRET, DATABASE_URL).
  * Only access after validateStartupEnv() has been called.
  */
