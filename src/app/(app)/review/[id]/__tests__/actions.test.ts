@@ -45,14 +45,18 @@ vi.mock("@/lib/auth", () => ({
   auth,
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
+vi.mock("@/lib/db", () => {
+  const prisma = {
     upload: {
       findFirst,
       update,
     },
-  },
-}));
+    canvaToken: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
+  };
+  return { prisma, db: prisma };
+});
 
 vi.mock("@/lib/canva/adapter", () => ({
   generateArtifact,
