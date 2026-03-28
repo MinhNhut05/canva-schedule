@@ -63,7 +63,7 @@
 
 ### Reliability & Safety
 
-- [ ] **SAFE-01**: External AI API credentials and Canva credentials are stored server-side and never exposed to the browser
+- [x] **SAFE-01**: External AI API credentials and Canva credentials are stored server-side and never exposed to the browser
 - [x] **SAFE-02**: AI output is validated before being used in rules processing or Canva payload construction
 - [x] **SAFE-03**: System handles Canva token expiry or authorization refresh without requiring repeated manual intervention during normal operation
 - [ ] **SAFE-04**: System avoids immediate failure under normal weekly volume (~10 tours/week) and respects Canva/API rate limits at this scale
@@ -140,7 +140,7 @@
 | HIST-02 | Phase 5 | Pending |
 | ADMIN-01 | Phase 5 | Pending |
 | ADMIN-02 | Phase 5 | Pending |
-| SAFE-01 | Phase 1 | Pending |
+| SAFE-01 | Phase 1 | Complete |
 | SAFE-02 | Phase 3 | Complete |
 | SAFE-03 | Phase 4 | Complete |
 | SAFE-04 | Phase 6 | Pending |

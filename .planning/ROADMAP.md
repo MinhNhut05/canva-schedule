@@ -42,7 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Notes/Risks**: Research indicates Canva Pro may be insufficient; Brand Templates and possibly Canva Enterprise may be required. This is a go/no-go phase for the intended Canva autofill path.
 
 Plans:
-- [ ] 01-01: Set up internal authentication, session persistence, and route protection.
+- [x] 01-01: Set up internal authentication, session persistence, and route protection.
 - [ ] 01-02: Establish server-side secret handling for AI and Canva credentials.
 - [ ] 01-03: Verify Canva Brand Template/autofill feasibility with the real account and template setup.
 

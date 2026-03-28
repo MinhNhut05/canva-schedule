@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 6 Plan 01 complete — all Phase 06 plans done
-last_updated: "2026-03-27T16:48:51.966Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-28T07:43:23.146Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 06 — operational-polish-reliability
+**Current focus:** Phase 01 — capability-gate-secure-access
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
+Phase: 01 (capability-gate-secure-access) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Plan: Not started
 | Phase 05 P02 | 25 min | 11 tasks | 19 files |
 | Phase 06 P01 | 35 min | 7 tasks | 9 files |
 | Phase 06 P02 | 20 min | 5 tasks | 8 files |
+| Phase 01 P01 | 13 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase 06-01]: Alert component extended with variant prop (default | destructive) instead of adding cva — keeps component lightweight.
 - [Phase 06-01]: computedStep useMemo hoisted above early returns in ReviewPage so all 3 return branches share the same step/error state.
 - [Phase 06-01]: isRateLimited kept as optional prop in CanvaGenerationPanel for backward compatibility while rate-limit display ownership moves to CooldownBanner in ReviewPage.
+- [Phase 01]: Export validateStartupEnv() from canonical env.ts while keeping inline duplicate in next.config.ts for build-time safety — next.config.ts cannot import server-only modules
+- [Phase 01]: Widen SEEDED_RULE_IDS to Set<string> so admin actions can check arbitrary ruleId strings — String type needed for dynamic admin code paths
 
 ### Pending Todos
 
@@ -139,6 +142,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T23:55:00.000Z
-Stopped at: Phase 6 Plan 01 complete — all Phase 06 plans done
-Resume file: .planning/phases/06-operational-polish-reliability/06-01-SUMMARY.md
+Last session: 2026-03-28T07:43:23.143Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
