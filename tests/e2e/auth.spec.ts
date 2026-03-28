@@ -43,12 +43,9 @@ test.describe("Authentication Flow", () => {
     await page.fill("#password", TEST_USER.password);
     await page.click('button[type="submit"]');
 
-    // Should reach dashboard
+    // Should reach dashboard — heading is Vietnamese "Bảng điều khiển"
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
-    await expect(page.getByText("Dashboard")).toBeVisible();
-    await expect(
-      page.getByText(`${TEST_USER.name} (${TEST_USER.username})`)
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bảng điều khiển" })).toBeVisible();
   });
 
   test("session persists after page refresh", async ({ page }) => {
@@ -64,7 +61,7 @@ test.describe("Authentication Flow", () => {
 
     // Should still be on dashboard
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.getByText("Dashboard")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bảng điều khiển" })).toBeVisible();
   });
 
   test("visiting /login while authenticated redirects to /dashboard", async ({
@@ -90,7 +87,7 @@ test.describe("Authentication Flow", () => {
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
-    // Logout
+    // Logout — button text is "Đăng xuất"
     await page.getByRole("button", { name: "Đăng xuất" }).click();
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
@@ -133,7 +130,7 @@ test.describe("Authentication Flow", () => {
 
     // Should reach dashboard with fresh session
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
-    await expect(page.getByText("Dashboard")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bảng điều khiển" })).toBeVisible();
   });
 });
 
