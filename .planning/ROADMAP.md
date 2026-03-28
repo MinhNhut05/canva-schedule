@@ -44,7 +44,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01: Set up internal authentication, session persistence, and route protection.
 - [ ] 01-02: Establish server-side secret handling for AI and Canva credentials.
-- [ ] 01-03: Verify Canva Brand Template/autofill feasibility with the real account and template setup.
+- [x] 01-03: Verify Canva Brand Template/autofill feasibility with the real account and template setup.
 
 ### Phase 2: Document Intake & Parsing
 **Goal**: Users can upload supported tour documents and receive readable Vietnamese text or clear guidance when source quality is insufficient.

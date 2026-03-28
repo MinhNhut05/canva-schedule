@@ -45,7 +45,7 @@
 - [x] **CANVA-04**: System returns at least one editable Canva link for the generated design outputs
 - [x] **CANVA-05**: Canva integration handles asynchronous job completion and reports failure clearly when generation does not succeed
 - [x] **CANVA-06**: Template identifiers and mappings are managed outside hardcoded business logic so template changes can be updated safely
-- [ ] **CANVA-07**: Canva plan/template capability is verified before production reliance on autofill workflow
+- [x] **CANVA-07**: Canva plan/template capability is verified before production reliance on autofill workflow
 
 ### UX & Feedback
 
@@ -131,7 +131,7 @@
 | CANVA-04 | Phase 4 | Complete |
 | CANVA-05 | Phase 4 | Complete |
 | CANVA-06 | Phase 4 | Complete |
-| CANVA-07 | Phase 1 | Pending |
+| CANVA-07 | Phase 1 | Complete |
 | UX-01 | Phase 6 | Pending |
 | UX-02 | Phase 6 | Pending |
 | UX-03 | Phase 4 | Complete |
