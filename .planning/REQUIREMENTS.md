@@ -7,9 +7,9 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: Team member can log in to the web app with an assigned internal account
-- [ ] **AUTH-02**: User session persists across browser refresh until logout or expiry
-- [ ] **AUTH-03**: Unauthenticated users cannot access upload, generation, history, rules, or template pages
+- [x] **AUTH-01**: Team member can log in to the web app with an assigned internal account
+- [x] **AUTH-02**: User session persists across browser refresh until logout or expiry
+- [x] **AUTH-03**: Unauthenticated users cannot access upload, generation, history, rules, or template pages
 
 ### Document Intake
 
@@ -105,9 +105,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
 | DOC-01 | Phase 2 | Complete |
 | DOC-02 | Phase 2 | Complete |
 | DOC-03 | Phase 2 | Complete |

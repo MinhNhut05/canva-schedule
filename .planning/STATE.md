@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-28T07:53:02.673Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-28T07:56:26.270Z"
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 20
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -65,6 +65,7 @@ Plan: 3 of 3
 | Phase 06 P02 | 20 min | 5 tasks | 8 files |
 | Phase 01 P01 | 13 min | 3 tasks | 10 files |
 | Phase 01 P03 | 5 min | 2 tasks | 3 files |
+| Phase 01 P02 | 7 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Export validateStartupEnv() from canonical env.ts while keeping inline duplicate in next.config.ts for build-time safety — next.config.ts cannot import server-only modules
 - [Phase 01]: Widen SEEDED_RULE_IDS to Set<string> so admin actions can check arbitrary ruleId strings — String type needed for dynamic admin code paths
 - [Phase 01]: Verdict NO-GO: Canva Enterprise and real SOHA credentials required before autofill workflow can be validated — Probe ran against current env — no Canva credentials configured. Research confirms Brand Template/autofill API requires Canva Enterprise, not just Pro.
+- [Phase 01]: Move getFieldsForTemplate from use server actions to shared field-map module for Next.js 15.5 async requirement
 
 ### Pending Todos
 
@@ -144,6 +146,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:53:02.671Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-28T07:56:13.382Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
