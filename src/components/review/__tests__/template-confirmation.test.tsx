@@ -3,18 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...props }: Record<string, unknown>) =>
+  Button: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement("button", props, children),
 }));
 
 vi.mock("@/components/ui/card", () => ({
-  Card: ({ children, ...props }: Record<string, unknown>) =>
+  Card: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement("div", props, children),
-  CardHeader: ({ children, ...props }: Record<string, unknown>) =>
+  CardHeader: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement("div", props, children),
-  CardTitle: ({ children, ...props }: Record<string, unknown>) =>
+  CardTitle: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement("h3", props, children),
-  CardContent: ({ children, ...props }: Record<string, unknown>) =>
+  CardContent: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
     React.createElement("div", props, children),
 }));
 

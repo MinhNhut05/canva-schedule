@@ -34,7 +34,7 @@ export async function extractPdfText(
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
     const strings = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
+      .map((item: Record<string, unknown>) => ("str" in item ? String(item.str) : ""))
       .filter(Boolean);
 
     totalTextItems += strings.length;

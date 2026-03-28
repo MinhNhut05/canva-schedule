@@ -49,8 +49,8 @@ describe("History page data logic", () => {
   });
 
   it("derives canva link label '2 lien ket' for both artifacts succeeded", () => {
-    const successCount = 2;
-    const total = 2;
+    const successCount: number = 2;
+    const total: number = 2;
     let label: string;
     if (successCount === 2) label = "2 lien ket";
     else if (successCount === 1 && total === 2) label = "1/2 lien ket";
@@ -59,8 +59,8 @@ describe("History page data logic", () => {
   });
 
   it("derives canva link label '1/2 lien ket' for partial success", () => {
-    const successCount = 1;
-    const total = 2;
+    const successCount: number = 1;
+    const total: number = 2;
     let label: string;
     if (successCount === 2) label = "2 lien ket";
     else if (successCount === 1 && total === 2) label = "1/2 lien ket";
@@ -69,8 +69,8 @@ describe("History page data logic", () => {
   });
 
   it("derives canva link label 'Chua co lien ket' when no success", () => {
-    const successCount = 0;
-    const total = 2;
+    const successCount: number = 0;
+    const total: number = 2;
     let label: string;
     if (successCount === 2) label = "2 lien ket";
     else if (successCount === 1 && total === 2) label = "1/2 lien ket";

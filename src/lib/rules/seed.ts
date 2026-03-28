@@ -51,7 +51,7 @@ const COMPANY_RULES_SEED = [
   },
 ] as const;
 
-export const SEEDED_RULE_IDS = new Set(
+export const SEEDED_RULE_IDS: Set<string> = new Set(
   COMPANY_RULES_SEED.map((r) => r.ruleId)
 );
 

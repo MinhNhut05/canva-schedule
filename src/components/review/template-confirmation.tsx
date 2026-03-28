@@ -19,7 +19,6 @@ function getTemplateRows(label: string) {
 }
 
 export function TemplateConfirmation({
-  duration: _duration,
   templatePair,
   onConfirm,
   disabled,

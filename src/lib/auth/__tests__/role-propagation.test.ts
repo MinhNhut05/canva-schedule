@@ -19,7 +19,7 @@ describe("Role propagation types", () => {
   });
 
   it("admin check returns false for member role", () => {
-    const role: "admin" | "member" = "member";
+    const role: string = "member";
     expect(role === "admin").toBe(false);
   });
 });
