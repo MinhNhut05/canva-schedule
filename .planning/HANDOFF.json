@@ -1,49 +1,85 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T04:10:12.226Z",
-  "phase": "post-completion",
-  "phase_name": "content-rules-update",
-  "phase_dir": "N/A — all 6 phases completed",
-  "plan": 0,
-  "task": 0,
-  "total_tasks": 0,
+  "timestamp": "2026-03-31T08:41:23.384Z",
+  "phase": "04",
+  "phase_name": "editable-canva-generation",
+  "phase_dir": ".planning/phases/04-editable-canva-generation",
+  "plan": 3,
+  "task": 1,
+  "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Create .planning/CONTENT-RULES.md with R1-R5 rules", "status": "done", "commit": "uncommitted"},
-    {"id": 2, "name": "Update extraction-prompt.ts with content shortening rules", "status": "done", "commit": "uncommitted"},
-    {"id": 3, "name": "Update R2 to add greeting prefix (Quý đoàn/Quý thầy cô) before tham quan", "status": "done", "commit": "uncommitted"},
-    {"id": 4, "name": "Add content rules reference to Project MEMORY.md", "status": "done", "commit": "uncommitted"}
+    {
+      "id": 1,
+      "name": "Clarify requested scope for menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 2,
+      "name": "Inspect current Canva generation flow and confirm block-based ONE_DAY/TWO_DAY support already exists",
+      "status": "done",
+      "commit": "uncommitted"
+    },
+    {
+      "id": 3,
+      "name": "Draft implementation proposal focused on runtime fieldMapping usage and sample-image alignment",
+      "status": "done",
+      "commit": "uncommitted"
+    }
   ],
   "remaining_tasks": [
-    {"id": 5, "name": "Verify Canva template binds program_label to heading (from previous session)", "status": "not_started"},
-    {"id": 6, "name": "Test AI extraction with real tour document to verify content shortening rules", "status": "not_started"}
+    {
+      "id": 4,
+      "name": "Implement runtime fieldMapping remap in Canva generation path",
+      "status": "not_started"
+    },
+    {
+      "id": 5,
+      "name": "Add/update tests for menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày generation paths",
+      "status": "not_started"
+    },
+    {
+      "id": 6,
+      "name": "Verify admin template mappings and compare generated outputs against the provided 2-day sample images",
+      "status": "not_started"
+    }
   ],
-  "blockers": [],
+  "blockers": [
+    {
+      "description": "Conversation context hit 100%, so implementation was intentionally paused before any code edits to avoid losing execution context mid-change.",
+      "type": "technical",
+      "workaround": "Resume in a fresh session and start directly from the approved plan + this handoff."
+    }
+  ],
   "human_actions_pending": [
     {
-      "action": "Verify Canva template has program_label bound to the top heading text element (carried from previous session)",
-      "context": "The generic heading CHƯƠNG TRÌNH THAM QUAN may be static in the Canva template rather than data-bound.",
-      "blocking": true
+      "action": "After code changes, verify the actual Canva template text-element names/mappings for the 1-day menu, 2-day menu, and 2-day itinerary templates in admin/Canva.",
+      "context": "The current likely gap is that saved fieldMapping exists in admin but is not applied at runtime; visual correctness still depends on real Canva element names matching the configured mapping.",
+      "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "Add 5 content shortening rules (R1-R5) to AI extraction prompt", "rationale": "AI should auto-shorten itinerary text for Canva output — remove marketing text, add greetings, use bullet format for complex locations", "phase": "post-completion"},
-    {"decision": "R2 includes greeting prefix based on clientType", "rationale": "SCHOOL tours use 'Quý thầy cô và các bạn học sinh tham quan...', GROUP tours use 'Quý đoàn tham quan...'", "phase": "post-completion"},
-    {"decision": "R3 uses bullet character (•) at start of each sub-activity line", "rationale": "Matches Canva design format shown by user", "phase": "post-completion"},
-    {"decision": "R4 applies to both SCHOOL and GROUP", "rationale": "Always add 'Sau khi dùng bữa trưa' prefix for first post-lunch activity", "phase": "post-completion"},
-    {"decision": "programName is auto-extracted from DOCX/PDF with manual override in review UI (from previous session)", "rationale": "User wants each document to have its own program heading instead of generic CHƯƠNG TRÌNH THAM QUAN", "phase": "adhoc"},
-    {"decision": "program_label Canva field gets programName; title Canva field keeps route/school text (from previous session)", "rationale": "field-map.ts already had both title and program_label; now they carry distinct semantics", "phase": "adhoc"}
+    {
+      "decision": "Keep the current block-text Canva payload model instead of redesigning schema/editor flow.",
+      "rationale": "Main-branch code already uses block fields like morning_block, day1_block, and menu_day2_block, which fits the current repo state better than reverting to per-slot fields.",
+      "phase": "04"
+    },
+    {
+      "decision": "Prioritize wiring saved fieldMapping into runtime Canva generation.",
+      "rationale": "Admin already stores template field mappings, but generation appears to send canonical payload keys directly; this is the most likely reason real output may not match the user's Canva templates and sample images.",
+      "phase": "04"
+    },
+    {
+      "decision": "Treat menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày as the active resume scope.",
+      "rationale": "User explicitly asked to continue these three outputs, reuse the existing 1-day mapping logic, ask questions first, and align final output with the two provided 2-day sample images.",
+      "phase": "04"
+    }
   ],
   "uncommitted_files": [
-    ".planning/CONTENT-RULES.md",
-    "src/lib/ai/extraction-prompt.ts",
-    "src/lib/ai/extraction-schema.ts",
-    "src/components/review/itinerary-editor.tsx",
-    "src/lib/canva/payload.ts",
-    "src/lib/ai/__tests__/extraction-schema.test.ts",
-    "src/lib/ai/__tests__/extract-tour.test.ts",
-    "src/lib/canva/__tests__/payload.test.ts"
+    ".planning/HANDOFF.json",
+    ".planning/phases/04-editable-canva-generation/.continue-here.md"
   ],
-  "next_action": "Test AI extraction with a real tour document to verify content shortening rules work correctly. Also verify Canva template program_label binding.",
-  "context_notes": "All 6 phases (20/20 plans) completed. This session added content shortening rules (R1-R5) based on user's Canva design feedback. Previous session added programName field split (also uncommitted). Both features need E2E testing with real tour uploads."
+  "next_action": "Start by updating src/lib/canva/template-resolver.ts and/or src/lib/canva/adapter.ts so generation can load the saved CanvaTemplate record and remap canonical payload keys through fieldMapping before calling Canva. Then add focused tests in src/app/(app)/review/[id]/__tests__/actions.test.ts and src/lib/canva/__tests__/payload.test.ts.",
+  "context_notes": "This session did not modify repo code. It only clarified scope, explored the existing Canva/review flow, and produced an approved implementation direction. Important repo reality discovered during planning: current main branch already uses a block-based schema in src/lib/canva/field-map.ts and src/lib/canva/payload.ts, and explicit ONE_DAY/TWO_DAY support already exists across payload builders, review editors, and review actions. The likely missing last-mile integration is applying stored fieldMapping at generation time. Also note the broader working tree already had many unrelated uncommitted changes before pause-work started, so resume carefully and avoid assuming a clean tree. Grep found placeholder/TBD markers in various planning docs, but no new phase-04 summary regression was introduced by this session."
 }
