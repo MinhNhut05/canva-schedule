@@ -1,79 +1,49 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T03:07:09.448Z",
-  "phase": "adhoc",
-  "phase_name": "programName-field-split",
-  "phase_dir": "N/A (ad-hoc feature, not a GSD phase)",
-  "plan": 1,
-  "task": 3,
-  "total_tasks": 3,
+  "timestamp": "2026-03-31T04:10:12.226Z",
+  "phase": "post-completion",
+  "phase_name": "content-rules-update",
+  "phase_dir": "N/A — all 6 phases completed",
+  "plan": 0,
+  "task": 0,
+  "total_tasks": 0,
   "status": "paused",
   "completed_tasks": [
-    {
-      "id": 1,
-      "name": "Add programName to extraction schema + AI prompt",
-      "status": "done",
-      "commit": "uncommitted"
-    },
-    {
-      "id": 2,
-      "name": "Update review UI and Canva payload mapping",
-      "status": "done",
-      "commit": "uncommitted"
-    },
-    {
-      "id": 3,
-      "name": "Update tests for programName split",
-      "status": "done",
-      "commit": "uncommitted"
-    }
+    {"id": 1, "name": "Create .planning/CONTENT-RULES.md with R1-R5 rules", "status": "done", "commit": "uncommitted"},
+    {"id": 2, "name": "Update extraction-prompt.ts with content shortening rules", "status": "done", "commit": "uncommitted"},
+    {"id": 3, "name": "Update R2 to add greeting prefix (Quý đoàn/Quý thầy cô) before tham quan", "status": "done", "commit": "uncommitted"},
+    {"id": 4, "name": "Add content rules reference to Project MEMORY.md", "status": "done", "commit": "uncommitted"}
   ],
   "remaining_tasks": [
-    {
-      "id": 4,
-      "name": "Verify Canva template binds program_label to heading and title to subtitle",
-      "status": "not_started"
-    },
-    {
-      "id": 5,
-      "name": "Manual E2E test: upload DOCX, review programName field, generate Canva",
-      "status": "not_started"
-    }
+    {"id": 5, "name": "Verify Canva template binds program_label to heading (from previous session)", "status": "not_started"},
+    {"id": 6, "name": "Test AI extraction with real tour document to verify content shortening rules", "status": "not_started"}
   ],
   "blockers": [],
   "human_actions_pending": [
     {
-      "action": "Verify Canva template has program_label bound to the top heading text element (not hardcoded static text)",
-      "context": "The generic heading CHƯƠNG TRÌNH THAM QUAN may be static in the Canva template rather than data-bound. If so, the template needs to be updated in Canva to bind to the program_label field.",
+      "action": "Verify Canva template has program_label bound to the top heading text element (carried from previous session)",
+      "context": "The generic heading CHƯƠNG TRÌNH THAM QUAN may be static in the Canva template rather than data-bound.",
       "blocking": true
     }
   ],
   "decisions": [
-    {
-      "decision": "programName is auto-extracted from DOCX/PDF with manual override in review UI",
-      "rationale": "User wants each document to have its own program heading instead of generic CHƯƠNG TRÌNH THAM QUAN",
-      "phase": "adhoc"
-    },
-    {
-      "decision": "Fallback to CHƯƠNG TRÌNH THAM QUAN happens only at Canva payload build time, not in persisted draft",
-      "rationale": "Keeps stored data truthful; blank programName means extraction could not determine it, not that it should be the default",
-      "phase": "adhoc"
-    },
-    {
-      "decision": "program_label Canva field gets programName; title Canva field keeps route/school text",
-      "rationale": "field-map.ts already had both title and program_label; now they carry distinct semantics instead of duplicating draft.title",
-      "phase": "adhoc"
-    }
+    {"decision": "Add 5 content shortening rules (R1-R5) to AI extraction prompt", "rationale": "AI should auto-shorten itinerary text for Canva output — remove marketing text, add greetings, use bullet format for complex locations", "phase": "post-completion"},
+    {"decision": "R2 includes greeting prefix based on clientType", "rationale": "SCHOOL tours use 'Quý thầy cô và các bạn học sinh tham quan...', GROUP tours use 'Quý đoàn tham quan...'", "phase": "post-completion"},
+    {"decision": "R3 uses bullet character (•) at start of each sub-activity line", "rationale": "Matches Canva design format shown by user", "phase": "post-completion"},
+    {"decision": "R4 applies to both SCHOOL and GROUP", "rationale": "Always add 'Sau khi dùng bữa trưa' prefix for first post-lunch activity", "phase": "post-completion"},
+    {"decision": "programName is auto-extracted from DOCX/PDF with manual override in review UI (from previous session)", "rationale": "User wants each document to have its own program heading instead of generic CHƯƠNG TRÌNH THAM QUAN", "phase": "adhoc"},
+    {"decision": "program_label Canva field gets programName; title Canva field keeps route/school text (from previous session)", "rationale": "field-map.ts already had both title and program_label; now they carry distinct semantics", "phase": "adhoc"}
   ],
   "uncommitted_files": [
-    "src/lib/ai/extraction-schema.ts",
+    ".planning/CONTENT-RULES.md",
     "src/lib/ai/extraction-prompt.ts",
+    "src/lib/ai/extraction-schema.ts",
     "src/components/review/itinerary-editor.tsx",
     "src/lib/canva/payload.ts",
     "src/lib/ai/__tests__/extraction-schema.test.ts",
     "src/lib/ai/__tests__/extract-tour.test.ts",
     "src/lib/canva/__tests__/payload.test.ts"
   ],
-  "next_action": "Verify Canva template binding: check that the top heading element in the Canva template is bound to program_label (not static text). Then do a manual E2E upload+review+generate test.",
-  "context_notes": "All code changes are done and unit tests pass (40/40). The split is: programName = document heading like CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ, title = route/school like SÓC TRĂNG – CẦN THƠ. Fallback default is CHƯƠNG TRÌNH THAM QUAN when programName is missing. The main risk is that the Canva template might have static heading text that ignores the program_label field."
+  "next_action": "Test AI extraction with a real tour document to verify content shortening rules work correctly. Also verify Canva template program_label binding.",
+  "context_notes": "All 6 phases (20/20 plans) completed. This session added content shortening rules (R1-R5) based on user's Canva design feedback. Previous session added programName field split (also uncommitted). Both features need E2E testing with real tour uploads."
 }
