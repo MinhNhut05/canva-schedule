@@ -1,85 +1,35 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T08:41:23.384Z",
+  "timestamp": "2026-04-01T04:23:23.474Z",
   "phase": "04",
   "phase_name": "editable-canva-generation",
   "phase_dir": ".planning/phases/04-editable-canva-generation",
-  "plan": 3,
-  "task": 1,
-  "total_tasks": 3,
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {
-      "id": 1,
-      "name": "Clarify requested scope for menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày",
-      "status": "done",
-      "commit": "uncommitted"
-    },
-    {
-      "id": 2,
-      "name": "Inspect current Canva generation flow and confirm block-based ONE_DAY/TWO_DAY support already exists",
-      "status": "done",
-      "commit": "uncommitted"
-    },
-    {
-      "id": 3,
-      "name": "Draft implementation proposal focused on runtime fieldMapping usage and sample-image alignment",
-      "status": "done",
-      "commit": "uncommitted"
-    }
+    {"id": 1, "name": "Diagnosed Canva autofill failure for TWO_DAY templates", "status": "done"},
+    {"id": 2, "name": "Identified DB template ID mismatch (TWO_DAY IDs differed from .env)", "status": "done"},
+    {"id": 3, "name": "Reverted TWO_DAY template IDs in DB to match .env", "status": "done"},
+    {"id": 4, "name": "Discovered root cause: TWO_DAY Brand Templates missing Bulk Create dataset fields on Canva", "status": "done"},
+    {"id": 5, "name": "Guided user to publish Brand Templates with autofill fields", "status": "done"},
+    {"id": 6, "name": "Verified templates now return correct dataset fields via Canva API", "status": "done"},
+    {"id": 7, "name": "Probe-tested autofill with real upload data — both ITINERARY and MENU succeeded", "status": "done"}
   ],
   "remaining_tasks": [
-    {
-      "id": 4,
-      "name": "Implement runtime fieldMapping remap in Canva generation path",
-      "status": "not_started"
-    },
-    {
-      "id": 5,
-      "name": "Add/update tests for menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày generation paths",
-      "status": "not_started"
-    },
-    {
-      "id": 6,
-      "name": "Verify admin template mappings and compare generated outputs against the provided 2-day sample images",
-      "status": "not_started"
-    }
+    {"id": 8, "name": "User needs to test via UI (hit Thử lại on upload cmnfd58r000074yj047up8z9e)", "status": "not_started"},
+    {"id": 9, "name": "Verify generated Canva designs have correct content placement", "status": "not_started"}
   ],
-  "blockers": [
-    {
-      "description": "Conversation context hit 100%, so implementation was intentionally paused before any code edits to avoid losing execution context mid-change.",
-      "type": "technical",
-      "workaround": "Resume in a fresh session and start directly from the approved plan + this handoff."
-    }
-  ],
+  "blockers": [],
   "human_actions_pending": [
-    {
-      "action": "After code changes, verify the actual Canva template text-element names/mappings for the 1-day menu, 2-day menu, and 2-day itinerary templates in admin/Canva.",
-      "context": "The current likely gap is that saved fieldMapping exists in admin but is not applied at runtime; visual correctness still depends on real Canva element names matching the configured mapping.",
-      "blocking": false
-    }
+    {"action": "Test Canva generation on the app UI for the TWO_DAY upload", "context": "API probe succeeded, need UI confirmation", "blocking": false}
   ],
   "decisions": [
-    {
-      "decision": "Keep the current block-text Canva payload model instead of redesigning schema/editor flow.",
-      "rationale": "Main-branch code already uses block fields like morning_block, day1_block, and menu_day2_block, which fits the current repo state better than reverting to per-slot fields.",
-      "phase": "04"
-    },
-    {
-      "decision": "Prioritize wiring saved fieldMapping into runtime Canva generation.",
-      "rationale": "Admin already stores template field mappings, but generation appears to send canonical payload keys directly; this is the most likely reason real output may not match the user's Canva templates and sample images.",
-      "phase": "04"
-    },
-    {
-      "decision": "Treat menu 1 ngày, menu 2 ngày, and lịch trình 2 ngày as the active resume scope.",
-      "rationale": "User explicitly asked to continue these three outputs, reuse the existing 1-day mapping logic, ask questions first, and align final output with the two provided 2-day sample images.",
-      "phase": "04"
-    }
+    {"decision": "Root cause was Canva-side: Brand Templates for TWO_DAY lacked published Bulk Create (autofill) dataset fields", "rationale": "API returned empty dataset {} for both 2DAY templates while 1DAY templates had fields. User had configured fields in Canva UI but had not published/updated the Brand Template.", "phase": "04"},
+    {"decision": "Reverted DB template IDs from EAHFhGCm2I8/EAHFhGoflFk back to .env values EAHFavTKu_k/EAHFaunQ-m8", "rationale": "DB had been updated (possibly by seed script) to different template IDs that also lacked autofill setup", "phase": "04"}
   ],
-  "uncommitted_files": [
-    ".planning/HANDOFF.json",
-    ".planning/phases/04-editable-canva-generation/.continue-here.md"
-  ],
-  "next_action": "Start by updating src/lib/canva/template-resolver.ts and/or src/lib/canva/adapter.ts so generation can load the saved CanvaTemplate record and remap canonical payload keys through fieldMapping before calling Canva. Then add focused tests in src/app/(app)/review/[id]/__tests__/actions.test.ts and src/lib/canva/__tests__/payload.test.ts.",
-  "context_notes": "This session did not modify repo code. It only clarified scope, explored the existing Canva/review flow, and produced an approved implementation direction. Important repo reality discovered during planning: current main branch already uses a block-based schema in src/lib/canva/field-map.ts and src/lib/canva/payload.ts, and explicit ONE_DAY/TWO_DAY support already exists across payload builders, review editors, and review actions. The likely missing last-mile integration is applying stored fieldMapping at generation time. Also note the broader working tree already had many unrelated uncommitted changes before pause-work started, so resume carefully and avoid assuming a clean tree. Grep found placeholder/TBD markers in various planning docs, but no new phase-04 summary regression was introduced by this session."
+  "uncommitted_files": [],
+  "next_action": "User tests TWO_DAY Canva generation via app UI. If it works, this debug session is complete. If not, check the specific error message.",
+  "context_notes": "This was a debug session, not a plan-based execution. The issue was 100% Canva-side configuration — TWO_DAY Brand Templates existed but had no autofill dataset fields published. After user published them, API probe confirmed both ITINERARY and MENU autofill jobs succeed. The fieldMapping in DB (identity mapping) is correct and matches the Canva dataset field names."
 }
