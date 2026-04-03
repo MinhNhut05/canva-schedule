@@ -11,7 +11,8 @@ export function getCanvaConfig() {
   return {
     clientId: env.CANVA_CLIENT_ID,
     clientSecret: env.CANVA_CLIENT_SECRET,
-    accessToken: env.CANVA_ACCESS_TOKEN,
-    refreshToken: env.CANVA_REFRESH_TOKEN,
+    // Tokens are optional in env — DB is the primary source.
+    accessToken: env.CANVA_ACCESS_TOKEN ?? undefined,
+    refreshToken: env.CANVA_REFRESH_TOKEN ?? undefined,
   };
 }

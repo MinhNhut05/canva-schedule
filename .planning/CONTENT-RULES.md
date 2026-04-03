@@ -73,6 +73,27 @@ Mục đích: tạo nội dung ngắn gọn, phù hợp hiển thị trên Canva
 
 ---
 
+## R6 — Kết thúc chương trình
+
+**Quy tắc:** LUÔN thêm activity cuối cùng "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình. Áp dụng cho cả SCHOOL và GROUP.
+
+- Tour 1 ngày (ONE_DAY): thêm vào cuối mảng `afternoon`
+- Tour 2 ngày (TWO_DAY): thêm vào cuối mảng `day2`
+
+**Trước:**
+> Tối:
+> Về lại đến điểm hen.
+
+**Sau:**
+> Tối:
+> Về lại đến điểm hen.
+>
+> Kết thúc chương trình!
+
+**Lưu ý:** Payload builder cũng có fallback — nếu AI extraction thiếu dòng này, hệ thống sẽ tự động append.
+
+---
+
 ## Tổng hợp ví dụ đầy đủ
 
 ```
@@ -90,6 +111,11 @@ Sau khi dùng bữa trưa, Quý đoàn tự do tham quan và vui chơi tại Khu
 • Xem biểu diễn xiếc thú: Khỉ, Chó, Dê.
 • Vui chơi tại Công viên nước
 • Trải nghiệm trò chơi dân gian, trò chơi liên hoàn nước
+
+Tối:
+Khởi hành về lại Thành phố Cần Thơ.
+
+Kết thúc chương trình!
 ```
 
 ---

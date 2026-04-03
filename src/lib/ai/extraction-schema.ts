@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // --- Activity schema (shared) ---
 export const activitySchema = z.object({
-  timeLabel: z.string().optional(),
+  timeLabel: z.string().nullish(),
   text: z.string().min(1),
   sourceConfidence: z.enum(["high", "medium", "low"]).default("high"),
   needsReview: z.boolean().default(false),
@@ -28,14 +28,15 @@ export type TourDuration = z.infer<typeof tourDurationSchema>;
 
 // --- Common fields (shared between 1-day and 2-day) ---
 const commonFieldsSchema = z.object({
-  title: z.string().optional(),
-  clientName: z.string().optional(),
-  clientType: clientTypeSchema.optional(),
-  schoolName: z.string().optional(),
-  tourDate: z.string().optional(),
-  greetingText: z.string().optional(),
-  pickupLocation: z.string().optional(),
-  returnLocation: z.string().optional(),
+  programName: z.string().nullish(),
+  title: z.string().nullish(),
+  clientName: z.string().nullish(),
+  clientType: clientTypeSchema.nullish(),
+  schoolName: z.string().nullish(),
+  tourDate: z.string().nullish(),
+  greetingText: z.string().nullish(),
+  pickupLocation: z.string().nullish(),
+  returnLocation: z.string().nullish(),
   reviewFlags: z.array(z.string()).default([]),
 });
 

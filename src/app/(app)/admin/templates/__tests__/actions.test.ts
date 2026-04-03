@@ -113,28 +113,31 @@ describe("Admin templates actions", () => {
     it("returns ONE_DAY_ITINERARY fields for ONE_DAY + ITINERARY", () => {
       const fields = getFieldsForTemplate("ONE_DAY", "ITINERARY");
       expect(fields).toContain("title");
-      expect(fields).toContain("morning_1");
-      expect(fields).toContain("afternoon_1");
-      expect(fields.length).toBeGreaterThan(6);
+      expect(fields).toContain("program_label");
+      expect(fields).toContain("tour_date");
+      expect(fields).toContain("morning_block");
+      expect(fields).toContain("afternoon_block");
+      expect(fields).toHaveLength(5);
     });
 
     it("returns TWO_DAY_MENU fields for TWO_DAY + MENU", () => {
       const fields = getFieldsForTemplate("TWO_DAY", "MENU");
       expect(fields).toContain("title");
-      expect(fields).toContain("menu_day1_1");
-      expect(fields).toContain("menu_day2_1");
+      expect(fields).toContain("menu_day1_block");
+      expect(fields).toContain("menu_day2_block");
     });
 
     it("returns ONE_DAY_MENU fields for ONE_DAY + MENU", () => {
       const fields = getFieldsForTemplate("ONE_DAY", "MENU");
-      expect(fields).toContain("menu_morning_1");
-      expect(fields).toContain("menu_lunch_1");
+      expect(fields).toContain("menu_morning_block");
+      expect(fields).toContain("menu_lunch_block");
     });
 
     it("returns TWO_DAY_ITINERARY fields for TWO_DAY + ITINERARY", () => {
       const fields = getFieldsForTemplate("TWO_DAY", "ITINERARY");
-      expect(fields).toContain("day1_1");
-      expect(fields).toContain("day2_1");
+      expect(fields).toContain("day1_block");
+      expect(fields).toContain("day2_block");
+      expect(fields).toHaveLength(5);
     });
 
     it("returns empty array for unknown combination", () => {

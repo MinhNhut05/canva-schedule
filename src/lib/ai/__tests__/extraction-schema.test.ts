@@ -90,7 +90,8 @@ describe("twoDaySchema", () => {
 describe("structuredDraftSchema — ONE_DAY", () => {
   const validOneDay = {
     duration: "ONE_DAY",
-    title: "Tour Vũng Tàu 1 ngày",
+    programName: "CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ",
+    title: "SÓC TRĂNG – CẦN THƠ",
     clientName: "Trường THPT Trần Đại Nghĩa",
     clientType: "SCHOOL",
     schoolName: "THPT Trần Đại Nghĩa",
@@ -115,6 +116,8 @@ describe("structuredDraftSchema — ONE_DAY", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.duration).toBe("ONE_DAY");
+      expect(result.data.programName).toBe("CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ");
+      expect(result.data.title).toBe("SÓC TRĂNG – CẦN THƠ");
     }
   });
 
@@ -151,7 +154,8 @@ describe("structuredDraftSchema — ONE_DAY", () => {
 describe("structuredDraftSchema — TWO_DAY", () => {
   const validTwoDay = {
     duration: "TWO_DAY",
-    title: "Tour Đà Lạt 2 ngày",
+    programName: "CHƯƠNG TRÌNH THAM QUAN DÃ NGOẠI",
+    title: "ĐÀ LẠT – TEAM BUILDING",
     clientType: "GROUP",
     greetingText: "Quý khách",
     reviewFlags: [],
@@ -170,6 +174,8 @@ describe("structuredDraftSchema — TWO_DAY", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.duration).toBe("TWO_DAY");
+      expect(result.data.programName).toBe("CHƯƠNG TRÌNH THAM QUAN DÃ NGOẠI");
+      expect(result.data.title).toBe("ĐÀ LẠT – TEAM BUILDING");
     }
   });
 

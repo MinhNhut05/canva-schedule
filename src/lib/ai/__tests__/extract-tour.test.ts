@@ -16,7 +16,8 @@ const mockCallApi = vi.mocked(callExtractionApi);
 
 const VALID_ONE_DAY_RESPONSE = JSON.stringify({
   duration: "ONE_DAY",
-  title: "Tour Vũng Tàu",
+  programName: "CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ",
+  title: "SÓC TRĂNG – CẦN THƠ",
   clientType: "SCHOOL",
   schoolName: "THPT Trần Đại Nghĩa",
   greetingText: "Quý thầy cô và các bạn học sinh",
@@ -46,6 +47,8 @@ describe("extractTour", () => {
 
     const result = await extractTour("Sample tour text");
     expect(result.draft.duration).toBe("ONE_DAY");
+    expect(result.draft.programName).toBe("CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ");
+    expect(result.draft.title).toBe("SÓC TRĂNG – CẦN THƠ");
     expect(result.model).toBe("gpt-5.4");
     expect(result.attemptCount).toBe(1);
   });
@@ -132,6 +135,7 @@ describe("extractTour", () => {
     });
 
     const result = await extractTour("Sample text");
+    expect(result.draft.programName).toBeUndefined();
     expect(result.draft.title).toBeUndefined();
     expect(result.draft.clientName).toBeUndefined();
     expect(result.draft.schoolName).toBeUndefined();

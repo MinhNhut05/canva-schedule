@@ -41,8 +41,10 @@ const aiEnvSchema = z.object({
 const canvaEnvSchema = z.object({
   CANVA_CLIENT_ID: z.string().min(1, "CANVA_CLIENT_ID is required"),
   CANVA_CLIENT_SECRET: z.string().min(1, "CANVA_CLIENT_SECRET is required"),
-  CANVA_ACCESS_TOKEN: z.string().min(1, "CANVA_ACCESS_TOKEN is required"),
-  CANVA_REFRESH_TOKEN: z.string().min(1, "CANVA_REFRESH_TOKEN is required"),
+  // Tokens are optional in env — DB is the primary token source.
+  // Env values serve only as initial seed / fallback.
+  CANVA_ACCESS_TOKEN: z.string().min(1).optional(),
+  CANVA_REFRESH_TOKEN: z.string().min(1).optional(),
 });
 
 // ---------------------------------------------------------------------------

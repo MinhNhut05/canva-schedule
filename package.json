@@ -15,7 +15,8 @@
     "test:unit": "vitest run src/lib/documents/",
     "test:fixtures": "tsx tests/fixtures/documents/create-fixtures.ts",
     "test:e2e": "playwright test",
-    "canva:probe": "tsx scripts/canva-probe.ts"
+    "canva:probe": "tsx scripts/canva-probe.ts",
+    "canva:oauth": "tsx scripts/canva-oauth.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

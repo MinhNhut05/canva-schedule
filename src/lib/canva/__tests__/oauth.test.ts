@@ -8,14 +8,8 @@ const { findFirst, upsert, getCanvaConfig } = vi.hoisted(() => ({
   getCanvaConfig: vi.fn(() => ({
     clientId: "test-client-id",
     clientSecret: "test-client-secret",
-    accessToken: "test-access-token",
+    accessToken: undefined,
     refreshToken: "env-refresh-token",
-    templates: {
-      ONE_DAY_ITINERARY: "template-1day-itinerary",
-      ONE_DAY_MENU: "template-1day-menu",
-      TWO_DAY_ITINERARY: "template-2day-itinerary",
-      TWO_DAY_MENU: "template-2day-menu",
-    },
   })),
 }));
 
@@ -168,5 +162,46 @@ describe("getValidAccessToken", () => {
     await expect(getValidAccessToken()).rejects.toThrow(
       "Canva token refresh failed (401): invalid_grant"
     );
+  });
+
+  it("deduplicates concurrent refresh calls (mutex)", async () => {
+    findFirst.mockResolvedValue({
+      id: "token-1",
+      accessToken: "expired-access-token",
+      refreshToken: "stored-refresh-token",
+      expiresAt: new Date(Date.now() - 1_000),
+    });
+
+    // Slow refresh that takes 50ms
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve(
+                new Response(JSON.stringify(createTokenResponse()), {
+                  status: 200,
+                  headers: { "Content-Type": "application/json" },
+                })
+              ),
+            50
+          )
+        )
+    );
+
+    // Fire 3 concurrent refresh calls
+    const [r1, r2, r3] = await Promise.all([
+      getValidAccessToken({ forceRefresh: true }),
+      getValidAccessToken({ forceRefresh: true }),
+      getValidAccessToken({ forceRefresh: true }),
+    ]);
+
+    // All 3 should return the same token
+    expect(r1).toBe("new-access-token");
+    expect(r2).toBe("new-access-token");
+    expect(r3).toBe("new-access-token");
+
+    // But fetch should only be called ONCE (mutex prevents duplicates)
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

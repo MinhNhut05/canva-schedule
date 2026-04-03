@@ -15,6 +15,12 @@ interface EditableFieldProps {
   uploadId: string;
   multiline?: boolean;
   placeholder?: string;
+  /** Custom render for display mode (styled text with highlights) */
+  renderValue?: (value: string) => React.ReactNode;
+  /** Additional className for the label text */
+  labelClassName?: string;
+  /** Additional className for the display button */
+  displayClassName?: string;
   onSave: (
     uploadId: string,
     fieldPath: string,
@@ -31,6 +37,9 @@ export function EditableField({
   uploadId,
   multiline = false,
   placeholder,
+  renderValue,
+  labelClassName,
+  displayClassName,
   onSave,
   onSaveSuccess,
   onSaveError,
@@ -102,7 +111,7 @@ export function EditableField({
   if (isEditing) {
     return (
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+        <p className={cn("text-sm font-semibold text-muted-foreground", labelClassName)}>{label}</p>
         <div className="space-y-2">
           {multiline ? (
             <Textarea
@@ -149,17 +158,21 @@ export function EditableField({
 
   return (
     <div className="space-y-1">
-      <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+      <p className={cn("text-sm font-semibold text-muted-foreground", labelClassName)}>{label}</p>
       <button
         type="button"
         onClick={handleStartEdit}
         className={cn(
-          "w-full cursor-pointer rounded-lg px-3 py-2 text-left text-base text-foreground transition-colors hover:bg-slate-100",
+          "w-full cursor-pointer rounded-lg px-3 py-2 text-left text-base transition-colors",
+          !displayClassName && "text-foreground hover:bg-slate-100",
+          displayClassName,
           !value && "italic text-muted-foreground",
         )}
         title="Nhan de chinh sua"
       >
-        {value || placeholder || "Chua co — nhan de them"}
+        {value
+          ? (renderValue ? renderValue(value) : value)
+          : (placeholder || "Chua co — nhan de them")}
       </button>
     </div>
   );

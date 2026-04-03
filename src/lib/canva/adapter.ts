@@ -11,7 +11,8 @@ import {
   type CreateDesignResult,
 } from "./jobs";
 import {
-  resolveTemplateId,
+  resolveTemplate,
+  applyFieldMapping,
   type ArtifactKind,
   type TourDuration,
 } from "./template-resolver";
@@ -73,7 +74,11 @@ async function persistSuccess(
 export async function generateArtifact(
   input: GenerateArtifactInput
 ): Promise<ArtifactResult> {
-  const templateId = await resolveTemplateId(input.duration, input.kind);
+  const resolved = await resolveTemplate(input.duration, input.kind);
+  const { templateId, fieldMapping } = resolved;
+
+  // Remap canonical payload keys to actual Canva text-element names
+  const remappedData = applyFieldMapping(input.data, fieldMapping);
 
   await db.canvaArtifact.upsert({
     where: artifactWhere(input),
@@ -95,7 +100,7 @@ export async function generateArtifact(
   try {
     const creationResult: CreateDesignResult = await createDesignFromTemplate(
       templateId,
-      input.data,
+      remappedData,
       input.title
     );
 

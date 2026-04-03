@@ -3,9 +3,9 @@ import "server-only";
 import OpenAI from "openai";
 import { getAiConfig } from "@/lib/ai/server-client";
 
-const AI_MODEL = "gpt-5.4";
-const MAX_RETRIES = 2;
-const AI_TIMEOUT_MS = 30_000;
+const AI_MODEL = "ag/gemini-3-flash";
+const MAX_RETRIES = 1;
+const AI_TIMEOUT_MS = 45_000;
 
 // Errors that should NOT be retried
 const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 422];
@@ -66,6 +66,7 @@ export async function callExtractionApi(
           ],
           response_format: { type: "json_object" },
           temperature: 0.1,
+          stream: false,
         }, { signal: controller.signal });
 
         const content = completion.choices[0]?.message?.content;
@@ -97,18 +98,22 @@ export async function callExtractionApi(
   // All retries exhausted
   if (lastError instanceof Error && lastError.name === "AbortError") {
     throw new Error(
-      "AI phan hoi qua cham (30 giay). Vui long thu lai."
+      `AI phản hồi quá chậm (${AI_TIMEOUT_MS / 1000} giây). Vui lòng thử lại sau.`
     );
   }
 
   if (lastError instanceof OpenAI.APIError) {
+    const statusInfo = lastError.status
+      ? `mã lỗi: ${lastError.status}`
+      : `lỗi: ${lastError.message || "không xác định"}`;
     throw new Error(
-      `Không thể kết nối với dịch vụ AI (mã lỗi: ${lastError.status}). Vui lòng thử lại sau.`,
+      `Không thể kết nối với dịch vụ AI (${statusInfo}). Vui lòng thử lại sau.`,
     );
   }
 
+  const errorMsg = lastError instanceof Error ? lastError.message : "không xác định";
   throw new Error(
-    "Có lỗi xảy ra khi trích xuất nội dung bằng AI. Vui lòng thử lại sau.",
+    `Có lỗi xảy ra khi trích xuất nội dung bằng AI (${errorMsg}). Vui lòng thử lại sau.`,
   );
 }
 

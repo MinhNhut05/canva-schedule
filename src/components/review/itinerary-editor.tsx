@@ -1,12 +1,21 @@
 "use client";
 
+import { useMemo } from "react";
+
 import type { Activity, StructuredDraft } from "@/lib/ai/extraction-schema";
+import type { SectionColors } from "@/lib/review/highlight-terms";
+import {
+  extractImportantTerms,
+  PRIMARY_SECTION,
+  SECONDARY_SECTION,
+} from "@/lib/review/highlight-terms";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 import { EditableField } from "./editable-field";
 import { FlaggedField } from "./flagged-field";
+import { HighlightedText } from "./highlighted-text";
 
 interface ItineraryEditorProps {
   draft: StructuredDraft;
@@ -27,11 +36,21 @@ const SECTION_LABELS: Record<string, string> = {
   day2: "Ngay 2",
 };
 
+/** Map section keys to their theme variant */
+const SECTION_THEMES: Record<string, SectionColors> = {
+  morning: PRIMARY_SECTION,
+  day1: PRIMARY_SECTION,
+  afternoon: SECONDARY_SECTION,
+  day2: SECONDARY_SECTION,
+};
+
 function ActivityItem({
   activity,
   index,
   sectionKey,
   uploadId,
+  colors,
+  importantTerms,
   onSaveField,
   onSaveSuccess,
   onSaveError,
@@ -40,6 +59,8 @@ function ActivityItem({
   index: number;
   sectionKey: string;
   uploadId: string;
+  colors: SectionColors;
+  importantTerms: string[];
   onSaveField: ItineraryEditorProps["onSaveField"];
   onSaveSuccess: () => void;
   onSaveError: (error: string) => void;
@@ -64,6 +85,16 @@ function ActivityItem({
           fieldPath={`${basePath}.timeLabel`}
           uploadId={uploadId}
           placeholder="VD: 6:00, 7:30 - 8:00"
+          labelClassName={`text-xs opacity-70`}
+          displayClassName="hover:bg-white/10"
+          renderValue={(val) => (
+            <HighlightedText
+              text={val}
+              importantTerms={[]}
+              colors={colors}
+              isTimeLabel
+            />
+          )}
           onSave={onSaveField}
           onSaveSuccess={onSaveSuccess}
           onSaveError={onSaveError}
@@ -74,6 +105,15 @@ function ActivityItem({
           fieldPath={`${basePath}.text`}
           uploadId={uploadId}
           multiline
+          labelClassName={`text-xs opacity-70`}
+          displayClassName="hover:bg-white/10"
+          renderValue={(val) => (
+            <HighlightedText
+              text={val}
+              importantTerms={importantTerms}
+              colors={colors}
+            />
+          )}
           onSave={onSaveField}
           onSaveSuccess={onSaveSuccess}
           onSaveError={onSaveError}
@@ -90,6 +130,8 @@ export function ItineraryEditor({
   onSaveSuccess,
   onSaveError,
 }: ItineraryEditorProps) {
+  const importantTerms = useMemo(() => extractImportantTerms(draft), [draft]);
+
   const sections =
     draft.duration === "ONE_DAY"
       ? [
@@ -107,9 +149,19 @@ export function ItineraryEditor({
         <CardTitle>Lich trinh</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Shared fields — no theming */}
         <div className="space-y-3">
           <EditableField
-            label="Tieu de tour"
+            label="Ten chuong trinh"
+            value={draft.programName || ""}
+            fieldPath="programName"
+            uploadId={uploadId}
+            onSave={onSaveField}
+            onSaveSuccess={onSaveSuccess}
+            onSaveError={onSaveError}
+          />
+          <EditableField
+            label="Tieu de tuyen / truong"
             value={draft.title || ""}
             fieldPath="title"
             uploadId={uploadId}
@@ -176,35 +228,51 @@ export function ItineraryEditor({
           />
         </div>
 
-        <Separator />
+        {/* Themed itinerary sections */}
+        {sections.map((section) => {
+          const colors = SECTION_THEMES[section.key] || PRIMARY_SECTION;
 
-        {sections.map((section) => (
-          <div key={section.key} className="space-y-3">
-            <h3 className="text-lg font-semibold text-foreground">
-              {SECTION_LABELS[section.key] || section.key}
-            </h3>
-            <div className="space-y-4">
-              {section.activities.map((activity, index) => (
-                <ActivityItem
-                  key={`${section.key}-${index}`}
-                  activity={activity}
-                  index={index}
-                  sectionKey={section.key}
-                  uploadId={uploadId}
-                  onSaveField={onSaveField}
-                  onSaveSuccess={onSaveSuccess}
-                  onSaveError={onSaveError}
-                />
-              ))}
-              {section.activities.length === 0 ? (
-                <p className="py-4 text-center text-sm italic text-muted-foreground">
-                  Chua co hoat dong nao.
-                </p>
-              ) : null}
+          return (
+            <div
+              key={section.key}
+              className={cn(
+                "rounded-xl p-4 space-y-3 transition-colors",
+                colors.bg,
+              )}
+            >
+              <h3
+                className="text-lg font-bold"
+                style={{ color: colors.headingColor }}
+              >
+                {SECTION_LABELS[section.key] || section.key}
+              </h3>
+              <div className="space-y-4">
+                {section.activities.map((activity, index) => (
+                  <ActivityItem
+                    key={`${section.key}-${index}`}
+                    activity={activity}
+                    index={index}
+                    sectionKey={section.key}
+                    uploadId={uploadId}
+                    colors={colors}
+                    importantTerms={importantTerms}
+                    onSaveField={onSaveField}
+                    onSaveSuccess={onSaveSuccess}
+                    onSaveError={onSaveError}
+                  />
+                ))}
+                {section.activities.length === 0 ? (
+                  <p
+                    className="py-4 text-center text-sm italic opacity-60"
+                    style={{ color: colors.textColor }}
+                  >
+                    Chua co hoat dong nao.
+                  </p>
+                ) : null}
+              </div>
             </div>
-            <Separator />
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

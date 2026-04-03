@@ -16,6 +16,14 @@ interface TokenResponse {
   scope?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Mutex: ensures only one refresh runs at a time.
+// Canva refresh tokens are single-use — if two requests try to refresh
+// concurrently with the same token, the second one will fail and the
+// refresh token is permanently lost (requiring a full re-OAuth).
+// ---------------------------------------------------------------------------
+let activeRefreshPromise: Promise<string> | null = null;
+
 export async function getValidAccessToken(options?: {
   forceRefresh?: boolean;
 }): Promise<string> {
@@ -31,7 +39,26 @@ export async function getValidAccessToken(options?: {
     return stored.accessToken;
   }
 
-  const refreshToken = stored?.refreshToken ?? getCanvaConfig().refreshToken;
+  // If another request is already refreshing, wait for it instead of
+  // starting a second refresh (which would invalidate the token).
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+
+  // Start refresh and let other callers share the same promise.
+  activeRefreshPromise = performRefresh(stored?.refreshToken ?? null, stored?.id ?? null)
+    .finally(() => {
+      activeRefreshPromise = null;
+    });
+
+  return activeRefreshPromise;
+}
+
+async function performRefresh(
+  storedRefreshToken: string | null,
+  storedId: string | null,
+): Promise<string> {
+  const refreshToken = storedRefreshToken ?? getCanvaConfig().refreshToken;
 
   if (!refreshToken) {
     throw new Error("Canva refresh token is not configured");
@@ -41,7 +68,7 @@ export async function getValidAccessToken(options?: {
   const expiresAt = new Date(Date.now() + newTokens.expires_in * 1000);
 
   await db.canvaToken.upsert({
-    where: { id: stored?.id ?? "seed" },
+    where: { id: storedId ?? "seed" },
     create: {
       accessToken: newTokens.access_token,
       refreshToken: newTokens.refresh_token,

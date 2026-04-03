@@ -1,7 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
 import {
-  SHARED_FIELDS,
   ONE_DAY_ITINERARY_FIELDS,
   ONE_DAY_MENU_FIELDS,
   TWO_DAY_ITINERARY_FIELDS,
@@ -42,9 +41,6 @@ const TEMPLATE_SEEDS: TemplateSeedInput[] = [
   },
 ];
 
-// SHARED_FIELDS is used indirectly via ONE_DAY_ITINERARY_FIELDS etc.
-void SHARED_FIELDS;
-
 function buildDefaultFieldMapping(fields: readonly string[]): Record<string, string> {
   const mapping: Record<string, string> = {};
   for (const field of fields) {
@@ -71,7 +67,7 @@ export async function seedCanvaTemplates(prisma: PrismaClient) {
           artifactType: seed.artifactType,
         },
       },
-      update: {},
+      update: { templateId, fieldMapping: buildDefaultFieldMapping(seed.fields) },
       create: {
         tourDuration: seed.tourDuration,
         artifactType: seed.artifactType,
