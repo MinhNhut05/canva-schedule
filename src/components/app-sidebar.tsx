@@ -56,13 +56,13 @@ interface NavItem {
 const primaryItems: NavItem[] = [
   { href: "/dashboard", label: "Bảng điều khiển" },
   { href: "/upload", label: "Tải tài liệu" },
-  { href: "/review", label: "Duyet noi dung" },
-  { href: "/history", label: "Lich su" },
+  { href: "/review", label: "Duyệt nội dung" },
+  { href: "/history", label: "Lịch sử" },
 ];
 
 const adminItems: NavItem[] = [
-  { href: "/admin/rules", label: "Quy tac" },
-  { href: "/admin/templates", label: "Mau Canva" },
+  { href: "/admin/rules", label: "Quy tắc" },
+  { href: "/admin/templates", label: "Mẫu Canva" },
 ];
 
 function SidebarLink({
@@ -143,7 +143,7 @@ function SidebarContent({
         {role === "admin" && (
           <div className="pt-2">
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Quan ly
+              Quản lý
             </p>
             <nav aria-label="Quan tri" className="space-y-2">
               {adminItems.map((item) => (
