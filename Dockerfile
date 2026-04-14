@@ -20,12 +20,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# next.config.ts validates startup secrets during build, so use dummy values here.
-ENV AUTH_SECRET=buildtime-auth-secret
-ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/builddb
-
 RUN npx prisma generate
-RUN npm run build
+# next.config.ts validates startup secrets during build, so provide dummy values
+# only for this build step.
+RUN AUTH_SECRET=buildtime-auth-secret \
+  DATABASE_URL=postgresql://build:build@127.0.0.1:5432/builddb \
+  npm run build
 
 FROM base AS runner
 WORKDIR /app
