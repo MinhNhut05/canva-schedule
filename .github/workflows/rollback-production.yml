@@ -1,0 +1,75 @@
+name: Rollback Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Optional explicit image tag. Leave blank to use previous-image-tag on the server.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rollback-production
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${VPS_SSH_PORT:-22}" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare rollback files
+        env:
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+        run: |
+          cat > .production.rollback.env <<EOF
+          APP_NAME=canva-schedule
+          DEPLOY_ENV=production
+          APP_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/canva-schedule
+          IMAGE_TAG=${{ inputs.image_tag }}
+          APP_PORT=3000
+          APP_RUNTIME_ENV_FILE=/opt/canva-schedule/production/.env.runtime
+          PROJECT_ROOT=/opt/canva-schedule/production
+          GHCR_USERNAME=${GHCR_PULL_USERNAME}
+          GHCR_TOKEN=${GHCR_PULL_TOKEN}
+          EOF
+
+      - name: Upload rollback files
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+        run: |
+          ssh -p "${VPS_SSH_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p /opt/canva-schedule/production/scripts"
+          scp -P "${VPS_SSH_PORT:-22}" deploy/scripts/deploy.sh "$VPS_USER@$VPS_HOST:/opt/canva-schedule/production/scripts/deploy.sh"
+          scp -P "${VPS_SSH_PORT:-22}" deploy/scripts/smoke-check.sh "$VPS_USER@$VPS_HOST:/opt/canva-schedule/production/scripts/smoke-check.sh"
+          scp -P "${VPS_SSH_PORT:-22}" deploy/scripts/rollback.sh "$VPS_USER@$VPS_HOST:/opt/canva-schedule/production/scripts/rollback.sh"
+          scp -P "${VPS_SSH_PORT:-22}" .production.rollback.env "$VPS_USER@$VPS_HOST:/opt/canva-schedule/production/.deploy.env"
+          ssh -p "${VPS_SSH_PORT:-22}" "$VPS_USER@$VPS_HOST" "chmod 600 /opt/canva-schedule/production/.deploy.env && chmod 700 /opt/canva-schedule/production/scripts/*.sh"
+
+      - name: Roll back on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+        run: |
+          ssh -p "${VPS_SSH_PORT:-22}" "$VPS_USER@$VPS_HOST" "bash -lc 'set -euo pipefail; cd /opt/canva-schedule/production && trap \"rm -f ./.deploy.env\" EXIT && set -a && source ./.deploy.env && set +a && bash ./scripts/rollback.sh'"

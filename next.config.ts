@@ -44,6 +44,7 @@ function validateStartupEnv(): void {
 validateStartupEnv();
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     serverActions: {
       bodySizeLimit: "32mb",

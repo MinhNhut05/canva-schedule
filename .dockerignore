@@ -1,0 +1,16 @@
+.git
+.github
+.next
+.planning
+.vscode
+.idea
+node_modules
+npm-debug.log*
+playwright-report
+test-results
+coverage
+docs
+tests
+.env
+.env.*
+README.md

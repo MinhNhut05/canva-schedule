@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ${APP_IMAGE}:${IMAGE_TAG}
+    container_name: ${APP_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file:
+      - ${APP_RUNTIME_ENV_FILE}
+      - ./.release.env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "${APP_PORT}:3000"
