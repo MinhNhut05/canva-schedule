@@ -3,6 +3,8 @@ services:
     image: ${APP_IMAGE}:${IMAGE_TAG}
     container_name: ${APP_CONTAINER_NAME}
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - ${APP_RUNTIME_ENV_FILE}
       - ./.release.env

@@ -45,6 +45,7 @@ Create these repository secrets before enabling the workflows:
 - `CANVA_TEMPLATE_2DAY_MENU`
 
 Use different `DATABASE_URL` values for staging and production. On one VPS, that usually means separate databases on the same PostgreSQL server.
+If the database runs in a separate container on the VPS host, point the app at `host.docker.internal` and expose the DB port only on loopback.
 
 ## VPS prerequisites
 
