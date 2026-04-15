@@ -56,6 +56,7 @@ printf '%s\n' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --pas
 docker compose --env-file "${release_env_file}" -f "${compose_file}" pull
 
 docker run --rm \
+  --add-host host.docker.internal:host-gateway \
   --env-file "${APP_RUNTIME_ENV_FILE}" \
   --env-file "${release_env_file}" \
   "${APP_IMAGE}:${IMAGE_TAG}" \
