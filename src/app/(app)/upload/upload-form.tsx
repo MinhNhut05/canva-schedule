@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
@@ -95,7 +94,6 @@ export function UploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<UploadApiResponse["data"]>();
   const [isDragActive, setIsDragActive] = useState(false);
-  const router = useRouter();
 
   const fileDetails = useMemo(() => {
     if (!selectedFile) {
@@ -211,8 +209,7 @@ export function UploadForm() {
       }
 
       setResult(payload.data);
-      toast.success("Tải tài liệu thành công. Đang chuyển đến trang duyệt...");
-      router.push(`/review/${payload.data.uploadId}`);
+      toast.success("Tải tài liệu thành công.");
     } catch {
       setError(GENERIC_ERROR);
       // Removed toast.error — error now shown as persistent Alert below
@@ -353,7 +350,13 @@ export function UploadForm() {
             </Card>
           ) : null}
 
-          {result ? <ExtractionResult data={result} onReset={resetExtractionResult} /> : null}
+          {result ? (
+            <ExtractionResult
+              data={result}
+              onReset={resetExtractionResult}
+              reviewHref={`/review/${result.uploadId}`}
+            />
+          ) : null}
         </CardContent>
       </Card>
     </div>

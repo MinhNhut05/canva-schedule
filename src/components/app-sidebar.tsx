@@ -58,6 +58,7 @@ const primaryItems: NavItem[] = [
   { href: "/upload", label: "Tải tài liệu" },
   { href: "/review", label: "Duyệt nội dung" },
   { href: "/history", label: "Lịch sử" },
+  { href: "/settings/password", label: "Cài đặt" },
 ];
 
 const adminItems: NavItem[] = [

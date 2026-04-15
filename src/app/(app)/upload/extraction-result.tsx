@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 interface ExtractionResultProps {
   data: DocumentExtractionResult;
   onReset: () => void;
+  reviewHref?: string;
 }
 
 const qualityContent: Record<
@@ -83,7 +85,7 @@ function WarningIcon() {
   );
 }
 
-export function ExtractionResult({ data, onReset }: ExtractionResultProps) {
+export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResultProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const quality = qualityContent[data.quality.level];
   const previewText = data.normalizedText || "Văn bản trích xuất sẽ hiển thị ở đây sau khi xử lý.";
@@ -165,6 +167,24 @@ export function ExtractionResult({ data, onReset }: ExtractionResultProps) {
           <div className="rounded-xl border border-border bg-slate-50/70 p-4 text-sm text-muted-foreground">
             Bạn có thể kiểm tra nhanh nội dung bên dưới trước khi chuyển sang bước trích xuất AI ở Phase 3.
           </div>
+
+          {reviewHref ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="focus-visible:ring-2 focus-visible:ring-primary">
+                <Link href={reviewHref}>Mở bước kiểm tra</Link>
+              </Button>
+              {!shouldShowWarning ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onReset}
+                  className="focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  Tải file khác
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
