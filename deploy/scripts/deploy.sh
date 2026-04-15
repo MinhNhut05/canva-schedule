@@ -26,6 +26,7 @@ release_env_file="${PROJECT_ROOT}/.release.env"
 current_tag_file="${PROJECT_ROOT}/current-image-tag"
 previous_tag_file="${PROJECT_ROOT}/previous-image-tag"
 container_name="${APP_NAME}-${DEPLOY_ENV}"
+app_network="${APP_NETWORK:-canva-schedule-network}"
 
 mkdir -p "${PROJECT_ROOT}"
 
@@ -49,6 +50,7 @@ APP_ENV=${DEPLOY_ENV}
 APP_VERSION=${IMAGE_TAG}
 APP_CONTAINER_NAME=${container_name}
 APP_RUNTIME_ENV_FILE=${APP_RUNTIME_ENV_FILE}
+APP_NETWORK=${app_network}
 EOF
 
 printf '%s\n' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
@@ -56,7 +58,7 @@ printf '%s\n' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --pas
 docker compose --env-file "${release_env_file}" -f "${compose_file}" pull
 
 docker run --rm \
-  --add-host host.docker.internal:host-gateway \
+  --network "${app_network}" \
   --env-file "${APP_RUNTIME_ENV_FILE}" \
   --env-file "${release_env_file}" \
   "${APP_IMAGE}:${IMAGE_TAG}" \
