@@ -19,6 +19,7 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN mkdir -p public
 
 RUN npx prisma generate
 # next.config.ts validates startup secrets during build, so provide dummy values
