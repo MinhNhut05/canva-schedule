@@ -1,21 +1,86 @@
 import "server-only";
 
 import OpenAI from "openai";
+
 import { getAiConfig } from "@/lib/ai/server-client";
 
-const AI_MODEL = "ag/gemini-3-flash";
+const AI_MODEL = process.env.AI_MODEL?.trim() || "cx/gpt-5.4";
 const MAX_RETRIES = 1;
-const AI_TIMEOUT_MS = 45_000;
+const AI_TIMEOUT_MS = 120_000;
 
-// Errors that should NOT be retried
-const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 422];
+const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 406, 422];
+
+function maskApiKey(apiKey: string): string {
+  if (!apiKey) {
+    return "(missing)";
+  }
+
+  if (apiKey.length <= 8) {
+    return `${apiKey.slice(0, 2)}***`;
+  }
+
+  return `${apiKey.slice(0, 6)}***${apiKey.slice(-4)}`;
+}
+
+function logExtractionApiError(
+  phase: "retry" | "final",
+  attempt: number,
+  error: unknown,
+): void {
+  const { baseUrl, apiKey } = getAiConfig();
+  const details =
+    error instanceof OpenAI.APIError
+      ? {
+          status: error.status,
+          message: error.message,
+          requestId:
+            "request_id" in error && typeof error.request_id === "string"
+              ? error.request_id
+              : undefined,
+        }
+      : {
+          status: undefined,
+          message: error instanceof Error ? error.message : String(error),
+          requestId: undefined,
+        };
+
+  console.error("[AI extraction] upstream error", {
+    phase,
+    attempt,
+    model: AI_MODEL,
+    baseUrl,
+    apiKey: maskApiKey(apiKey),
+    ...details,
+  });
+}
 
 export function createExtractionClient(): OpenAI {
   const { baseUrl, apiKey } = getAiConfig();
+
   return new OpenAI({
     apiKey,
     baseURL: baseUrl,
   });
+}
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error && error.name === "AbortError") {
+    return true;
+  }
+
+  if (error instanceof OpenAI.APIError) {
+    if (error.status && NON_RETRYABLE_STATUS_CODES.includes(error.status)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  if (error instanceof Error && error.message.includes("fetch")) {
+    return true;
+  }
+
+  return false;
 }
 
 export interface ExtractionCallOptions {
@@ -29,47 +94,33 @@ export interface ExtractionCallResult {
   attemptCount: number;
 }
 
-function isRetryableError(error: unknown): boolean {
-  if (error instanceof Error && error.name === "AbortError") {
-    return true; // Timeouts are retryable
-  }
-
-  if (error instanceof OpenAI.APIError) {
-    if (NON_RETRYABLE_STATUS_CODES.includes(error.status)) return false;
-    // Retry on 429 (rate limit), 500, 502, 503, 504
-    return true;
-  }
-
-  // Network errors are retryable
-  if (error instanceof Error && error.message.includes("fetch")) return true;
-
-  return false;
-}
-
 export async function callExtractionApi(
   options: ExtractionCallOptions,
 ): Promise<ExtractionCallResult> {
   const client = createExtractionClient();
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt += 1) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
       try {
-        const completion = await client.chat.completions.create({
-          model: AI_MODEL,
-          messages: [
-            { role: "system", content: options.systemPrompt },
-            { role: "user", content: options.userContent },
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.1,
-          stream: false,
-        }, { signal: controller.signal });
+        const completion = await client.chat.completions.create(
+          {
+            model: AI_MODEL,
+            messages: [
+              { role: "system", content: options.systemPrompt },
+              { role: "user", content: options.userContent },
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.1,
+          },
+          { signal: controller.signal },
+        );
 
         const content = completion.choices[0]?.message?.content;
+
         if (!content) {
           throw new Error("AI không trả về nội dung. Vui lòng thử lại.");
         }
@@ -86,19 +137,21 @@ export async function callExtractionApi(
       lastError = error;
 
       if (attempt <= MAX_RETRIES && isRetryableError(error)) {
-        // Exponential backoff: attempt=1 -> 1000ms, attempt=2 -> 2000ms, attempt=3 -> 4000ms
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+        logExtractionApiError("retry", attempt, error);
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt - 1) * 1000),
+        );
         continue;
       }
 
+      logExtractionApiError("final", attempt, error);
       break;
     }
   }
 
-  // All retries exhausted
   if (lastError instanceof Error && lastError.name === "AbortError") {
     throw new Error(
-      `AI phản hồi quá chậm (${AI_TIMEOUT_MS / 1000} giây). Vui lòng thử lại sau.`
+      `AI phản hồi quá chậm (${AI_TIMEOUT_MS / 1000} giây). Vui lòng thử lại sau.`,
     );
   }
 
@@ -106,15 +159,17 @@ export async function callExtractionApi(
     const statusInfo = lastError.status
       ? `mã lỗi: ${lastError.status}`
       : `lỗi: ${lastError.message || "không xác định"}`;
+
     throw new Error(
       `Không thể kết nối với dịch vụ AI (${statusInfo}). Vui lòng thử lại sau.`,
     );
   }
 
   const errorMsg = lastError instanceof Error ? lastError.message : "không xác định";
+
   throw new Error(
     `Có lỗi xảy ra khi trích xuất nội dung bằng AI (${errorMsg}). Vui lòng thử lại sau.`,
   );
 }
 
-export { AI_MODEL, MAX_RETRIES, AI_TIMEOUT_MS };
+export { AI_MODEL, AI_TIMEOUT_MS, MAX_RETRIES };
