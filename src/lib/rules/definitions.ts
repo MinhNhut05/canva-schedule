@@ -1,8 +1,169 @@
+import type { Activity } from "@/lib/ai/extraction-schema";
 import type { RuleDefinition, RuleViolation } from "./types";
 
 const SCHOOL_GREETING = "Quý thầy cô và các bạn học sinh";
 const GROUP_GREETINGS = ["Quý khách", "Quý đoàn"];
 const DEFAULT_GROUP_GREETING = "Quý khách";
+const MAX_PRIMARY_BULLETS = 3;
+
+function normalizeSpaces(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeComparisonValue(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/[.!:;,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function trimTrailingPunctuation(value: string) {
+  return value.replace(/[.!:;,]+$/g, "").trim();
+}
+
+function countPrimaryBullets(text: string) {
+  return text
+    .split("\n")
+    .filter((line) => /^\s*[•*-]\s+/.test(line.trim())).length;
+}
+
+function looksLikeGenericTravelLine(text: string) {
+  return /^(khởi hành đi|di chuyển)(?:[.!]?)$/i.test(normalizeSpaces(text));
+}
+
+function looksLikeGenericReturnLine(text: string) {
+  return /^(khởi hành về|về lại|về lại trường|về trường|trở về|trở về trường)(?:[.!]?)$/i.test(
+    normalizeSpaces(text),
+  );
+}
+
+function looksSpecificDestination(value: string) {
+  const normalized = normalizeComparisonValue(value);
+  if (!normalized || normalized.length < 6) {
+    return false;
+  }
+
+  return !new Set([
+    "trường",
+    "về lại trường",
+    "khởi hành về",
+    "khởi hành đi",
+    "di chuyển",
+    "về",
+    "điểm hẹn",
+  ]).has(normalized);
+}
+
+function deriveReturnDestination(
+  returnLocation: string | null | undefined,
+  schoolName: string | null | undefined,
+) {
+  const raw = normalizeSpaces(returnLocation ?? schoolName ?? "");
+  if (!raw) {
+    return null;
+  }
+
+  const stripped = trimTrailingPunctuation(
+    raw.replace(/^(khởi hành về|về lại|về|trở về|trả khách tại)\s+/i, ""),
+  );
+
+  if (looksSpecificDestination(stripped)) {
+    return stripped;
+  }
+
+  return looksSpecificDestination(raw) ? trimTrailingPunctuation(raw) : null;
+}
+
+function applyOneDayFidelityChecks(
+  section: "morning" | "afternoon",
+  activity: Activity,
+  index: number,
+  returnDestination: string | null,
+) {
+  const violations: RuleViolation[] = [];
+  const fieldBase = `itinerary.${section}[${index}]`;
+  let nextActivity: Activity = { ...activity };
+
+  if (nextActivity.sourceConfidence === "low" && !nextActivity.needsReview) {
+    nextActivity = { ...nextActivity, needsReview: true };
+    violations.push({
+      ruleId: "RULE-08",
+      field: `${fieldBase}.needsReview`,
+      message:
+        "Activity tour 1 ngày có độ tin cậy thấp phải được đánh dấu needsReview để người dùng kiểm tra lại.",
+      severity: "auto_fixed",
+      originalValue: "false",
+      correctedValue: "true",
+    });
+  }
+
+  if (looksLikeGenericTravelLine(nextActivity.text)) {
+    if (!nextActivity.needsReview) {
+      nextActivity = { ...nextActivity, needsReview: true };
+    }
+
+    violations.push({
+      ruleId: "RULE-08",
+      field: `${fieldBase}.text`,
+      message:
+        "Câu khởi hành/di chuyển tour 1 ngày đang mất đích đến. Cần giữ wording gần nguồn hoặc bổ sung địa điểm rõ ràng.",
+      severity: "needs_review",
+      originalValue: activity.text,
+      correctedValue: null,
+    });
+  } else if (looksLikeGenericReturnLine(nextActivity.text)) {
+    if (returnDestination) {
+      const corrected = `Khởi hành về ${returnDestination}.`;
+      if (normalizeComparisonValue(nextActivity.text) !== normalizeComparisonValue(corrected)) {
+        nextActivity = { ...nextActivity, text: corrected };
+        violations.push({
+          ruleId: "RULE-08",
+          field: `${fieldBase}.text`,
+          message:
+            "Câu về tour 1 ngày phải giữ đích đến rõ ràng. Đã tự động khôi phục từ điểm trả về đã biết.",
+          severity: "auto_fixed",
+          originalValue: activity.text,
+          correctedValue: corrected,
+        });
+      }
+    } else {
+      if (!nextActivity.needsReview) {
+        nextActivity = { ...nextActivity, needsReview: true };
+      }
+
+      violations.push({
+        ruleId: "RULE-08",
+        field: `${fieldBase}.text`,
+        message:
+          "Câu về tour 1 ngày đang mất đích đến và hệ thống không thể khôi phục an toàn. Cần review thủ công.",
+        severity: "needs_review",
+        originalValue: activity.text,
+        correctedValue: null,
+      });
+    }
+  }
+
+  const bulletCount = countPrimaryBullets(nextActivity.text);
+  if (bulletCount > MAX_PRIMARY_BULLETS) {
+    if (!nextActivity.needsReview) {
+      nextActivity = { ...nextActivity, needsReview: true };
+    }
+
+    violations.push({
+      ruleId: "RULE-08",
+      field: `${fieldBase}.text`,
+      message:
+        "Khối hoạt động tour 1 ngày đang giữ quá nhiều bullet phụ. Chỉ nên giữ câu mở đầu và các bullet chính.",
+      severity: "needs_review",
+      originalValue: activity.text,
+      correctedValue: null,
+    });
+  }
+
+  return { activity: nextActivity, violations };
+}
 
 const rule01OneDayLayout: RuleDefinition = {
   ruleId: "RULE-01",
@@ -249,6 +410,89 @@ const rule07MenuStructure: RuleDefinition = {
   },
 };
 
+const rule08OneDayWordingFidelity: RuleDefinition = {
+  ruleId: "RULE-08",
+  name: "Tour 1 ngày giữ wording gần nguồn và đích đến rõ ràng",
+  check: (draft) => {
+    const violations: RuleViolation[] = [];
+
+    if (draft.duration !== "ONE_DAY") {
+      return { draft, violations };
+    }
+
+    const returnDestination = deriveReturnDestination(
+      draft.returnLocation,
+      draft.schoolName,
+    );
+
+    const morning = draft.itinerary.morning.map((activity, index) => {
+      const result = applyOneDayFidelityChecks(
+        "morning",
+        activity,
+        index,
+        returnDestination,
+      );
+      violations.push(...result.violations);
+      return result.activity;
+    });
+
+    const afternoon = draft.itinerary.afternoon.map((activity, index) => {
+      const result = applyOneDayFidelityChecks(
+        "afternoon",
+        activity,
+        index,
+        returnDestination,
+      );
+      violations.push(...result.violations);
+      return result.activity;
+    });
+
+    return {
+      draft: {
+        ...draft,
+        itinerary: {
+          morning,
+          afternoon,
+        },
+      },
+      violations,
+    };
+  },
+};
+
+const rule09ProgramLabelFidelity: RuleDefinition = {
+  ruleId: "RULE-09",
+  name: "Program label và title phải là hai trường review riêng",
+  check: (draft) => {
+    const violations: RuleViolation[] = [];
+
+    if (draft.duration !== "ONE_DAY") {
+      return { draft, violations };
+    }
+
+    const programName = normalizeSpaces(draft.programName ?? "");
+    const title = normalizeSpaces(draft.title ?? "");
+
+    if (!programName || !title) {
+      return { draft, violations };
+    }
+
+    if (normalizeComparisonValue(programName) === normalizeComparisonValue(title)) {
+      violations.push({
+        ruleId: "RULE-09",
+        field: "programName",
+        message:
+          '"programName" đang bị gộp với "title". Với tour 1 ngày, heading nguồn và title ngắn phải được review tách riêng.',
+        severity: "needs_review",
+        originalValue: draft.programName ?? null,
+        correctedValue: null,
+      });
+    }
+
+    return { draft, violations };
+  },
+};
+
 export const V1_RULES: RuleDefinition[] = [
   rule01OneDayLayout,
   rule02TwoDayLayout,
@@ -257,6 +501,8 @@ export const V1_RULES: RuleDefinition[] = [
   rule05SchoolNameIntegrity,
   rule06ReturnToSchool,
   rule07MenuStructure,
+  rule08OneDayWordingFidelity,
+  rule09ProgramLabelFidelity,
 ];
 
 export { DEFAULT_GROUP_GREETING, GROUP_GREETINGS, SCHOOL_GREETING };

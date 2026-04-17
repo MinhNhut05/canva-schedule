@@ -100,12 +100,12 @@ describe("Admin rules actions", () => {
         user: { id: "1", role: "admin" },
       } as any);
       vi.mocked(db.companyRule.findUnique).mockResolvedValue({
-        ruleId: "RULE-08",
+        ruleId: "RULE-99",
         isActive: true,
       } as any);
       vi.mocked(db.companyRule.update).mockResolvedValue({} as any);
 
-      const result = await softDeleteRule("RULE-08");
+      const result = await softDeleteRule("RULE-99");
 
       expect(result.success).toBe(true);
       expect(db.companyRule.update).toHaveBeenCalledWith(

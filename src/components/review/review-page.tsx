@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
@@ -10,11 +10,14 @@ import {
   generateCanva,
   reExtractDraft,
   retryCanvaArtifact,
+  saveCanvaGenerationOptions,
   saveDraftField,
 } from "@/app/(app)/review/[id]/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import type { StructuredDraft } from "@/lib/ai/extraction-schema";
+import type { CanvaGenerationOptions } from "@/lib/review/draft";
 import { ERROR_MESSAGES } from "@/lib/messages";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 
@@ -104,6 +107,8 @@ interface ReviewPageProps {
   canvaArtifacts?: InitialCanvaArtifact[];
   templatePair?: TemplatePairSummary | null;
   initialCooldownUntil?: string | null;
+  initialCanvaOptions: CanvaGenerationOptions;
+  initialMenuMergeWarning?: string | null;
 }
 
 function isArtifactKind(value: string): value is ReviewArtifactKind {
@@ -166,6 +171,8 @@ export function ReviewPage({
   canvaArtifacts,
   templatePair,
   initialCooldownUntil,
+  initialCanvaOptions,
+  initialMenuMergeWarning,
 }: ReviewPageProps) {
   const router = useRouter();
   const [isApproved, setIsApproved] = useState(upload.reviewStatus === "APPROVED");
@@ -194,6 +201,12 @@ export function ReviewPage({
   );
   const [pendingRetryKinds, setPendingRetryKinds] = useState<ReviewArtifactKind[]>([]);
   const [canvaError, setCanvaError] = useState<string | null>(null);
+  const [canvaOptions, setCanvaOptions] = useState<CanvaGenerationOptions>(initialCanvaOptions);
+  const [isSavingCanvaOptions, setIsSavingCanvaOptions] = useState(false);
+  const [menuMergeWarning, setMenuMergeWarning] = useState<string | null>(
+    initialMenuMergeWarning ?? null,
+  );
+  const generationRequestInFlightRef = useRef(false);
 
   useEffect(() => {
     setArtifacts(normalizeArtifacts(canvaArtifacts));
@@ -202,6 +215,11 @@ export function ReviewPage({
   useEffect(() => {
     setIsApproved(upload.reviewStatus === "APPROVED");
   }, [upload.reviewStatus]);
+
+  useEffect(() => {
+    setCanvaOptions(initialCanvaOptions);
+    setMenuMergeWarning(initialMenuMergeWarning ?? null);
+  }, [initialCanvaOptions, initialMenuMergeWarning]);
 
   useEffect(() => {
     if (!cooldownUntil) {
@@ -261,7 +279,9 @@ export function ReviewPage({
   );
 
   const hasPersistedResults = artifacts.length > 0;
-  const generationDisabled = isGenerating || isRateLimited || !templatePair;
+  const generationDisabled =
+    isGenerating || isRateLimited || isSavingCanvaOptions || !templatePair;
+  const showOneDayCanvaOptions = draft?.duration === "ONE_DAY" && upload.tourDuration === "ONE_DAY";
 
   const handleSaveField = useCallback(
     async (
@@ -292,6 +312,44 @@ export function ReviewPage({
     setCooldownMinutes(Math.max(1, Math.ceil(seconds / 60)));
   }, []);
 
+  const handleToggleMenuMerge = useCallback(
+    async (checked: boolean) => {
+      const previousValue = canvaOptions.mergeMenuIntoItinerary;
+      setCanvaOptions((current) => ({
+        ...current,
+        mergeMenuIntoItinerary: checked,
+      }));
+      setIsSavingCanvaOptions(true);
+
+      try {
+        const result = await saveCanvaGenerationOptions(upload.id, checked);
+
+        if (!result.success || !result.options) {
+          setCanvaOptions((current) => ({
+            ...current,
+            mergeMenuIntoItinerary: previousValue,
+          }));
+          toast.error(result.error || "Không thể lưu tùy chọn Canva.");
+          return;
+        }
+
+        setCanvaOptions(result.options);
+        setMenuMergeWarning(result.warningMessage ?? null);
+        toast.success("Đã lưu tùy chọn tạo Canva.");
+        router.refresh();
+      } catch {
+        setCanvaOptions((current) => ({
+          ...current,
+          mergeMenuIntoItinerary: previousValue,
+        }));
+        toast.error("Không thể lưu tùy chọn Canva.");
+      } finally {
+        setIsSavingCanvaOptions(false);
+      }
+    },
+    [canvaOptions.mergeMenuIntoItinerary, router, upload.id],
+  );
+
   const handleApprove = useCallback(async () => {
     setIsApproving(true);
     try {
@@ -311,10 +369,11 @@ export function ReviewPage({
   }, [router, upload.id]);
 
   const handleGenerate = useCallback(async () => {
-    if (!templatePair || !isApproved) {
+    if (generationRequestInFlightRef.current || !templatePair || !isApproved) {
       return;
     }
 
+    generationRequestInFlightRef.current = true;
     setIsGenerating(true);
     setCanvaError(null);
 
@@ -347,6 +406,7 @@ export function ReviewPage({
     } catch {
       setCanvaError(ERROR_MESSAGES.canvaGeneration.description);
     } finally {
+      generationRequestInFlightRef.current = false;
       setIsGenerating(false);
     }
   }, [applyCooldown, isApproved, router, templatePair, upload.id]);
@@ -538,6 +598,57 @@ export function ReviewPage({
         />
       </div>
 
+      {showOneDayCanvaOptions ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Tùy chọn Canva 1 ngày
+              </p>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Có nhập menu vào lịch trình không?
+                </h3>
+                <p className="max-w-2xl text-sm text-slate-600">
+                  Khi bật, các dòng menu ngắn sẽ được ghép vào lịch trình 1 ngày trước khi tạo Canva. Tùy chọn này được lưu riêng cho từng tài liệu.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+              <span className="text-sm font-medium text-slate-700">
+                {canvaOptions.mergeMenuIntoItinerary ? "Đang bật" : "Đang tắt"}
+              </span>
+              <Switch
+                checked={canvaOptions.mergeMenuIntoItinerary}
+                onCheckedChange={(checked) => void handleToggleMenuMerge(checked)}
+                disabled={isSavingCanvaOptions}
+                aria-label="Có nhập menu vào lịch trình không?"
+              />
+            </div>
+          </div>
+
+          <p className="mt-3 text-sm text-slate-600">
+            {canvaOptions.mergeMenuIntoItinerary
+              ? "Menu sẽ được chèn vào block lịch trình tương ứng khi tạo Canva."
+              : "Menu sẽ giữ riêng ở thiết kế thực đơn, không ghép vào lịch trình."}
+          </p>
+
+          {isSavingCanvaOptions ? (
+            <p className="mt-2 text-sm text-slate-500">Đang lưu lựa chọn...</p>
+          ) : null}
+
+          {menuMergeWarning ? (
+            <Alert className="mt-4 border-amber-300 bg-amber-50">
+              <AlertTriangle className="size-4 text-amber-600" />
+              <AlertTitle className="text-amber-900">Cảnh báo độ dài trước khi tạo Canva</AlertTitle>
+              <AlertDescription className="text-amber-800">
+                {menuMergeWarning}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
+      ) : null}
+
       {isApproved ? (
         <div className="space-y-6">
           {/* Completion banner — replaces approved alert when generation is done */}
@@ -621,6 +732,7 @@ export function ReviewPage({
         isGenerating={isGenerating}
         hasResults={hasCompletedAttempt}
         isRateLimited={isRateLimited}
+        disableGenerate={generationDisabled}
         onApprove={() => void handleApprove()}
         onGenerate={() => void handleGenerate()}
       />

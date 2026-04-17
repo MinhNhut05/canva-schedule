@@ -31,22 +31,31 @@ QUY TẮC BẮT BUỘC:
    - Nếu không xác định chắc chắn "programName", để trống thay vì bịa thêm
 
 QUY TẮC RÚT GỌN NỘI DUNG (áp dụng khi tạo trường "text" cho mỗi activity trong itinerary):
-1. Khởi hành/di chuyển: Chỉ giữ "Khởi hành đi [Địa điểm]." — bỏ tất cả câu marketing, miêu tả (nghỉ ngơi trên xe, làm quen, giao lưu...).
+1. Với tour 1 ngày (ONE_DAY), luôn ưu tiên wording gần với câu nguồn đã được duyệt:
+   - Giữ nguyên đích đến ở câu khởi hành/di chuyển/câu về. Không được rút còn "Khởi hành đi." hoặc "Khởi hành về." nếu văn bản nguồn có đích đến rõ ràng.
+   - Không được tự thay heading nguồn bằng nhãn chung. Khi văn bản có heading rõ ràng, giữ heading đó vào "programName"; "title" chỉ là tiêu đề tuyến/tiêu đề phụ ngắn hơn.
+   - Với khối điểm đến lớn như Suối Tiên, giữ câu mở đầu + các bullet chính; không thêm bullet mới, không mở rộng chi tiết sâu.
+   - Không tự thêm "Sau khi dùng bữa trưa" nếu phiên bản rút gọn đã duyệt không dùng cụm này.
+   - Nếu không chắc rút gọn thế nào cho an toàn, giữ wording gần nguồn hơn, đặt "sourceConfidence" là "low" hoặc "medium", và bật "needsReview": true.
+2. Khởi hành/di chuyển: Chỉ giữ câu chính có đích đến rõ ràng, bỏ các câu marketing/miêu tả phụ (nghỉ ngơi trên xe, làm quen, giao lưu...) nếu không cần thiết.
    Ví dụ: "Khởi hành đi Đồng Tháp. Quý khách nghỉ ngơi trên xe..." → "Khởi hành đi Đồng Tháp."
-2. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan", chỉ giữ tên địa điểm, bỏ mô tả chi tiết.
+3. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan", chỉ giữ tên địa điểm, bỏ mô tả chi tiết.
    - SCHOOL: "Quý thầy cô và các bạn học sinh tham quan [Tên địa điểm]."
    - GROUP: "Quý đoàn tham quan [Tên địa điểm]."
    Ví dụ SCHOOL: "Tham quan Khu di tích Nguyễn Sinh Sắc – nơi lưu giữ cội nguồn..." → "Quý thầy cô và các bạn học sinh tham quan Khu di tích Nguyễn Sinh Sắc."
    Ví dụ GROUP: "Tham quan Khu di tích Xẻo Quýt. Trải nghiệm ngồi xuồng..." → "Quý đoàn tham quan Khu di tích Xẻo Quýt."
-3. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng với dấu chấm tròn (•) đầu dòng.
+4. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng với dấu chấm tròn (•) đầu dòng. Với tour 1 ngày, chỉ giữ các bullet chính thực sự cần cho bố cục Canva.
    Ví dụ:
-   "Sau khi dùng bữa trưa, Quý đoàn tự do tham quan và vui chơi tại Khu du lịch Văn Hóa Phương Nam:\n• Xem biểu diễn xiếc thú: Khỉ, Chó, Dê.\n• Vui chơi tại Công viên nước\n• Trải nghiệm trò chơi dân gian, trò chơi liên hoàn nước"
-4. Khung giờ sau ăn trưa: Luôn thêm "Sau khi dùng bữa trưa, ..." ở đầu câu cho hoạt động đầu tiên sau giờ trưa. Áp dụng cho cả SCHOOL và GROUP.
+   "Sau khi dùng bữa trưa, Quý đoàn tự do tham quan và vui chơi tại Khu du lịch Văn Hóa Phương Nam:
+• Xem biểu diễn xiếc thú: Khỉ, Chó, Dê.
+• Vui chơi tại Công viên nước
+• Trải nghiệm trò chơi dân gian, trò chơi liên hoàn nước"
+5. Khung giờ sau ăn trưa: Chỉ thêm "Sau khi dùng bữa trưa, ..." khi câu nguồn hoặc phương án duyệt thực sự cần cụm đó để tự nhiên. Không coi đây là cụm bắt buộc.
    - GROUP: "Sau khi dùng bữa trưa, Quý đoàn..."
    - SCHOOL: "Sau khi dùng bữa trưa, Quý thầy cô và các bạn học sinh..."
-5. Dấu chấm cuối tên địa điểm: Mỗi tên địa điểm kết thúc bằng dấu chấm "."
+6. Dấu chấm cuối tên địa điểm: Mỗi tên địa điểm kết thúc bằng dấu chấm "."
    Ví dụ: "Tham quan Khu di tích Nguyễn Sinh Sắc." / "Khởi hành đi Đồng Tháp."
-6. Kết thúc chương trình: LUÔN thêm một activity cuối cùng với text "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình.
+7. Kết thúc chương trình: LUÔN thêm một activity cuối cùng với text "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình.
    - Tour 1 ngày (ONE_DAY): thêm vào cuối mảng "afternoon"
    - Tour 2 ngày (TWO_DAY): thêm vào cuối mảng "day2"
    Ví dụ: {"timeLabel": null, "text": "Kết thúc chương trình!", "sourceConfidence": "high", "needsReview": false}

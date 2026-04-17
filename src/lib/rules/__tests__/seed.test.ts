@@ -3,15 +3,16 @@ import { describe, it, expect, vi } from "vitest";
 import { seedCompanyRules, SEEDED_RULE_IDS } from "../seed";
 
 describe("seedCompanyRules", () => {
-  it("exports SEEDED_RULE_IDS with 7 entries", () => {
-    expect(SEEDED_RULE_IDS.size).toBe(7);
+  it("exports SEEDED_RULE_IDS with 9 entries", () => {
+    expect(SEEDED_RULE_IDS.size).toBe(9);
     expect(SEEDED_RULE_IDS.has("RULE-01")).toBe(true);
     expect(SEEDED_RULE_IDS.has("RULE-07")).toBe(true);
+    expect(SEEDED_RULE_IDS.has("RULE-09")).toBe(true);
   });
 
-  it("SEEDED_RULE_IDS does not contain rules outside RULE-01 to RULE-07", () => {
+  it("SEEDED_RULE_IDS does not contain rules outside the seeded range", () => {
     expect(SEEDED_RULE_IDS.has("RULE-00")).toBe(false);
-    expect(SEEDED_RULE_IDS.has("RULE-08")).toBe(false);
+    expect(SEEDED_RULE_IDS.has("RULE-10")).toBe(false);
   });
 
   it("uses upsert with empty update{} (non-destructive) for each seeded rule", async () => {
@@ -22,7 +23,7 @@ describe("seedCompanyRules", () => {
 
     await seedCompanyRules(mockPrisma);
 
-    expect(mockUpsert).toHaveBeenCalledTimes(7);
+    expect(mockUpsert).toHaveBeenCalledTimes(9);
 
     // Each upsert should have update: {} (non-destructive)
     for (const call of mockUpsert.mock.calls) {
@@ -32,7 +33,7 @@ describe("seedCompanyRules", () => {
     }
   });
 
-  it("seeds all 7 rules with correct ruleIds", async () => {
+  it("seeds all 9 rules with correct ruleIds", async () => {
     const mockUpsert = vi.fn().mockResolvedValue({});
     const mockPrisma = {
       companyRule: { upsert: mockUpsert },
@@ -46,6 +47,7 @@ describe("seedCompanyRules", () => {
 
     expect(seededIds).toContain("RULE-01");
     expect(seededIds).toContain("RULE-07");
-    expect(seededIds).toHaveLength(7);
+    expect(seededIds).toContain("RULE-09");
+    expect(seededIds).toHaveLength(9);
   });
 });

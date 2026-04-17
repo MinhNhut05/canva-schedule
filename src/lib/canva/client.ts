@@ -14,13 +14,25 @@ export class CanvaRateLimitError extends Error {
 
 export async function canvaFetch(
   path: string,
-  init?: RequestInit & { retried?: boolean; forceRefreshToken?: boolean }
+  init?: RequestInit & {
+    retried?: boolean;
+    forceRefreshToken?: boolean;
+    accessTokenOverride?: string;
+  }
 ): Promise<Response> {
-  const token = await getValidAccessToken({
-    forceRefresh: init?.forceRefreshToken,
-  });
+  const {
+    retried,
+    forceRefreshToken,
+    accessTokenOverride,
+    ...requestInit
+  } = init ?? {};
+  const token =
+    accessTokenOverride ??
+    (await getValidAccessToken({
+      forceRefresh: forceRefreshToken,
+    }));
   const url = path.startsWith("http") ? path : `${CANVA_API_BASE}${path}`;
-  const headers = new Headers(init?.headers);
+  const headers = new Headers(requestInit.headers);
 
   headers.set("Authorization", `Bearer ${token}`);
   if (!headers.has("Content-Type")) {
@@ -28,7 +40,7 @@ export async function canvaFetch(
   }
 
   const response = await fetch(url, {
-    ...init,
+    ...requestInit,
     headers,
     cache: "no-store",
   });
@@ -39,11 +51,15 @@ export async function canvaFetch(
     throw new CanvaRateLimitError(Number.isNaN(cooldownSeconds) ? 60 : cooldownSeconds);
   }
 
-  if (response.status === 401 && !init?.retried) {
+  if (response.status === 401 && !retried) {
+    const latestKnownToken = await getValidAccessToken();
+    const shouldForceRefresh = latestKnownToken === token;
+
     return canvaFetch(path, {
-      ...init,
+      ...requestInit,
       retried: true,
-      forceRefreshToken: true,
+      forceRefreshToken: shouldForceRefresh,
+      accessTokenOverride: shouldForceRefresh ? undefined : latestKnownToken,
     });
   }
 

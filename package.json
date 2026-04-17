@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:seed:canva-templates": "tsx prisma/seed-canva-templates.ts",
     "test": "vitest run",
     "test:unit": "vitest run src/lib/documents/",
     "test:fixtures": "tsx tests/fixtures/documents/create-fixtures.ts",

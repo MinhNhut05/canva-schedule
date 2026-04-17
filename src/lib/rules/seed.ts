@@ -49,6 +49,20 @@ const COMPANY_RULES_SEED = [
       "Thực đơn phải tách riêng khỏi lịch trình, cấu trúc phải khớp với loại tour (1 ngày: sáng/trưa/chiều, 2 ngày: ngày 1/ngày 2).",
     category: "menu",
   },
+  {
+    ruleId: "RULE-08",
+    name: "Tour 1 ngày giữ wording gần nguồn và đích đến rõ ràng",
+    description:
+      "Với tour 1 ngày, câu khởi hành/câu về phải giữ đích đến rõ ràng, khối hoạt động lớn chỉ giữ các bullet chính, và activity độ tin cậy thấp phải được đẩy sang review.",
+    category: "content",
+  },
+  {
+    ruleId: "RULE-09",
+    name: "Program label và title phải tách riêng",
+    description:
+      'Heading nguồn dùng cho program label phải được giữ riêng với "title" ngắn của tour, không được gộp hai trường thành một nhãn chung.',
+    category: "naming",
+  },
 ] as const;
 
 export const SEEDED_RULE_IDS: Set<string> = new Set(

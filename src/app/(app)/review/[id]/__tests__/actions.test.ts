@@ -14,7 +14,10 @@ const {
   buildOneDayMenuPayload,
   buildTwoDayItineraryPayload,
   buildTwoDayMenuPayload,
+  getCanvaGenerationOptions,
   getDraft,
+  getOneDayMenuMergeWarning,
+  persistCanvaGenerationOptions,
   revalidatePath,
 } = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -33,7 +36,10 @@ const {
   buildOneDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "one-day-menu" } })),
   buildTwoDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "two-day-itinerary" } })),
   buildTwoDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "two-day-menu" } })),
+  getCanvaGenerationOptions: vi.fn(),
   getDraft: vi.fn(),
+  getOneDayMenuMergeWarning: vi.fn(),
+  persistCanvaGenerationOptions: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
@@ -76,8 +82,11 @@ vi.mock("@/lib/canva/payload", () => ({
 }));
 
 vi.mock("@/lib/review/draft", () => ({
+  getCanvaGenerationOptions,
   getDraft,
+  getOneDayMenuMergeWarning,
   approveDraft: vi.fn(),
+  saveCanvaGenerationOptions: persistCanvaGenerationOptions,
   saveDraft: vi.fn(),
 }));
 
@@ -96,6 +105,7 @@ import {
   generateCanva,
   loadCanvaArtifacts,
   retryCanvaArtifact,
+  saveCanvaGenerationOptions,
 } from "@/app/(app)/review/[id]/actions";
 
 const approvedOneDayUpload = {
@@ -116,8 +126,38 @@ describe("review actions canva flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     auth.mockResolvedValue({ user: { id: "user-1" } });
+    getCanvaGenerationOptions.mockResolvedValue({ mergeMenuIntoItinerary: false });
     getDraft.mockResolvedValue(oneDayDraft);
+    getOneDayMenuMergeWarning.mockReturnValue(null);
+    persistCanvaGenerationOptions.mockResolvedValue({ mergeMenuIntoItinerary: false });
     findFirst.mockResolvedValue(approvedOneDayUpload);
+  });
+
+  it("saveCanvaGenerationOptions persists the per-upload choice and returns warning state", async () => {
+    findFirst.mockResolvedValueOnce({
+      id: "upload-1",
+      tourDuration: "ONE_DAY",
+    });
+    persistCanvaGenerationOptions.mockResolvedValueOnce({
+      mergeMenuIntoItinerary: true,
+    });
+    getOneDayMenuMergeWarning.mockReturnValueOnce(
+      "Đang bật nhập menu vào lịch trình.",
+    );
+
+    await expect(saveCanvaGenerationOptions("upload-1", true)).resolves.toEqual({
+      success: true,
+      options: { mergeMenuIntoItinerary: true },
+      warningMessage: "Đang bật nhập menu vào lịch trình.",
+    });
+
+    expect(persistCanvaGenerationOptions).toHaveBeenCalledWith("upload-1", {
+      mergeMenuIntoItinerary: true,
+    });
+    expect(getOneDayMenuMergeWarning).toHaveBeenCalledWith(oneDayDraft, {
+      mergeMenuIntoItinerary: true,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/review/upload-1");
   });
 
   it("generateCanva returns error if upload is not APPROVED", async () => {
@@ -155,7 +195,10 @@ describe("review actions canva flow", () => {
 
     const result = await generateCanva("upload-1");
 
-    expect(buildOneDayItineraryPayload).toHaveBeenCalledWith(oneDayDraft);
+    expect(getCanvaGenerationOptions).toHaveBeenCalledWith("upload-1");
+    expect(buildOneDayItineraryPayload).toHaveBeenCalledWith(oneDayDraft, {
+      mergeMenuIntoItinerary: false,
+    });
     expect(buildOneDayMenuPayload).toHaveBeenCalledWith(oneDayDraft);
     expect(resolveTemplatePair).toHaveBeenCalledWith("ONE_DAY");
     expect(generateArtifact).toHaveBeenCalledTimes(2);
@@ -179,6 +222,63 @@ describe("review actions canva flow", () => {
       isRateLimited: false,
       cooldownSeconds: undefined,
     });
+  });
+
+  it("deduplicates concurrent generateCanva calls for the same upload", async () => {
+    let resolveItinerary:
+      | ((value: {
+          artifactType: "ITINERARY";
+          status: "SUCCEEDED";
+          designId: string;
+        }) => void)
+      | undefined;
+    let resolveMenu:
+      | ((value: {
+          artifactType: "MENU";
+          status: "SUCCEEDED";
+          designId: string;
+        }) => void)
+      | undefined;
+
+    generateArtifact
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveItinerary = resolve as typeof resolveItinerary;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveMenu = resolve as typeof resolveMenu;
+          })
+      );
+
+    const firstRequest = generateCanva("upload-1");
+    const secondRequest = generateCanva("upload-1");
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(generateArtifact).toHaveBeenCalledTimes(2);
+
+    resolveItinerary?.({
+      artifactType: "ITINERARY",
+      status: "SUCCEEDED",
+      designId: "design-itinerary",
+    });
+    resolveMenu?.({
+      artifactType: "MENU",
+      status: "SUCCEEDED",
+      designId: "design-menu",
+    });
+
+    const [firstResult, secondResult] = await Promise.all([
+      firstRequest,
+      secondRequest,
+    ]);
+
+    expect(firstResult).toEqual(secondResult);
+    expect(generateArtifact).toHaveBeenCalledTimes(2);
   });
 
   it("generateCanva handles partial success when one artifact fails", async () => {
@@ -229,6 +329,36 @@ describe("review actions canva flow", () => {
       kind: "MENU",
       data: { menu: { type: "text", text: "one-day-menu" } },
       title: "SileTravel - Tour 1 ngày - Thực đơn",
+    });
+  });
+
+  it("retryCanvaArtifact reuses saved merge options for one-day itinerary payloads", async () => {
+    getCanvaGenerationOptions.mockResolvedValueOnce({
+      mergeMenuIntoItinerary: true,
+    });
+    generateArtifact.mockResolvedValue({
+      artifactType: "ITINERARY",
+      status: "SUCCEEDED",
+      designId: "design-itinerary",
+    });
+
+    await expect(retryCanvaArtifact("upload-1", "ITINERARY")).resolves.toEqual({
+      artifactType: "ITINERARY",
+      status: "SUCCEEDED",
+      designId: "design-itinerary",
+    });
+
+    expect(getCanvaGenerationOptions).toHaveBeenCalledWith("upload-1");
+    expect(buildOneDayItineraryPayload).toHaveBeenCalledWith(oneDayDraft, {
+      mergeMenuIntoItinerary: true,
+    });
+    expect(buildOneDayMenuPayload).not.toHaveBeenCalled();
+    expect(generateArtifact).toHaveBeenCalledWith({
+      uploadId: "upload-1",
+      duration: "ONE_DAY",
+      kind: "ITINERARY",
+      data: { itinerary: { type: "text", text: "one-day-itinerary" } },
+      title: "SileTravel - Tour 1 ngày - Lịch trình",
     });
   });
 

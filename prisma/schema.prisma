@@ -51,6 +51,7 @@ model Upload {
   reviewStatus     String?      // PENDING_REVIEW | REVIEWED | APPROVED
   structuredDraft  Json?
   reviewFlags      Json?
+  canvaOptions     Json?        // Per-upload Canva generation options (kept separate from reviewed draft content)
   aiModel          String?
   aiAttemptCount   Int          @default(0)
   approvedAt       DateTime?

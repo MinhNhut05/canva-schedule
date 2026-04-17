@@ -27,10 +27,27 @@ import {
 import { prisma } from "@/lib/db";
 import {
   approveDraft as persistApproval,
+  getCanvaGenerationOptions,
   getDraft,
+  getOneDayMenuMergeWarning,
+  saveCanvaGenerationOptions as persistCanvaGenerationOptions,
   saveDraft as persistDraft,
+  type CanvaGenerationOptions,
 } from "@/lib/review/draft";
 import { AI_STATUS } from "@/lib/review/status";
+
+type GenerateCanvaResponse = {
+  success: boolean;
+  results: ArtifactResult[];
+  error?: string;
+  isRateLimited?: boolean;
+  cooldownSeconds?: number;
+};
+
+const activeCanvaGenerationByUpload = new Map<
+  string,
+  Promise<GenerateCanvaResponse>
+>();
 
 function setByPath(obj: unknown, path: string, value: unknown): unknown {
   const clone = JSON.parse(JSON.stringify(obj));
@@ -63,10 +80,15 @@ function getArtifactLabel(kind: ArtifactKind) {
   return kind === "ITINERARY" ? "Lịch trình" : "Thực đơn";
 }
 
-function buildArtifactPayload(duration: TourDuration, kind: ArtifactKind, draft: Awaited<ReturnType<typeof getDraft>>) {
+function buildArtifactPayload(
+  duration: TourDuration,
+  kind: ArtifactKind,
+  draft: Awaited<ReturnType<typeof getDraft>>,
+  canvaOptions?: CanvaGenerationOptions,
+) {
   if (kind === "ITINERARY") {
     return duration === "ONE_DAY"
-      ? buildOneDayItineraryPayload(draft)
+      ? buildOneDayItineraryPayload(draft, canvaOptions)
       : buildTwoDayItineraryPayload(draft);
   }
 
@@ -195,13 +217,79 @@ export async function approveDraft(
   return { success: true };
 }
 
-export async function generateCanva(uploadId: string): Promise<{
+export async function saveCanvaGenerationOptions(
+  uploadId: string,
+  mergeMenuIntoItinerary: boolean,
+): Promise<{
   success: boolean;
-  results: ArtifactResult[];
+  options?: CanvaGenerationOptions;
+  warningMessage?: string | null;
   error?: string;
-  isRateLimited?: boolean;
-  cooldownSeconds?: number;
 }> {
+  const userId = await requireAuth();
+
+  if (!userId) {
+    return { success: false, error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const upload = await prisma.upload.findFirst({
+    where: { id: uploadId, userId },
+    select: { id: true, tourDuration: true },
+  });
+
+  if (!upload) {
+    return { success: false, error: "Không tìm thấy tài liệu." };
+  }
+
+  if (upload.tourDuration !== "ONE_DAY") {
+    return {
+      success: false,
+      error: "Tùy chọn này chỉ áp dụng cho tour 1 ngày.",
+    };
+  }
+
+  const draft = await getDraft(uploadId);
+
+  if (!draft || draft.duration !== "ONE_DAY") {
+    return { success: false, error: "Không tìm thấy bản nháp tour 1 ngày." };
+  }
+
+  const options = await persistCanvaGenerationOptions(uploadId, {
+    mergeMenuIntoItinerary,
+  });
+  const warningMessage = getOneDayMenuMergeWarning(draft, options);
+
+  revalidatePath(`/review/${uploadId}`);
+
+  return {
+    success: true,
+    options,
+    warningMessage,
+  };
+}
+
+export async function generateCanva(uploadId: string): Promise<GenerateCanvaResponse> {
+  const activeRequest = activeCanvaGenerationByUpload.get(uploadId);
+
+  if (activeRequest) {
+    return activeRequest;
+  }
+
+  const request = runGenerateCanva(uploadId);
+  activeCanvaGenerationByUpload.set(uploadId, request);
+
+  const cleanup = () => {
+    if (activeCanvaGenerationByUpload.get(uploadId) === request) {
+      activeCanvaGenerationByUpload.delete(uploadId);
+    }
+  };
+
+  void request.then(cleanup, cleanup);
+
+  return request;
+}
+
+async function runGenerateCanva(uploadId: string): Promise<GenerateCanvaResponse> {
   const { userId, upload } = await getAuthorizedUpload(uploadId);
 
   if (!userId) {
@@ -259,11 +347,17 @@ export async function generateCanva(uploadId: string): Promise<{
     };
   }
 
+  const oneDayCanvaOptions =
+    upload.tourDuration === "ONE_DAY"
+      ? await getCanvaGenerationOptions(uploadId)
+      : undefined;
+
   const pair = await resolveTemplatePair(upload.tourDuration);
   const itineraryPayload = buildArtifactPayload(
     upload.tourDuration,
     "ITINERARY",
     draft,
+    oneDayCanvaOptions,
   );
   const menuPayload = buildArtifactPayload(upload.tourDuration, "MENU", draft);
 
@@ -371,8 +465,18 @@ export async function retryCanvaArtifact(
     };
   }
 
+  const oneDayCanvaOptions =
+    upload.tourDuration === "ONE_DAY" && kind === "ITINERARY"
+      ? await getCanvaGenerationOptions(uploadId)
+      : undefined;
+
   const pair = await resolveTemplatePair(upload.tourDuration);
-  const payload = buildArtifactPayload(upload.tourDuration, kind, draft);
+  const payload = buildArtifactPayload(
+    upload.tourDuration,
+    kind,
+    draft,
+    oneDayCanvaOptions,
+  );
 
   const result = await generateArtifact({
     uploadId,
@@ -470,6 +574,19 @@ export async function reExtractDraft(
       error instanceof Error
         ? error.message
         : "Co loi xay ra khi trich xuat lai.";
+
+    console.error("[Review reExtractDraft] failed", {
+      uploadId,
+      message,
+      error:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
+    });
 
     await prisma.upload.update({
       where: { id: uploadId },

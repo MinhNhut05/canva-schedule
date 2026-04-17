@@ -1,6 +1,5 @@
 import type {
   OneDayDraft,
-  StructuredDraft,
   TwoDayDraft,
 } from "@/lib/ai/extraction-schema";
 import { describe, expect, it } from "vitest";
@@ -29,7 +28,7 @@ function makeOneDaySchoolDraft(
         { text: "Khởi hành từ trường", sourceConfidence: "high", needsReview: false },
       ],
       afternoon: [
-        { text: "Về lại trường", sourceConfidence: "high", needsReview: false },
+        { text: "Khởi hành về THPT Trần Đại Nghĩa.", sourceConfidence: "high", needsReview: false },
       ],
     },
     menu: {
@@ -357,6 +356,232 @@ describe("RULE-07: Menu separation and structure", () => {
 
     const result = applyRules(draft);
     expect(result.violations.filter((v) => v.ruleId === "RULE-07")).toHaveLength(0);
+  });
+});
+
+describe("RULE-08: One-day wording fidelity", () => {
+  it("passes canonical school wording that keeps destination-rich lines and primary bullets only", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        programName: "CHƯƠNG TRÌNH TRẢI NGHIỆM NGOẠI KHÓA",
+        title: "LONG TUYỀN 2 - SUỐI TIÊN",
+        schoolName: "Trường tiểu học Long Tuyền 2",
+        returnLocation: "Trường tiểu học Long Tuyền 2",
+        itinerary: {
+          morning: [
+            {
+              text: "Khởi hành đi Bến Nhà Rồng.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+          afternoon: [
+            {
+              text:
+                "Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:\n• Tham quan các khu chủ đề nổi bật.\n• Trải nghiệm trò chơi phù hợp.\n• Tập trung theo hướng dẫn của đoàn.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+            {
+              text: "Khởi hành về Trường tiểu học Long Tuyền 2.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(result.violations.filter((v) => v.ruleId === "RULE-08")).toHaveLength(0);
+  });
+
+  it("marks low-confidence one-day wording for review", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        itinerary: {
+          morning: [
+            {
+              text: "Khởi hành đi Bến Nhà Rồng.",
+              sourceConfidence: "low",
+              needsReview: false,
+            },
+          ],
+          afternoon: [
+            {
+              text: "Khởi hành về Trường tiểu học Long Tuyền 2.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(result.correctedDraft.duration).toBe("ONE_DAY");
+    if (result.correctedDraft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+
+    expect(result.correctedDraft.itinerary.morning[0].needsReview).toBe(true);
+    expect(
+      result.violations.some(
+        (violation) =>
+          violation.ruleId === "RULE-08" &&
+          violation.field === "itinerary.morning[0].needsReview" &&
+          violation.severity === "auto_fixed",
+      ),
+    ).toBe(true);
+  });
+
+  it("flags a generic outbound travel line that lost its destination", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        itinerary: {
+          morning: [
+            { text: "Khởi hành đi.", sourceConfidence: "high", needsReview: false },
+          ],
+          afternoon: [
+            {
+              text: "Khởi hành về Trường tiểu học Long Tuyền 2.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+        },
+      }),
+    );
+
+    const violations = result.violations.filter((v) => v.ruleId === "RULE-08");
+    expect(violations).toHaveLength(1);
+    expect(violations[0].severity).toBe("needs_review");
+    expect(result.correctedDraft.duration).toBe("ONE_DAY");
+    if (result.correctedDraft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+
+    expect(result.correctedDraft.itinerary.morning[0].needsReview).toBe(true);
+  });
+
+  it("repairs a generic return line when the saved return destination is known", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        schoolName: "Trường tiểu học Long Tuyền 2",
+        returnLocation: "Trường tiểu học Long Tuyền 2",
+        itinerary: {
+          morning: [
+            {
+              text: "Khởi hành đi Bến Nhà Rồng.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+          afternoon: [
+            { text: "Khởi hành về.", sourceConfidence: "high", needsReview: false },
+          ],
+        },
+      }),
+    );
+
+    expect(result.correctedDraft.duration).toBe("ONE_DAY");
+    if (result.correctedDraft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+
+    expect(result.correctedDraft.itinerary.afternoon[0].text).toBe(
+      "Khởi hành về Trường tiểu học Long Tuyền 2.",
+    );
+    expect(
+      result.violations.some(
+        (violation) =>
+          violation.ruleId === "RULE-08" &&
+          violation.field === "itinerary.afternoon[0].text" &&
+          violation.severity === "auto_fixed",
+      ),
+    ).toBe(true);
+  });
+
+  it("flags over-expanded destination blocks that keep too many bullets", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        clientType: "GROUP",
+        greetingText: DEFAULT_GROUP_GREETING,
+        schoolName: undefined,
+        title: "CẦN THƠ - SUỐI TIÊN",
+        itinerary: {
+          morning: [
+            {
+              text: "Khởi hành đi Suối Tiên.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+          afternoon: [
+            {
+              text:
+                "Quý khách tự do tham quan và vui chơi tại Suối Tiên:\n• Khu chủ đề 1.\n• Khu chủ đề 2.\n• Khu chủ đề 3.\n• Khu chủ đề 4.",
+              sourceConfidence: "high",
+              needsReview: false,
+            },
+          ],
+        },
+        menu: {
+          morning: [],
+          lunch: [{ text: "Cơm trưa", needsReview: false }],
+          afternoon: [],
+        },
+      }),
+    );
+
+    expect(
+      result.violations.some(
+        (violation) =>
+          violation.ruleId === "RULE-08" &&
+          violation.field === "itinerary.afternoon[0].text" &&
+          violation.severity === "needs_review",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("RULE-09: Program label/title separation", () => {
+  it("passes when programName and title stay distinct", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        programName: "CHƯƠNG TRÌNH TRẢI NGHIỆM NGOẠI KHÓA",
+        title: "LONG TUYỀN 2 - SUỐI TIÊN",
+      }),
+    );
+
+    expect(result.violations.filter((v) => v.ruleId === "RULE-09")).toHaveLength(0);
+  });
+
+  it("flags collapsed school labels when programName matches title", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        programName: "LONG TUYỀN 2 - SUỐI TIÊN",
+        title: "LONG TUYỀN 2 - SUỐI TIÊN",
+      }),
+    );
+
+    const violations = result.violations.filter((v) => v.ruleId === "RULE-09");
+    expect(violations).toHaveLength(1);
+    expect(violations[0].severity).toBe("needs_review");
+  });
+
+  it("flags collapsed group labels when programName reuses the short route title", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        clientType: "GROUP",
+        greetingText: DEFAULT_GROUP_GREETING,
+        schoolName: undefined,
+        programName: "CẦN THƠ - SUỐI TIÊN",
+        title: "CẦN THƠ - SUỐI TIÊN",
+      }),
+    );
+
+    const violations = result.violations.filter((v) => v.ruleId === "RULE-09");
+    expect(violations).toHaveLength(1);
+    expect(violations[0].field).toBe("programName");
   });
 });
 

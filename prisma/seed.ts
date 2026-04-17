@@ -26,6 +26,11 @@ async function main() {
   await seedCompanyRules(prisma);
   await seedCanvaTemplates(prisma);
 
+  console.log("Resetting existing users and user-owned records...");
+  await prisma.canvaArtifact.deleteMany();
+  await prisma.upload.deleteMany();
+  await prisma.user.deleteMany();
+
   for (const user of seedUsers) {
     const passwordHash = await bcrypt.hash(user.password, SALT_ROUNDS);
 

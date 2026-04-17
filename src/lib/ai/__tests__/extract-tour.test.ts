@@ -33,6 +33,46 @@ const VALID_ONE_DAY_RESPONSE = JSON.stringify({
   },
 });
 
+const PHASE7_ONE_DAY_RESPONSE = JSON.stringify({
+  duration: "ONE_DAY",
+  programName: "CHƯƠNG TRÌNH TRẢI NGHIỆM NGOẠI KHÓA",
+  title: "LONG TUYỀN 2 - SUỐI TIÊN",
+  clientType: "SCHOOL",
+  schoolName: "Trường tiểu học Long Tuyền 2",
+  greetingText: "Quý thầy cô và các bạn học sinh",
+  reviewFlags: [],
+  itinerary: {
+    morning: [
+      {
+        timeLabel: "6:00",
+        text: "Khởi hành đi Khu di tích Bến Nhà Rồng.",
+        sourceConfidence: "high",
+        needsReview: false,
+      },
+    ],
+    afternoon: [
+      {
+        timeLabel: "13:00",
+        text:
+          "Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:\n• Tham quan các khu chủ đề nổi bật.\n• Trải nghiệm trò chơi phù hợp.\n• Tập trung theo hướng dẫn của đoàn.",
+        sourceConfidence: "high",
+        needsReview: false,
+      },
+      {
+        timeLabel: "15:30",
+        text: "Khởi hành về Trường tiểu học Long Tuyền 2.",
+        sourceConfidence: "high",
+        needsReview: false,
+      },
+    ],
+  },
+  menu: {
+    morning: [],
+    lunch: [{ text: "Cơm trưa", needsReview: false }],
+    afternoon: [],
+  },
+});
+
 describe("extractTour", () => {
   beforeEach(() => {
     mockCallApi.mockReset();
@@ -51,6 +91,57 @@ describe("extractTour", () => {
     expect(result.draft.title).toBe("SÓC TRĂNG – CẦN THƠ");
     expect(result.model).toBe("gpt-5.4");
     expect(result.attemptCount).toBe(1);
+  });
+
+  it("sends the Phase 7 one-day fidelity guidance in the extraction prompt", async () => {
+    mockCallApi.mockResolvedValueOnce({
+      content: VALID_ONE_DAY_RESPONSE,
+      model: "gpt-5.4",
+      attemptCount: 1,
+    });
+
+    await extractTour("Sample tour text");
+
+    const systemPrompt = mockCallApi.mock.calls[0]?.[0]?.systemPrompt;
+    expect(systemPrompt).toContain(
+      'Không được rút còn "Khởi hành đi." hoặc "Khởi hành về."',
+    );
+    expect(systemPrompt).toContain(
+      'Không được tự thay heading nguồn bằng nhãn chung.',
+    );
+    expect(systemPrompt).toContain(
+      'Không tự thêm "Sau khi dùng bữa trưa" nếu phiên bản rút gọn đã duyệt không dùng cụm này.',
+    );
+    expect(systemPrompt).toContain(
+      'đặt "sourceConfidence" là "low" hoặc "medium", và bật "needsReview": true.',
+    );
+  });
+
+  it("preserves canonical one-day program name and destination-rich wording", async () => {
+    mockCallApi.mockResolvedValueOnce({
+      content: PHASE7_ONE_DAY_RESPONSE,
+      model: "gpt-5.4",
+      attemptCount: 1,
+    });
+
+    const result = await extractTour("Canonical one-day sample");
+
+    expect(result.draft.programName).toBe("CHƯƠNG TRÌNH TRẢI NGHIỆM NGOẠI KHÓA");
+    expect(result.draft.title).toBe("LONG TUYỀN 2 - SUỐI TIÊN");
+
+    if (result.draft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+
+    expect(result.draft.itinerary.afternoon[0].text).toContain(
+      "Công viên văn hóa Suối Tiên:",
+    );
+    expect(result.draft.itinerary.afternoon[0].text).not.toContain(
+      "Sau khi dùng bữa trưa",
+    );
+    expect(result.draft.itinerary.afternoon[1].text).toBe(
+      "Khởi hành về Trường tiểu học Long Tuyền 2.",
+    );
   });
 
   it("throws on empty input text", async () => {

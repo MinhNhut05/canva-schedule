@@ -4,7 +4,11 @@ import { loadCanvaArtifacts } from "@/app/(app)/review/[id]/actions";
 import { ReviewPage } from "@/components/review/review-page";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getDraft } from "@/lib/review/draft";
+import {
+  getCanvaGenerationOptions,
+  getDraft,
+  getOneDayMenuMergeWarning,
+} from "@/lib/review/draft";
 import {
   resolveTemplatePair,
   type TourDuration,
@@ -44,12 +48,18 @@ export default async function ReviewPageRoute({
     notFound();
   }
 
-  const draft = await getDraft(id);
-  const canvaArtifacts = await loadCanvaArtifacts(upload.id);
+  const [draft, canvaOptions, canvaArtifacts, cooldownUntil] = await Promise.all([
+    getDraft(id),
+    getCanvaGenerationOptions(id),
+    loadCanvaArtifacts(upload.id),
+    getGlobalCooldown(),
+  ]);
   const templatePair = upload.tourDuration
     ? await resolveTemplatePair(upload.tourDuration as TourDuration)
     : null;
-  const cooldownUntil = await getGlobalCooldown();
+  const menuMergeWarning = draft
+    ? getOneDayMenuMergeWarning(draft, canvaOptions)
+    : null;
 
   return (
     <ReviewPage
@@ -66,6 +76,8 @@ export default async function ReviewPageRoute({
       canvaArtifacts={canvaArtifacts}
       templatePair={templatePair}
       initialCooldownUntil={cooldownUntil?.toISOString() ?? null}
+      initialCanvaOptions={canvaOptions}
+      initialMenuMergeWarning={menuMergeWarning}
     />
   );
 }

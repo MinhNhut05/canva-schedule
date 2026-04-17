@@ -26,6 +26,7 @@ interface ReviewActionsProps {
   isGenerating: boolean;
   hasResults: boolean;
   isRateLimited: boolean;
+  disableGenerate?: boolean;
   onApprove: () => void;
   onGenerate: () => void;
 }
@@ -37,6 +38,7 @@ export function ReviewActions({
   isGenerating,
   hasResults,
   isRateLimited,
+  disableGenerate = false,
   onApprove,
   onGenerate,
 }: ReviewActionsProps) {
@@ -67,7 +69,7 @@ export function ReviewActions({
         ) : (
           <Button
             onClick={onGenerate}
-            disabled={isGenerating || isRateLimited}
+            disabled={disableGenerate || isGenerating || isRateLimited}
             className="gap-2 bg-[#3B82F6] px-6 py-2.5 text-base font-semibold text-white hover:bg-[#3B82F6]/90 focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
           >
             {isGenerating ? (

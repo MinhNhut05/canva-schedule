@@ -36,6 +36,7 @@ describe("canvaFetch", () => {
 
   it("retries once on 401 and forces token refresh", async () => {
     getValidAccessToken.mockResolvedValueOnce("expired-token");
+    getValidAccessToken.mockResolvedValueOnce("expired-token");
     getValidAccessToken.mockResolvedValueOnce("fresh-token");
     fetchMock
       .mockResolvedValueOnce(new Response("unauthorized", { status: 401 }))
@@ -47,10 +48,32 @@ describe("canvaFetch", () => {
     expect(getValidAccessToken).toHaveBeenNthCalledWith(1, {
       forceRefresh: undefined,
     });
-    expect(getValidAccessToken).toHaveBeenNthCalledWith(2, {
+    expect(getValidAccessToken).toHaveBeenNthCalledWith(2);
+    expect(getValidAccessToken).toHaveBeenNthCalledWith(3, {
       forceRefresh: true,
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reuses a newer token after 401 instead of forcing another refresh", async () => {
+    getValidAccessToken.mockResolvedValueOnce("expired-token");
+    getValidAccessToken.mockResolvedValueOnce("fresh-token");
+    fetchMock
+      .mockResolvedValueOnce(new Response("unauthorized", { status: 401 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }));
+
+    const response = await canvaFetch("/designs/abc");
+
+    expect(response.status).toBe(200);
+    expect(getValidAccessToken).toHaveBeenNthCalledWith(1, {
+      forceRefresh: undefined,
+    });
+    expect(getValidAccessToken).toHaveBeenNthCalledWith(2);
+    expect(getValidAccessToken).toHaveBeenCalledTimes(2);
+
+    const [, secondInit] = fetchMock.mock.calls[1]!;
+    const secondHeaders = new Headers(secondInit?.headers);
+    expect(secondHeaders.get("Authorization")).toBe("Bearer fresh-token");
   });
 
   it("does not retry non-401 errors", async () => {
