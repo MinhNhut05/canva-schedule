@@ -119,6 +119,14 @@ export async function generateArtifact(
     return persistSuccess(input, result);
   } catch (error) {
     if (error instanceof CanvaRateLimitError) {
+      console.warn("[Canva generateArtifact] rate limited", {
+        uploadId: input.uploadId,
+        duration: input.duration,
+        kind: input.kind,
+        templateId,
+        cooldownSeconds: error.cooldownSeconds,
+      });
+
       await db.canvaArtifact.update({
         where: artifactWhere(input),
         data: {
@@ -141,6 +149,22 @@ export async function generateArtifact(
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown Canva generation error";
+
+    console.error("[Canva generateArtifact] failed", {
+      uploadId: input.uploadId,
+      duration: input.duration,
+      kind: input.kind,
+      templateId,
+      message: errorMessage,
+      error:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
+    });
 
     await db.canvaArtifact.update({
       where: artifactWhere(input),

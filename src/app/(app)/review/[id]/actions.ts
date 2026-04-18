@@ -316,101 +316,128 @@ async function runGenerateCanva(uploadId: string): Promise<GenerateCanvaResponse
     };
   }
 
-  const draft = await getDraft(uploadId);
+  try {
+    const draft = await getDraft(uploadId);
 
-  if (!draft) {
+    if (!draft) {
+      return {
+        success: false,
+        results: [],
+        error: "Không tìm thấy bản nháp.",
+      };
+    }
+
+    if (!isTourDuration(upload.tourDuration)) {
+      return {
+        success: false,
+        results: [],
+        error: "Loại tour không hợp lệ.",
+      };
+    }
+
+    // Check global cooldown (D-10)
+    const cooldownUntil = await getGlobalCooldown();
+    if (cooldownUntil) {
+      const remaining = getRemainingCooldownSeconds(cooldownUntil);
+      return {
+        success: false,
+        results: [],
+        error: "Canva dang trong thoi gian cho. Vui long doi.",
+        isRateLimited: true,
+        cooldownSeconds: remaining,
+      };
+    }
+
+    const oneDayCanvaOptions =
+      upload.tourDuration === "ONE_DAY"
+        ? await getCanvaGenerationOptions(uploadId)
+        : undefined;
+
+    const pair = await resolveTemplatePair(upload.tourDuration);
+    const itineraryPayload = buildArtifactPayload(
+      upload.tourDuration,
+      "ITINERARY",
+      draft,
+      oneDayCanvaOptions,
+    );
+    const menuPayload = buildArtifactPayload(upload.tourDuration, "MENU", draft);
+
+    const [itineraryResult, menuResult] = await Promise.allSettled([
+      generateArtifact({
+        uploadId,
+        duration: upload.tourDuration,
+        kind: "ITINERARY",
+        data: itineraryPayload,
+        title: `SileTravel - ${pair.displayLabel} - Lịch trình`,
+      }),
+      generateArtifact({
+        uploadId,
+        duration: upload.tourDuration,
+        kind: "MENU",
+        data: menuPayload,
+        title: `SileTravel - ${pair.displayLabel} - Thực đơn`,
+      }),
+    ]);
+
+    const results: ArtifactResult[] = [
+      itineraryResult.status === "fulfilled"
+        ? itineraryResult.value
+        : {
+            artifactType: "ITINERARY",
+            status: "FAILED",
+            errorMessage:
+              itineraryResult.reason instanceof Error
+                ? itineraryResult.reason.message
+                : "Lỗi không xác định",
+          },
+      menuResult.status === "fulfilled"
+        ? menuResult.value
+        : {
+            artifactType: "MENU",
+            status: "FAILED",
+            errorMessage:
+              menuResult.reason instanceof Error
+                ? menuResult.reason.message
+                : "Lỗi không xác định",
+          },
+    ];
+
+    const rateLimited = results.find((result) => result.isRateLimited);
+
+    revalidatePath(`/review/${uploadId}`);
+
     return {
-      success: false,
-      results: [],
-      error: "Không tìm thấy bản nháp.",
+      success: results.some((result) => result.status === "SUCCEEDED"),
+      results,
+      isRateLimited: Boolean(rateLimited),
+      cooldownSeconds: rateLimited?.cooldownSeconds,
     };
-  }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo Canva.";
 
-  if (!isTourDuration(upload.tourDuration)) {
-    return {
-      success: false,
-      results: [],
-      error: "Loại tour không hợp lệ.",
-    };
-  }
-
-  // Check global cooldown (D-10)
-  const cooldownUntil = await getGlobalCooldown();
-  if (cooldownUntil) {
-    const remaining = getRemainingCooldownSeconds(cooldownUntil);
-    return {
-      success: false,
-      results: [],
-      error: "Canva dang trong thoi gian cho. Vui long doi.",
-      isRateLimited: true,
-      cooldownSeconds: remaining,
-    };
-  }
-
-  const oneDayCanvaOptions =
-    upload.tourDuration === "ONE_DAY"
-      ? await getCanvaGenerationOptions(uploadId)
-      : undefined;
-
-  const pair = await resolveTemplatePair(upload.tourDuration);
-  const itineraryPayload = buildArtifactPayload(
-    upload.tourDuration,
-    "ITINERARY",
-    draft,
-    oneDayCanvaOptions,
-  );
-  const menuPayload = buildArtifactPayload(upload.tourDuration, "MENU", draft);
-
-  const [itineraryResult, menuResult] = await Promise.allSettled([
-    generateArtifact({
+    console.error("[Review generateCanva] failed", {
       uploadId,
-      duration: upload.tourDuration,
-      kind: "ITINERARY",
-      data: itineraryPayload,
-      title: `SileTravel - ${pair.displayLabel} - Lịch trình`,
-    }),
-    generateArtifact({
-      uploadId,
-      duration: upload.tourDuration,
-      kind: "MENU",
-      data: menuPayload,
-      title: `SileTravel - ${pair.displayLabel} - Thực đơn`,
-    }),
-  ]);
+      userId,
+      reviewStatus: upload.reviewStatus,
+      tourDuration: upload.tourDuration,
+      message,
+      error:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
+    });
 
-  const results: ArtifactResult[] = [
-    itineraryResult.status === "fulfilled"
-      ? itineraryResult.value
-      : {
-          artifactType: "ITINERARY",
-          status: "FAILED",
-          errorMessage:
-            itineraryResult.reason instanceof Error
-              ? itineraryResult.reason.message
-              : "Lỗi không xác định",
-        },
-    menuResult.status === "fulfilled"
-      ? menuResult.value
-      : {
-          artifactType: "MENU",
-          status: "FAILED",
-          errorMessage:
-            menuResult.reason instanceof Error
-              ? menuResult.reason.message
-              : "Lỗi không xác định",
-        },
-  ];
-
-  const rateLimited = results.find((result) => result.isRateLimited);
-
-  revalidatePath(`/review/${uploadId}`);
-
-  return {
-    success: results.some((result) => result.status === "SUCCEEDED"),
-    results,
-    isRateLimited: Boolean(rateLimited),
-    cooldownSeconds: rateLimited?.cooldownSeconds,
-  };
+    return {
+      success: false,
+      results: [],
+      error: message,
+    };
+  }
 }
 
 export async function retryCanvaArtifact(
