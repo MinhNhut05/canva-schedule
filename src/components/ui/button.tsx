@@ -14,21 +14,22 @@ type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring",
+    "bg-primary text-primary-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-primary/95 hover:glow-accent focus-visible:ring-ring",
   secondary:
-    "bg-secondary text-secondary-foreground hover:bg-muted focus-visible:ring-ring",
+    "border border-border-light bg-surface-panel-glass text-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-surface-panel focus-visible:ring-ring",
   outline:
-    "border border-input bg-background hover:bg-muted focus-visible:ring-ring",
+    "border border-border-light bg-transparent text-foreground transition-premium hover:bg-surface-panel-cool focus-visible:ring-ring",
   destructive:
-    "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-ring",
-  ghost: "hover:bg-muted hover:text-foreground focus-visible:ring-ring",
-  link: "text-primary underline-offset-4 hover:underline focus-visible:ring-ring",
+    "bg-destructive text-destructive-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-destructive/90 focus-visible:ring-ring",
+  ghost:
+    "text-foreground transition-premium hover:bg-surface-panel-cool hover:text-foreground focus-visible:ring-ring",
+  link: "text-primary underline-offset-4 transition-premium hover:text-primary/80 hover:underline focus-visible:ring-ring",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
   default: "h-10 px-4 py-2",
-  sm: "h-9 rounded-md px-3",
-  lg: "h-11 rounded-md px-8",
+  sm: "h-9 px-3",
+  lg: "h-11 px-8",
   icon: "size-10",
 };
 
