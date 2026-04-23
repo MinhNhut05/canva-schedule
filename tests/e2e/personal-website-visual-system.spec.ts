@@ -5,19 +5,24 @@ const TEST_USER = {
   password: "password123",
 };
 
+async function signIn(page: import("@playwright/test").Page) {
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.fill("#username", TEST_USER.username);
+  await page.fill("#password", TEST_USER.password);
+  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+}
+
 test.describe("Personal website visual system", () => {
   test.beforeEach(async ({ page }) => {
-    await page.context().clearCookies();
-    await page.goto("/login");
-    await page.fill("#username", TEST_USER.username);
-    await page.fill("#password", TEST_USER.password);
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await signIn(page);
+    await page.goto("/history");
+    await expect(page).toHaveURL(/\/history/);
+    await expect(page.getByTestId("visual-proof-surface")).toBeVisible();
   });
 
   test("proof surface keeps dark hero + light body split", async ({ page }) => {
-    await page.goto("/history");
-
     const proofSurface = page.getByTestId("visual-proof-surface");
     await expect(proofSurface).toBeVisible();
 
@@ -31,8 +36,6 @@ test.describe("Personal website visual system", () => {
   });
 
   test("font contract renders heading hierarchy", async ({ page }) => {
-    await page.goto("/history");
-
     const title = page.getByRole("heading", { name: "Visual system contract" });
     await expect(title).toBeVisible();
 
@@ -41,8 +44,6 @@ test.describe("Personal website visual system", () => {
   });
 
   test("primitive variants render with expected state classes", async ({ page }) => {
-    await page.goto("/history");
-
     await expect(page.getByRole("button", { name: "Primary action" })).toHaveClass(/bg-primary/);
     await expect(page.getByRole("button", { name: "Secondary action" })).toHaveClass(/bg-surface-panel-glass/);
     await expect(page.getByRole("button", { name: "Outline action" })).toHaveClass(/border-border-light/);
@@ -51,8 +52,6 @@ test.describe("Personal website visual system", () => {
   });
 
   test("overlay and feedback primitives open with premium states", async ({ page }) => {
-    await page.goto("/history");
-
     await page.getByRole("button", { name: "Open sheet" }).click();
     await expect(page.getByTestId("proof-sheet-content")).toBeVisible();
     await expect(page.getByTestId("proof-sheet-content")).toHaveClass(/surface-panel-glass/);
@@ -68,8 +67,6 @@ test.describe("Personal website visual system", () => {
   });
 
   test("navigation links expose active and focus contract", async ({ page }) => {
-    await page.goto("/history");
-
     const activeLink = page.getByRole("link", { name: "Lịch sử" }).first();
     await expect(activeLink).toHaveClass(/bg-primary\/10/);
 

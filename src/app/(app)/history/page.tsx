@@ -41,11 +41,17 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   }
 
   const params = await searchParams;
-  const currentPage = Math.max(1, Number(params.page ?? 1));
+  const parsedPage = Number.parseInt(params.page ?? "1", 10);
+  const currentPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 && String(parsedPage) === (params.page ?? "1")
+      ? parsedPage
+      : 1;
   const skip = (currentPage - 1) * PAGE_SIZE;
+  const where = session.user.role === "admin" ? {} : { userId: session.user.id };
 
   const [rows, totalCount] = await Promise.all([
     prisma.upload.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip,
       take: PAGE_SIZE,
@@ -64,7 +70,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
         },
       },
     }),
-    prisma.upload.count(),
+    prisma.upload.count({ where }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
