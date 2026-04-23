@@ -94,7 +94,9 @@ function SidebarLink({
       onClick={onNavigate}
       className={cn(
         "flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-        isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
+        isActive
+          ? "border border-primary/20 bg-primary/10 text-primary shadow-semantic-light"
+          : "text-foreground hover:bg-muted",
       )}
     >
       {item.label}
@@ -193,7 +195,7 @@ function MobileSidebar({ fullName, username, role, signOutAction }: MobileSideba
             <Button
               variant="outline"
               size="icon"
-              className="focus-visible:ring-2 focus-visible:ring-primary"
+              className="border-border-light bg-surface-panel-glass transition-premium hover:bg-surface-panel-cool focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Mở điều hướng"
             >
               <MenuIcon />
