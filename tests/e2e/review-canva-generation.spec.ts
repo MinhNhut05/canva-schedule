@@ -13,6 +13,9 @@ const TEST_UPLOAD_ID = "review-canva-e2e-upload";
 const ITINERARY_DESIGN_ID = "design-itinerary-e2e";
 const MENU_DESIGN_ID = "design-menu-e2e";
 
+const MOCK_ACCESS_TOKEN = "mock-access-token";
+const MOCK_REFRESH_TOKEN = "mock-refresh-token";
+
 type CanvaTextField = {
   type: string;
   text: string;
@@ -20,7 +23,18 @@ type CanvaTextField = {
 
 type CanvaPatchData = Record<string, CanvaTextField>;
 
+type StoredCanvaToken = {
+  id: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: Date;
+  cooldownUntil: Date | null;
+  scope: string | null;
+  tokenType: string;
+};
+
 const capturedDesignPayloads = new Map<string, CanvaPatchData[]>();
+let originalCanvaTokens: StoredCanvaToken[] = [];
 
 const oneDayDraft = {
   duration: "ONE_DAY",
@@ -70,6 +84,69 @@ const oneDayDraft = {
 } satisfies Prisma.InputJsonValue;
 
 let canvaMockServer: http.Server | null = null;
+
+async function backupCanvaTokens() {
+  originalCanvaTokens = await prisma.canvaToken.findMany({
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      accessToken: true,
+      refreshToken: true,
+      expiresAt: true,
+      cooldownUntil: true,
+      scope: true,
+      tokenType: true,
+    },
+  });
+}
+
+async function restoreCanvaTokens() {
+  await prisma.canvaToken.deleteMany();
+
+  if (originalCanvaTokens.length === 0) {
+    return;
+  }
+
+  await prisma.canvaToken.createMany({
+    data: originalCanvaTokens,
+  });
+}
+
+async function clearMockCanvaTokens() {
+  await prisma.canvaToken.deleteMany({
+    where: {
+      OR: [
+        { accessToken: MOCK_ACCESS_TOKEN },
+        { refreshToken: MOCK_REFRESH_TOKEN },
+      ],
+    },
+  });
+}
+
+async function seedSuccessfulMockCanvaToken() {
+  await prisma.canvaToken.deleteMany();
+  await prisma.canvaToken.create({
+    data: {
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      tokenType: "Bearer",
+      scope: "design:content:write",
+    },
+  });
+}
+
+async function ensureNoMockCanvaTokensRemain() {
+  const tokens = await prisma.canvaToken.findMany({
+    select: { accessToken: true, refreshToken: true },
+  });
+
+  const hasMockTokens = tokens.some(
+    (token) => token.accessToken === MOCK_ACCESS_TOKEN || token.refreshToken === MOCK_REFRESH_TOKEN,
+  );
+
+  expect(hasMockTokens).toBe(false);
+}
 
 function designResponse(designId: string) {
   return {
@@ -147,8 +224,8 @@ async function startCanvaMockServer() {
 
       if (req.method === "POST" && url.pathname === "/rest/v1/oauth/token") {
         sendJson(200, {
-          access_token: "mock-access-token",
-          refresh_token: "mock-refresh-token",
+          access_token: MOCK_ACCESS_TOKEN,
+          refresh_token: MOCK_REFRESH_TOKEN,
           expires_in: 3600,
           token_type: "Bearer",
           scope: "design:content:write",
@@ -221,8 +298,8 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.fill("#username", TEST_USER.username);
   await page.fill("#password", TEST_USER.password);
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+  await page.getByRole("button", { name: "Vào không gian làm việc" }).click();
+  await expect(page).toHaveURL(/\/upload/, { timeout: 10000 });
 }
 
 async function seedApprovedReviewUpload() {
@@ -267,22 +344,27 @@ async function seedApprovedReviewUpload() {
 
 test.describe("Review to Canva generation flow", () => {
   test.beforeAll(async () => {
+    await backupCanvaTokens();
+    await clearMockCanvaTokens();
     await startCanvaMockServer();
   });
 
   test.afterAll(async () => {
     await stopCanvaMockServer();
+    await clearMockCanvaTokens();
+    await restoreCanvaTokens();
+    await ensureNoMockCanvaTokensRemain();
     await prisma.$disconnect();
   });
 
   test.beforeEach(async () => {
     resetCapturedDesignPayloads();
     await seedApprovedReviewUpload();
+    await seedSuccessfulMockCanvaToken();
   });
 
   test("captures canonical one-day payload changes when the saved merge option changes", async ({
     page,
-    context,
   }) => {
     await signIn(page);
     await page.goto(`/review/${TEST_UPLOAD_ID}`);
@@ -292,17 +374,15 @@ test.describe("Review to Canva generation flow", () => {
     });
 
     await expect(page.getByText("Xác nhận mẫu Canva")).not.toBeVisible();
-    await expect(page.getByRole("button", { name: /^Xác nhận$/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Xác nhận nội dung$/ })).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Có nhập menu vào lịch trình không?" }),
     ).toBeVisible();
     await expect(mergeSwitch).not.toBeChecked();
 
-    await page.getByRole("button", { name: /^Xác nhận$/ }).click();
+    await page.getByRole("button", { name: /^Xác nhận nội dung$/ }).click();
 
-    await expect(
-      page.getByRole("heading", { name: "Nội dung đã được duyệt" }),
-    ).toBeVisible();
+    await expect(page.getByText("Giai đoạn 4 · Tạo thiết kế Canva")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Xác nhận mẫu Canva" }),
     ).toBeVisible();
@@ -365,7 +445,7 @@ test.describe("Review to Canva generation flow", () => {
     ).toBeVisible();
     await expect(mergeSwitch).toBeChecked();
 
-    await page.getByRole("button", { name: "Tạo lại" }).first().click();
+    await page.getByRole("button", { name: "Tạo lại Canva" }).first().click();
 
     await expect
       .poll(() => getCapturedPayloadCount(ITINERARY_DESIGN_ID), {
@@ -425,13 +505,12 @@ test.describe("Review to Canva generation flow", () => {
       page.evaluate(() => (window as typeof window & { __copied?: string }).__copied),
     ).resolves.toMatch(new RegExp(`${ITINERARY_DESIGN_ID}|${MENU_DESIGN_ID}`));
 
-    const [newTab] = await Promise.all([
-      context.waitForEvent("page"),
-      canvaLinks.nth(0).click(),
-    ]);
-    await newTab.waitForLoadState();
-    await expect(newTab).toHaveURL(new RegExp(`${ITINERARY_DESIGN_ID}|${MENU_DESIGN_ID}`));
-    await newTab.close();
+    await expect(canvaLinks.nth(0)).toHaveAttribute(
+      "href",
+      new RegExp(`${ITINERARY_DESIGN_ID}|${MENU_DESIGN_ID}`),
+    );
+    await expect(canvaLinks.nth(0)).toHaveAttribute("target", "_blank");
+    await expect(canvaLinks.nth(0)).toHaveAttribute("rel", /noreferrer/);
 
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);

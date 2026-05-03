@@ -10,7 +10,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.fill("#username", TEST_USER.username);
   await page.fill("#password", TEST_USER.password);
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await page.getByRole("button", { name: "Vào không gian làm việc" }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 }
 
