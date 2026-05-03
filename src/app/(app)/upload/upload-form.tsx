@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { ExtractionResult } from "./extraction-result";
@@ -94,11 +94,28 @@ export function UploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<UploadApiResponse["data"]>();
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  const canInteract = isHydrated && !isProcessing;
 
   const fileDetails = useMemo(() => {
     if (!selectedFile) {
       return null;
     }
+
+    const statusTone = isProcessing
+      ? "processing"
+      : result
+        ? result.quality.level === "good"
+          ? "success"
+          : "warning"
+        : error
+          ? "error"
+          : "ready";
 
     return {
       fileName: selectedFile.name,
@@ -113,6 +130,7 @@ export function UploadForm() {
           : error
             ? "Xử lý thất bại"
             : "Sẵn sàng xử lý",
+      statusTone,
     };
   }, [error, isProcessing, result, selectedFile]);
 
@@ -154,7 +172,7 @@ export function UploadForm() {
     event.preventDefault();
     setIsDragActive(false);
 
-    if (isProcessing) {
+    if (!canInteract) {
       return;
     }
 
@@ -164,7 +182,7 @@ export function UploadForm() {
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
 
-    if (!isProcessing) {
+    if (canInteract) {
       setIsDragActive(true);
     }
   }
@@ -204,7 +222,6 @@ export function UploadForm() {
       if (!response.ok || !payload.success || !payload.data) {
         const message = payload.error || GENERIC_ERROR;
         setError(message);
-        // Removed toast.error — error now shown as persistent Alert below
         return;
       }
 
@@ -212,7 +229,6 @@ export function UploadForm() {
       toast.success("Tải tài liệu thành công.");
     } catch {
       setError(GENERIC_ERROR);
-      // Removed toast.error — error now shown as persistent Alert below
     } finally {
       setIsProcessing(false);
     }
@@ -221,144 +237,206 @@ export function UploadForm() {
   return (
     <div className="space-y-6">
       <WorkflowStepper activeStep={1} activeLoading={isProcessing} />
-      <Card className="border-border bg-white shadow-sm">
-        <CardHeader className="space-y-2">
-          <CardTitle>Tải tài liệu</CardTitle>
-          <p className="text-base text-muted-foreground">
-            Mỗi lần chỉ xử lý 1 file để dễ kiểm tra kết quả trích xuất.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div
-            role="button"
-            tabIndex={isProcessing ? -1 : 0}
-            onClick={() => !isProcessing && inputRef.current?.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onKeyDown={(event) => {
-              if ((event.key === "Enter" || event.key === " ") && !isProcessing) {
-                event.preventDefault();
-                inputRef.current?.click();
-              }
-            }}
-            className={cn(
-              "flex min-h-[180px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background px-6 py-8 text-center transition-colors md:min-h-[220px] md:px-10",
-              isDragActive && !isProcessing && "border-primary bg-primary/5",
-              isProcessing && "pointer-events-none opacity-50",
-              error && "border-destructive/60 bg-destructive/5",
-            )}
-            aria-disabled={isProcessing}
-          >
-            <FileUploadIcon />
-            <p className="text-xl font-semibold text-foreground">Kéo và thả file vào đây</p>
-            <p className="mt-2 text-base text-muted-foreground">
-              Hoặc chọn file từ máy tính của bạn
-            </p>
-            <p className="mt-3 text-sm font-medium text-muted-foreground">
-              Hỗ trợ: PDF, DOCX · Tối đa 30MB · Mỗi lần chỉ 1 file
-            </p>
-            <Button className="mt-6 focus-visible:ring-2 focus-visible:ring-primary" disabled={isProcessing}>
-              Chọn file
-            </Button>
-            <Input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,.docx"
-              className="hidden"
-              onChange={handleInputChange}
-              disabled={isProcessing}
-            />
-          </div>
 
-          {error ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
-              <AlertTitle>{ERROR_MESSAGES.uploadParsing.title}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <Card className="surface-panel-glass border-semantic-light overflow-hidden shadow-semantic-light">
+          <CardHeader className="space-y-3 border-b border-semantic-light bg-surface-panel-cool/60">
+            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
+              Giai đoạn 1 · Chọn và xác nhận file
+            </Badge>
+            <div className="space-y-2">
+              <CardTitle className="text-[1.75rem] leading-tight text-foreground">Bắt đầu với tài liệu nguồn</CardTitle>
+              <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+                Chọn 1 file PDF hoặc DOCX, kiểm tra nhanh thông tin file, rồi bắt đầu trích xuất để mở bước xem trước.
+              </p>
+            </div>
+          </CardHeader>
 
-          {selectedFile ? (
-            <Card className="border-border bg-slate-50/70 shadow-none">
-              <CardHeader className="space-y-1">
-                <CardTitle>Thông tin file đã chọn</CardTitle>
-                <p className="text-base text-muted-foreground">
-                  Kiểm tra nhanh trước khi bấm xử lý tài liệu.
+          <CardContent className="space-y-6 p-6 lg:p-7">
+            <div
+              role="button"
+              tabIndex={canInteract ? 0 : -1}
+              onClick={() => canInteract && inputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onKeyDown={(event) => {
+                if ((event.key === "Enter" || event.key === " ") && canInteract) {
+                  event.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              className={cn(
+                "focus-ring-premium transition-premium group relative flex min-h-[280px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed px-6 py-10 text-center md:px-10",
+                "bg-white text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_24px_60px_rgba(11,47,174,0.08)]",
+                isDragActive && canInteract && "border-primary bg-sky-50",
+                !canInteract && "pointer-events-none opacity-60",
+                error ? "border-destructive/60 bg-destructive/5" : "border-primary/20 hover:border-primary/35",
+              )}
+              aria-disabled={!canInteract}
+            >
+              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,184,255,0.18),transparent_45%)] opacity-80" />
+              <div className="relative flex flex-col items-center">
+                <div className="mb-5 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[24px] bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(20,100,244,0.12),0_18px_40px_rgba(20,100,244,0.12)]">
+                  <FileUploadIcon />
+                </div>
+                <p className="text-2xl font-semibold text-slate-950">Kéo và thả file vào đây</p>
+                <p className="mt-3 max-w-xl text-base leading-7 text-slate-700">
+                  Hoặc chọn file từ máy tính của bạn để bắt đầu luồng xử lý.
                 </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-muted-foreground">Tên file</p>
-                    <p className="break-all text-base text-foreground">{fileDetails?.fileName}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-muted-foreground">Kích thước</p>
-                    <p className="text-base text-foreground">{fileDetails?.size}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-muted-foreground">Loại file</p>
-                    <p className="text-base text-foreground">{fileDetails?.type}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-muted-foreground">Trạng thái</p>
+                <p className="mt-4 text-sm font-medium text-slate-600">
+                  Hỗ trợ: PDF, DOCX · Tối đa 30MB · Mỗi lần chỉ 1 file
+                </p>
+                <Button
+                  className="glow-accent focus-ring-premium transition-premium hover-lift-subtle mt-7"
+                  disabled={!canInteract}
+                >
+                  Chọn file
+                </Button>
+                <Input
+                  ref={inputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  className="hidden"
+                  onChange={handleInputChange}
+                  disabled={!canInteract}
+                />
+              </div>
+            </div>
+
+            {error ? (
+              <Alert variant="destructive" className="rounded-[20px] border-destructive/35 bg-destructive/5">
+                <AlertTriangle className="size-4" />
+                <AlertTitle>{ERROR_MESSAGES.uploadParsing.title}</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {selectedFile ? (
+              <Card className="surface-panel-cool border-semantic-light rounded-[24px] shadow-none">
+                <CardHeader className="space-y-2 pb-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="w-fit border-primary/25 bg-primary/10 text-primary">
+                        Giai đoạn 2 · Kiểm tra trước khi trích xuất
+                      </Badge>
+                      <CardTitle className="text-[1.35rem] leading-tight text-foreground">
+                        File đã sẵn sàng để xử lý
+                      </CardTitle>
+                      <p className="text-base leading-7 text-muted-foreground">
+                        Xác nhận nhanh thông tin bên dưới trước khi mở kết quả trích xuất.
+                      </p>
+                    </div>
                     <Badge
                       className={cn(
                         "w-fit text-sm",
-                        isProcessing
+                        fileDetails?.statusTone === "processing"
                           ? "bg-primary text-primary-foreground"
-                          : error
+                          : fileDetails?.statusTone === "error"
                             ? "bg-destructive text-destructive-foreground"
-                            : result?.quality.level === "good"
-                              ? "bg-emerald-600 text-white"
-                              : result
-                                ? "bg-amber-400 text-amber-950"
-                                : "bg-emerald-600 text-white",
+                            : fileDetails?.statusTone === "warning"
+                              ? "bg-amber-400 text-amber-950"
+                              : "bg-emerald-600 text-white",
                       )}
                     >
                       {fileDetails?.status}
                     </Badge>
                   </div>
-                </div>
-
-                {isProcessing ? (
-                  <div className="flex items-center gap-2 text-base text-muted-foreground">
-                    <SpinnerIcon />
-                    <span>Đang phân tích file và trích xuất văn bản...</span>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Tên file</p>
+                      <p className="mt-3 break-all text-base text-foreground">{fileDetails?.fileName}</p>
+                    </div>
+                    <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Kích thước</p>
+                      <p className="mt-3 text-base text-foreground">{fileDetails?.size}</p>
+                    </div>
+                    <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Loại file</p>
+                      <p className="mt-3 text-base text-foreground">{fileDetails?.type}</p>
+                    </div>
+                    <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Điểm đến tiếp theo</p>
+                      <p className="mt-3 text-base text-foreground">
+                        {result ? "Đã có kết quả xem trước" : "Mở bước trích xuất và xem nhanh nội dung"}
+                      </p>
+                    </div>
                   </div>
-                ) : null}
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button
-                    onClick={() => void handleSubmit()}
-                    disabled={isProcessing || !selectedFile}
-                    className="focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    {isProcessing ? "Đang xử lý..." : "Xử lý"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={resetFile}
-                    disabled={isProcessing}
-                    className="focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    Chọn file khác
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
+                  {isProcessing ? (
+                    <div className="surface-panel-glass flex items-center gap-3 rounded-[20px] border-semantic-light px-4 py-3 text-base text-muted-foreground">
+                      <SpinnerIcon />
+                      <span>Đang phân tích file và chuẩn bị kết quả xem trước...</span>
+                    </div>
+                  ) : null}
 
-          {result ? (
-            <ExtractionResult
-              data={result}
-              onReset={resetExtractionResult}
-              reviewHref={`/review/${result.uploadId}`}
-            />
-          ) : null}
-        </CardContent>
-      </Card>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      onClick={() => void handleSubmit()}
+                      disabled={isProcessing || !selectedFile}
+                      className="glow-accent focus-ring-premium transition-premium hover-lift-subtle"
+                    >
+                      {isProcessing ? "Đang xử lý..." : "Bắt đầu trích xuất"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={resetFile}
+                      disabled={!canInteract}
+                      className="focus-ring-premium"
+                    >
+                      Chọn file khác
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="surface-hero text-white shadow-semantic-dark overflow-hidden border border-semantic-dark">
+          <CardHeader className="hero-grid hero-grain relative space-y-3 border-b border-white/10 bg-transparent">
+            <div className="pointer-events-none absolute inset-0 opacity-90" />
+            <Badge className="w-fit border border-white/15 bg-white/10 text-white">Lộ trình nhanh</Badge>
+            <CardTitle className="relative text-[1.5rem] leading-tight text-white">
+              Flow intake được tách thành các checkpoint ngắn để ít nhiễu hơn.
+            </CardTitle>
+            <p className="relative text-sm leading-6 text-white/75">
+              Mỗi checkpoint chỉ yêu cầu một quyết định: chọn file, xác nhận file, xem kết quả trích xuất, rồi mới sang bước review.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4 p-6">
+            <div className="rounded-[22px] border border-white/12 bg-white/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Giai đoạn 1</p>
+              <p className="mt-3 text-sm leading-6 text-white/78">
+                Chọn file sạch, đúng định dạng và đủ gọn để kết quả trích xuất ổn định hơn.
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-white/12 bg-white/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Giai đoạn 2</p>
+              <p className="mt-3 text-sm leading-6 text-white/78">
+                Kiểm tra nhanh tên file, dung lượng và trạng thái trước khi bấm trích xuất.
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-white/12 bg-white/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Giai đoạn 3</p>
+              <p className="mt-3 text-sm leading-6 text-white/78">
+                Đọc preview, xem cảnh báo nếu có, rồi mới tiếp tục sang bước duyệt nội dung.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {result ? (
+        <ExtractionResult
+          data={result}
+          onReset={resetExtractionResult}
+          reviewHref={`/review/${result.uploadId}`}
+        />
+      ) : null}
     </div>
   );
 }
