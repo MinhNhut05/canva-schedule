@@ -1,4 +1,9 @@
+import { PrismaClient } from "@prisma/client";
 import { test, expect } from "@playwright/test";
+
+import { hashPassword } from "../../src/lib/password";
+
+const prisma = new PrismaClient();
 
 // Seed user credentials (from prisma/seed.ts)
 const TEST_USER = {
@@ -7,9 +12,16 @@ const TEST_USER = {
   name: "Admin User",
 };
 
+async function resetTestUserPassword() {
+  await prisma.user.update({
+    where: { username: TEST_USER.username },
+    data: { passwordHash: await hashPassword(TEST_USER.password) },
+  });
+}
+
 test.describe("Authentication Flow", () => {
   test.beforeEach(async ({ page }) => {
-    // Clear cookies to start fresh
+    await resetTestUserPassword();
     await page.context().clearCookies();
   });
 
@@ -122,6 +134,15 @@ test.describe("Authentication Flow", () => {
 
 test.describe("Password Change", () => {
   const NEW_PASSWORD = "newpass123";
+
+  test.beforeEach(async ({ page }) => {
+    await resetTestUserPassword();
+    await page.context().clearCookies();
+  });
+
+  test.afterEach(async () => {
+    await resetTestUserPassword();
+  });
 
   test("successful password change allows login with new password", async ({
     page,
