@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { test, expect } from "@playwright/test";
-
-import { hashPassword } from "../../src/lib/password";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+const SALT_ROUNDS = 12;
 
 // Seed user credentials (from prisma/seed.ts)
 const TEST_USER = {
@@ -15,7 +15,12 @@ const TEST_USER = {
 async function resetTestUserPassword() {
   await prisma.user.update({
     where: { username: TEST_USER.username },
-    data: { passwordHash: await hashPassword(TEST_USER.password) },
+    data: {
+      name: TEST_USER.name,
+      passwordHash: await bcrypt.hash(TEST_USER.password, SALT_ROUNDS),
+      role: "admin",
+      mustChangePassword: false,
+    },
   });
 }
 
