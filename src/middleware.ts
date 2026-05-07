@@ -5,8 +5,12 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
   const { pathname, search, origin } = request.nextUrl;
 
-  // Allow auth API routes and login page
-  if (pathname.startsWith("/api/auth") || pathname === "/login") {
+  // Allow auth API routes, health checks, and login page
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname === "/api/health" ||
+    pathname === "/login"
+  ) {
     return NextResponse.next();
   }
 

@@ -6,7 +6,7 @@ import { getToken } from "next-auth/jwt";
  * Paths that do NOT require authentication.
  * Everything else redirects to /login with callbackUrl and reason=auth-required.
  */
-const PUBLIC_PATHS = ["/login", "/api/auth"];
+const PUBLIC_PATHS = ["/login", "/api/auth", "/api/health"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
