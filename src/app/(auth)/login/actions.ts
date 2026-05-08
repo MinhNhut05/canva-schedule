@@ -12,7 +12,7 @@ export async function loginAction(
   _prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const callbackUrl = (formData.get("callbackUrl") as string) || "/dashboard";
+  const callbackUrl = (formData.get("callbackUrl") as string) || "/upload";
 
   try {
     await signIn("credentials", {

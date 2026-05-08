@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   // Redirect authenticated users away from login
   if (session?.user) {
-    redirect(params.callbackUrl || "/dashboard");
+    redirect(params.callbackUrl || "/upload");
   }
 
   return (
@@ -41,7 +41,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       <Suspense><LoginToast /></Suspense>
       <LoginForm
-        callbackUrl={params.callbackUrl || "/dashboard"}
+        callbackUrl={params.callbackUrl || "/upload"}
         error={params.error}
       />
     </div>
