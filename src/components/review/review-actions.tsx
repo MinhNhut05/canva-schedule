@@ -45,12 +45,18 @@ export function ReviewActions({
   const generationLabel = isGenerating
     ? "Đang tạo Canva..."
     : hasResults
-      ? "Tạo lại"
+      ? "Tạo lại Canva"
       : "Tạo Canva";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white px-4 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:left-60">
-      <div className="mx-auto flex w-full max-w-[960px] items-center justify-end">
+      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">
+            {!isApproved ? "Giai đoạn 3 · Xác nhận nội dung" : "Giai đoạn 4 · Tạo thiết kế Canva"}
+          </p>
+        </div>
+
         {!isApproved ? (
           <Button
             onClick={onApprove}
@@ -60,10 +66,10 @@ export function ReviewActions({
             {isApproving ? (
               <>
                 <SpinnerIcon />
-                Đang xử lý...
+                Đang xác nhận...
               </>
             ) : (
-              "Xác nhận"
+              "Xác nhận nội dung"
             )}
           </Button>
         ) : (

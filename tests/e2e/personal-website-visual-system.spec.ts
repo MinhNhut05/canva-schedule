@@ -11,7 +11,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.fill("#username", TEST_USER.username);
   await page.fill("#password", TEST_USER.password);
   await page.getByRole("button", { name: "Vào không gian làm việc" }).click();
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+  await expect(page).toHaveURL(/\/upload/, { timeout: 10000 });
 }
 
 test.describe("Personal website visual system", () => {

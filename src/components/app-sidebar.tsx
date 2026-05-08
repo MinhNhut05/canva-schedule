@@ -54,7 +54,7 @@ interface NavItem {
 }
 
 const primaryItems: NavItem[] = [
-  { href: "/dashboard", label: "Bảng điều khiển" },
+  { href: "/dashboard", label: "Tổng quan" },
   { href: "/upload", label: "Tải tài liệu" },
   { href: "/review", label: "Duyệt nội dung" },
   { href: "/history", label: "Lịch sử" },

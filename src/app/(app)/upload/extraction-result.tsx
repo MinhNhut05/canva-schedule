@@ -104,7 +104,7 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
               <CardTitle>Kết quả trích xuất</CardTitle>
               <p className="text-base text-muted-foreground">
                 {quality.summaryStatus === "Đã trích xuất"
-                  ? "Đã trích xuất văn bản thành công."
+                  ? "Nội dung đã được trích xuất thành công. Bạn có thể đọc nhanh trước khi sang bước duyệt."
                   : "Đã trích xuất văn bản nhưng cần kiểm tra kỹ trước khi dùng tiếp."}
               </p>
             </div>
@@ -148,7 +148,7 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
                       onClick={handleContinueReview}
                       className="bg-[#92400E] text-white hover:bg-[#78350F]"
                     >
-                      Tiếp tục kiểm tra
+                      Đọc preview trước khi sang review
                     </Button>
                     <Button
                       type="button"
