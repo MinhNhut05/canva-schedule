@@ -218,6 +218,18 @@ export function ReviewPage({
   }, [upload.reviewStatus]);
 
   useEffect(() => {
+    if (upload.aiStatus !== "PROCESSING") {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 5_000);
+
+    return () => clearInterval(interval);
+  }, [router, upload.aiStatus]);
+
+  useEffect(() => {
     setCanvaOptions(initialCanvaOptions);
     setMenuMergeWarning(initialMenuMergeWarning ?? null);
   }, [initialCanvaOptions, initialMenuMergeWarning]);

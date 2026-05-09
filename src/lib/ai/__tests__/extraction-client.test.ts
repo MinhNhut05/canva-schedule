@@ -57,6 +57,7 @@ vi.mock("@/lib/ai/server-client", () => ({
 }));
 
 import {
+  AI_MAX_COMPLETION_TOKENS,
   AI_MODEL,
   AI_TIMEOUT_MS,
   callExtractionApi,
@@ -109,6 +110,7 @@ describe("extraction-client", () => {
           { role: "system", content: "system prompt" },
           { role: "user", content: "user content" },
         ],
+        max_tokens: AI_MAX_COMPLETION_TOKENS,
         response_format: { type: "json_object" },
         temperature: 0.1,
       },

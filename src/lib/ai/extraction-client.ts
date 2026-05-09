@@ -8,9 +8,22 @@ function normalizeModelName(model: string): string {
   return model.trim();
 }
 
+function parsePositiveInteger(value: string | undefined, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 const AI_MODEL = normalizeModelName(process.env.AI_MODEL?.trim() || "cx/gpt-5.4");
 const MAX_RETRIES = 1;
 const AI_TIMEOUT_MS = 240_000;
+const AI_MAX_COMPLETION_TOKENS = parsePositiveInteger(
+  process.env.AI_MAX_COMPLETION_TOKENS,
+  4096,
+);
 
 const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 406, 422];
 
@@ -117,6 +130,7 @@ export async function callExtractionApi(
               { role: "system", content: options.systemPrompt },
               { role: "user", content: options.userContent },
             ],
+            max_tokens: AI_MAX_COMPLETION_TOKENS,
             response_format: { type: "json_object" },
             temperature: 0.1,
           },
@@ -176,4 +190,4 @@ export async function callExtractionApi(
   );
 }
 
-export { AI_MODEL, AI_TIMEOUT_MS, MAX_RETRIES };
+export { AI_MAX_COMPLETION_TOKENS, AI_MODEL, AI_TIMEOUT_MS, MAX_RETRIES };

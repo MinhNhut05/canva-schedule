@@ -21,6 +21,7 @@ const {
   getOneDayMenuMergeWarning,
   parseStructuredDraft,
   persistCanvaGenerationOptions,
+  runUploadAiExtraction,
   revalidatePath,
 } = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -51,6 +52,7 @@ const {
   getOneDayMenuMergeWarning: vi.fn(),
   parseStructuredDraft: vi.fn((value) => ({ success: true, data: value })),
   persistCanvaGenerationOptions: vi.fn(),
+  runUploadAiExtraction: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
@@ -104,8 +106,8 @@ vi.mock("@/lib/review/draft", () => ({
   saveDraft: vi.fn(),
 }));
 
-vi.mock("@/lib/ai/extract-tour", () => ({
-  extractTour: vi.fn(),
+vi.mock("@/lib/ai/upload-extraction", () => ({
+  runUploadAiExtraction,
 }));
 
 vi.mock("@/lib/review/status", () => ({

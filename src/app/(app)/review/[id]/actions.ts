@@ -3,7 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { extractTour } from "@/lib/ai/extract-tour";
+import { runUploadAiExtraction } from "@/lib/ai/upload-extraction";
 import { auth } from "@/lib/auth";
 import {
   generateArtifact,
@@ -33,10 +33,8 @@ import {
   getOneDayMenuMergeWarning,
   parseStructuredDraft,
   saveCanvaGenerationOptions as persistCanvaGenerationOptions,
-  saveDraft as persistDraft,
   type CanvaGenerationOptions,
 } from "@/lib/review/draft";
-import { AI_STATUS } from "@/lib/review/status";
 
 type GenerateCanvaResponse = {
   success: boolean;
@@ -582,21 +580,13 @@ export async function reExtractDraft(
   }
 
   try {
-    await prisma.upload.update({
-      where: { id: uploadId },
-      data: { aiStatus: AI_STATUS.PROCESSING },
-    });
-
-    const result = await extractTour(upload.normalizedText);
-
-    await persistDraft(
-      uploadId,
-      result.draft,
-      result.model,
-      result.attemptCount,
-    );
-
+    const result = await runUploadAiExtraction(uploadId, upload.normalizedText);
     revalidatePath(`/review/${uploadId}`);
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
     return { success: true };
   } catch (error) {
     const message =
@@ -615,14 +605,6 @@ export async function reExtractDraft(
               stack: error.stack,
             }
           : error,
-    });
-
-    await prisma.upload.update({
-      where: { id: uploadId },
-      data: {
-        aiStatus: AI_STATUS.FAILED,
-        aiErrorMessage: message,
-      },
     });
 
     revalidatePath(`/review/${uploadId}`);

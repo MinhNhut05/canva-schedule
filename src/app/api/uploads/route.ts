@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validateFile } from "@/lib/documents/intake";
 import { runExtractionPipeline } from "@/lib/documents/pipeline";
+import { startUploadAiExtraction } from "@/lib/ai/upload-extraction";
 import { AI_STATUS } from "@/lib/review/status";
 import type { UploadApiResponse, UploadStatus } from "@/lib/documents/types";
 
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
 
     const finalStatus: UploadStatus =
       result.quality.level === "good" ? "COMPLETED" : "COMPLETED_WITH_WARNING";
+    const hasTextForAi = result.normalizedText.trim().length > 0;
 
     await prisma.upload.update({
       where: { id: upload.id },
@@ -91,8 +93,16 @@ export async function POST(request: Request) {
         warningMessages: result.warnings,
         processingTimeMs: result.processingTimeMs,
         errorMessage: null,
+        aiStatus: hasTextForAi ? AI_STATUS.PROCESSING : AI_STATUS.FAILED,
+        aiErrorMessage: hasTextForAi
+          ? null
+          : "Không có văn bản gốc để trích xuất AI.",
       },
     });
+
+    if (hasTextForAi) {
+      startUploadAiExtraction(upload.id, result.normalizedText);
+    }
 
     return NextResponse.json<UploadApiResponse>(
       {
