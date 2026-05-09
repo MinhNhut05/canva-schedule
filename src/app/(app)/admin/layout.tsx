@@ -1,6 +1,8 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
 
 export default async function AdminLayout({
   children,
@@ -23,12 +25,9 @@ export default async function AdminLayout({
           Trang này chỉ dành cho quản trị viên. Hãy quay về bảng điều khiển
           hoặc liên hệ người quản lý nếu bạn cần hỗ trợ.
         </p>
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          Về bảng điều khiển
-        </Link>
+        <Button asChild className="mt-6">
+          <Link href="/dashboard">Về bảng điều khiển</Link>
+        </Button>
       </div>
     );
   }

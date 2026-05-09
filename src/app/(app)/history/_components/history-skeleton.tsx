@@ -1,28 +1,37 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 export function HistorySkeleton() {
   return (
-    <div className="overflow-x-auto rounded-lg border bg-white">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-3 text-left font-semibold text-foreground">Ten file</th>
-            <th className="px-4 py-3 text-left font-semibold text-foreground">Ngay tao</th>
-            <th className="px-4 py-3 text-left font-semibold text-foreground">Trang thai</th>
-            <th className="px-4 py-3 text-left font-semibold text-foreground">Loai tour</th>
-            <th className="px-4 py-3 text-left font-semibold text-foreground">Lien ket Canva</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="surface-panel-glass overflow-hidden rounded-[24px] border border-semantic-light shadow-semantic-light">
+      <Table className="min-w-[720px]">
+        <TableHeader className="bg-surface-panel-cool/80">
+          <TableRow className="border-semantic-light hover:bg-transparent">
+            <TableHead className="px-4 py-3 text-sm font-semibold text-foreground">Tên file</TableHead>
+            <TableHead className="px-4 py-3 text-sm font-semibold text-foreground">Ngày tạo</TableHead>
+            <TableHead className="px-4 py-3 text-sm font-semibold text-foreground">Trạng thái</TableHead>
+            <TableHead className="px-4 py-3 text-sm font-semibold text-foreground">Loại tour</TableHead>
+            <TableHead className="px-4 py-3 text-sm font-semibold text-foreground">Liên kết Canva</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="border-b">
-              <td className="px-4 py-4"><div className="h-4 w-40 animate-pulse rounded bg-muted" /></td>
-              <td className="px-4 py-4"><div className="h-4 w-28 animate-pulse rounded bg-muted" /></td>
-              <td className="px-4 py-4"><div className="h-5 w-20 animate-pulse rounded bg-muted" /></td>
-              <td className="px-4 py-4"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></td>
-              <td className="px-4 py-4"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></td>
-            </tr>
+            <TableRow key={i} className="border-semantic-light">
+              <TableCell className="px-4 py-4"><div className="h-4 w-40 animate-pulse rounded bg-muted" /></TableCell>
+              <TableCell className="px-4 py-4"><div className="h-4 w-28 animate-pulse rounded bg-muted" /></TableCell>
+              <TableCell className="px-4 py-4"><div className="h-5 w-20 animate-pulse rounded bg-muted" /></TableCell>
+              <TableCell className="px-4 py-4"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></TableCell>
+              <TableCell className="px-4 py-4"><div className="h-4 w-24 animate-pulse rounded bg-muted" /></TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

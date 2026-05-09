@@ -3,7 +3,6 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { structuredDraftSchema } from "@/lib/ai/extraction-schema";
 import { extractTour } from "@/lib/ai/extract-tour";
 import { auth } from "@/lib/auth";
 import {
@@ -23,6 +22,8 @@ import {
   buildOneDayMenuPayload,
   buildTwoDayItineraryPayload,
   buildTwoDayMenuPayload,
+  buildThreeDayItineraryPayload,
+  buildThreeDayMenuPayload,
 } from "@/lib/canva/payload";
 import { prisma } from "@/lib/db";
 import {
@@ -30,6 +31,7 @@ import {
   getCanvaGenerationOptions,
   getDraft,
   getOneDayMenuMergeWarning,
+  parseStructuredDraft,
   saveCanvaGenerationOptions as persistCanvaGenerationOptions,
   saveDraft as persistDraft,
   type CanvaGenerationOptions,
@@ -73,7 +75,7 @@ function setByPath(obj: unknown, path: string, value: unknown): unknown {
 }
 
 function isTourDuration(value: string | null | undefined): value is TourDuration {
-  return value === "ONE_DAY" || value === "TWO_DAY";
+  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY";
 }
 
 function getArtifactLabel(kind: ArtifactKind) {
@@ -87,14 +89,14 @@ function buildArtifactPayload(
   canvaOptions?: CanvaGenerationOptions,
 ) {
   if (kind === "ITINERARY") {
-    return duration === "ONE_DAY"
-      ? buildOneDayItineraryPayload(draft, canvaOptions)
-      : buildTwoDayItineraryPayload(draft);
+    if (duration === "ONE_DAY") return buildOneDayItineraryPayload(draft, canvaOptions);
+    if (duration === "THREE_DAY") return buildThreeDayItineraryPayload(draft);
+    return buildTwoDayItineraryPayload(draft);
   }
 
-  return duration === "ONE_DAY"
-    ? buildOneDayMenuPayload(draft)
-    : buildTwoDayMenuPayload(draft);
+  if (duration === "ONE_DAY") return buildOneDayMenuPayload(draft);
+  if (duration === "THREE_DAY") return buildThreeDayMenuPayload(draft);
+  return buildTwoDayMenuPayload(draft);
 }
 
 async function requireAuth() {
@@ -167,7 +169,7 @@ export async function saveDraftField(
   }
 
   const updated = setByPath(upload.structuredDraft, fieldPath, newValue);
-  const parsed = structuredDraftSchema.safeParse(updated);
+  const parsed = parseStructuredDraft(updated);
 
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

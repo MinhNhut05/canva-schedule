@@ -5,6 +5,7 @@ import {
   menuItemSchema,
   oneDaySchema,
   twoDaySchema,
+  threeDaySchema,
 } from "../extraction-schema";
 
 describe("activitySchema", () => {
@@ -78,8 +79,38 @@ describe("twoDaySchema", () => {
         day2: [{ text: "Tham quan", sourceConfidence: "high" }],
       },
       menu: {
-        day1: [],
-        day2: [],
+        morning_day1: [],
+        lunch_day1: [],
+        afternoon_day1: [],
+        morning_day2: [],
+        lunch_day2: [],
+        afternoon_day2: [],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("threeDaySchema", () => {
+  it("accepts valid three-day schema directly", () => {
+    const result = threeDaySchema.safeParse({
+      duration: "THREE_DAY",
+      itinerary: {
+        day1: [{ text: "Khởi hành", sourceConfidence: "high" }],
+        day2: [{ text: "Tham quan", sourceConfidence: "high" }],
+        day3: [{ text: "Về", sourceConfidence: "high" }],
+      },
+      menu: {
+        morning_day1: [],
+        lunch_day1: [],
+        afternoon_day1: [],
+        morning_day2: [],
+        lunch_day2: [],
+        afternoon_day2: [],
+        morning_day3: [],
+        lunch_day3: [],
+        afternoon_day3: [],
       },
     });
 
@@ -164,8 +195,12 @@ describe("structuredDraftSchema — TWO_DAY", () => {
       day2: [{ text: "Tham quan", sourceConfidence: "high" }],
     },
     menu: {
-      day1: [{ text: "Phở bò", needsReview: false }],
-      day2: [{ text: "Bún bò", needsReview: false }],
+      morning_day1: [{ text: "Bánh mì", needsReview: false }],
+      lunch_day1: [{ text: "Phở bò", needsReview: false }],
+      afternoon_day1: [],
+      morning_day2: [{ text: "Hủ tiếu", needsReview: false }],
+      lunch_day2: [{ text: "Bún bò", needsReview: false }],
+      afternoon_day2: [],
     },
   };
 
@@ -200,7 +235,7 @@ describe("SAFE-02: schema validation rejects invalid output", () => {
 
   it("rejects unknown duration value", () => {
     const result = structuredDraftSchema.safeParse({
-      duration: "THREE_DAY",
+      duration: "FOUR_DAY",
       itinerary: {},
       menu: {},
     });

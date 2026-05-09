@@ -121,7 +121,7 @@ export function EditableField({
               onKeyDown={handleKeyDown}
               disabled={isSaving}
               rows={3}
-              className="border-2 border-[#1E3B8A] bg-white focus-visible:ring-[#1E3B8A]"
+              className="border-2 border-primary bg-card focus-visible:ring-ring"
             />
           ) : (
             <Input
@@ -130,7 +130,7 @@ export function EditableField({
               onChange={(event) => setEditValue(event.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isSaving}
-              className="border-2 border-[#1E3B8A] bg-white focus-visible:ring-[#1E3B8A]"
+              className="border-2 border-primary bg-card focus-visible:ring-ring"
             />
           )}
           <div className="flex gap-2">
@@ -138,8 +138,7 @@ export function EditableField({
               size="sm"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
-            >
+                          >
               {isSaving ? "Dang luu..." : "Luu"}
             </Button>
             <Button
@@ -164,7 +163,7 @@ export function EditableField({
         onClick={handleStartEdit}
         className={cn(
           "w-full cursor-pointer rounded-lg px-3 py-2 text-left text-base transition-colors",
-          !displayClassName && "text-foreground hover:bg-slate-100",
+          !displayClassName && "text-foreground hover:bg-surface-panel-cool/70",
           displayClassName,
           !value && "italic text-muted-foreground",
         )}

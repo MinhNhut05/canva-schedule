@@ -30,6 +30,45 @@ function normalizeCanvaGenerationOptions(value: unknown): CanvaGenerationOptions
   };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeLegacyStructuredDraft(value: unknown): unknown {
+  if (!isRecord(value) || value.duration !== "TWO_DAY" || !isRecord(value.menu)) {
+    return value;
+  }
+
+  const menu = value.menu;
+  const hasCurrentMenuShape =
+    "morning_day1" in menu ||
+    "lunch_day1" in menu ||
+    "afternoon_day1" in menu ||
+    "morning_day2" in menu ||
+    "lunch_day2" in menu ||
+    "afternoon_day2" in menu;
+
+  if (hasCurrentMenuShape || (!Array.isArray(menu.day1) && !Array.isArray(menu.day2))) {
+    return value;
+  }
+
+  return {
+    ...value,
+    menu: {
+      morning_day1: [],
+      lunch_day1: Array.isArray(menu.day1) ? menu.day1 : [],
+      afternoon_day1: [],
+      morning_day2: [],
+      lunch_day2: Array.isArray(menu.day2) ? menu.day2 : [],
+      afternoon_day2: [],
+    },
+  };
+}
+
+export function parseStructuredDraft(value: unknown) {
+  return structuredDraftSchema.safeParse(normalizeLegacyStructuredDraft(value));
+}
+
 export async function saveDraft(
   uploadId: string,
   draft: StructuredDraft,
@@ -80,7 +119,7 @@ export async function getDraft(uploadId: string): Promise<StructuredDraft | null
 
   if (!upload?.structuredDraft) return null;
 
-  const parsed = structuredDraftSchema.safeParse(upload.structuredDraft);
+  const parsed = parseStructuredDraft(upload.structuredDraft);
   return parsed.success ? parsed.data : null;
 }
 
@@ -193,7 +232,9 @@ function collectReviewFlags(draft: StructuredDraft): string[] {
   const activities =
     draft.duration === "ONE_DAY"
       ? [...draft.itinerary.morning, ...draft.itinerary.afternoon]
-      : [...draft.itinerary.day1, ...draft.itinerary.day2];
+      : draft.duration === "THREE_DAY"
+        ? [...draft.itinerary.day1, ...draft.itinerary.day2, ...draft.itinerary.day3]
+        : [...draft.itinerary.day1, ...draft.itinerary.day2];
 
   for (const activity of activities) {
     if (activity.needsReview) {

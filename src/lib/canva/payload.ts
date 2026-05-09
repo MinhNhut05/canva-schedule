@@ -55,8 +55,34 @@ interface TwoDayItineraryDraft extends DraftBase {
 
 interface TwoDayMenuDraft extends DraftBase {
   menu?: {
-    day1?: MenuItem[];
-    day2?: MenuItem[];
+    morning_day1?: MenuItem[];
+    lunch_day1?: MenuItem[];
+    afternoon_day1?: MenuItem[];
+    morning_day2?: MenuItem[];
+    lunch_day2?: MenuItem[];
+    afternoon_day2?: MenuItem[];
+  };
+}
+
+interface ThreeDayItineraryDraft extends DraftBase {
+  itinerary?: {
+    day1?: ActivityItem[];
+    day2?: ActivityItem[];
+    day3?: ActivityItem[];
+  };
+}
+
+interface ThreeDayMenuDraft extends DraftBase {
+  menu?: {
+    morning_day1?: MenuItem[];
+    lunch_day1?: MenuItem[];
+    afternoon_day1?: MenuItem[];
+    morning_day2?: MenuItem[];
+    lunch_day2?: MenuItem[];
+    afternoon_day2?: MenuItem[];
+    morning_day3?: MenuItem[];
+    lunch_day3?: MenuItem[];
+    afternoon_day3?: MenuItem[];
   };
 }
 
@@ -195,9 +221,13 @@ function resolveProgramLabel(programName?: string): string {
   return trimmed ? trimmed : DEFAULT_PROGRAM_LABEL;
 }
 
+function normalizeTitle(value: string | undefined): string {
+  return (value ?? "").replace(/–/g, "-").replace(/\s+/g, " ").trim();
+}
+
 function sharedFields(draft: DraftBase): AutofillData {
   return {
-    title: textField(draft.title ?? ""),
+    title: textField(normalizeTitle(draft.title)),
     program_label: textField(resolveProgramLabel(draft.programName)),
     tour_date: textField(draft.tourDate ?? ""),
   };
@@ -217,16 +247,29 @@ function formatActivity(item: ActivityItem): string {
 }
 
 /**
- * Join a list of activity items into a single text block.
- * Activities are separated by a single newline to keep Canva blocks compact.
- * Empty list produces empty string.
+ * Join activities into a single text block.
+ * Time-labeled activities get a blank line before them (except the first non-empty entry).
+ * Activities without a timeLabel (e.g. merged menu lines, "Kết thúc chương trình!") stay
+ * tight against the previous entry with a single newline.
  */
 function joinActivityBlock(items: ActivityItem[]): string {
   if (items.length === 0) return "";
-  return items
-    .map(formatActivity)
-    .filter((item) => item !== "")
-    .join("\n");
+
+  const entries = items
+    .map((item) => ({
+      text: formatActivity(item),
+      hasTime: Boolean(item.timeLabel?.trim()),
+    }))
+    .filter((entry) => entry.text !== "");
+
+  if (entries.length === 0) return "";
+
+  let result = entries[0].text;
+  for (let i = 1; i < entries.length; i += 1) {
+    const separator = entries[i].hasTime ? "\n\n" : "\n";
+    result += separator + entries[i].text;
+  }
+  return result;
 }
 
 const MORNING_MEAL_PATTERN = /(ăn sáng|dùng bữa sáng|điểm tâm)/i;
@@ -235,6 +278,24 @@ const LUNCH_MEAL_PATTERN =
   /(ăn trưa|dùng bữa trưa|dùng cơm trưa|nghỉ trưa|cơm trưa)/i;
 const AFTERNOON_SNACK_PATTERN = /(ăn nhẹ|ăn xế|ăn chiều|giải lao)/i;
 const RETURN_TRAVEL_PATTERN = /(khởi hành về|trở về|về trường|về lại|quay về)/i;
+const END_PROGRAM_DUPLICATE_PATTERN = /kết thúc chương trình/i;
+
+const PICKUP_LANDMARK_REPLACEMENTS: { pattern: RegExp; format: (loc: string) => string }[] = [
+  { pattern: /tại điểm (?:hẹn|đón)(?: ban đầu)?/gi, format: (loc) => `tại ${loc}` },
+  { pattern: /đến điểm (?:hẹn|đón)(?: ban đầu)?/gi, format: (loc) => `đến ${loc}` },
+  { pattern: /về (?:lại |đến )?điểm (?:hẹn|đón)(?: ban đầu)?/gi, format: (loc) => `về ${loc}` },
+  { pattern: /điểm đón ban đầu/gi, format: (loc) => loc },
+];
+
+function substituteLandmark(text: string, location: string | undefined): string {
+  const trimmed = location?.trim();
+  if (!trimmed) return text;
+  let out = text;
+  for (const { pattern, format } of PICKUP_LANDMARK_REPLACEMENTS) {
+    out = out.replace(pattern, format(trimmed));
+  }
+  return out;
+}
 const MENU_FOOD_LABEL_PATTERN = /^món ăn\s*:\s*(.+)$/i;
 const MENU_DRINK_LABEL_PATTERN = /^(?:món uống|nước uống|thức uống)\s*:\s*(.+)$/i;
 const DRINK_KEYWORD_PATTERN =
@@ -377,14 +438,20 @@ function compactFreePlayActivityText(
   }
 
   let header = replaceGreetingPrefix(normalizeWhitespace(lines[0]), options.greetingText);
+
+  if (!FREE_PLAY_HEADER_PATTERN.test(header)) {
+    // Non-free-play: preserve bullet markers verbatim, only normalize whitespace within each line.
+    const preservedDetails = lines
+      .slice(1)
+      .map((line) => normalizeWhitespace(line))
+      .filter((line) => line !== "");
+    return [header, ...preservedDetails].join("\n");
+  }
+
   const details = lines
     .slice(1)
     .map((line) => normalizeWhitespace(line.replace(/^[•+\-]\s*/, "")))
     .filter((line) => line !== "");
-
-  if (!FREE_PLAY_HEADER_PATTERN.test(header)) {
-    return [header, ...details].join("\n");
-  }
 
   if (/tự do vui chơi tại/i.test(header) && !/tự do tham quan và vui chơi tại/i.test(header)) {
     header = header.replace(/tự do vui chơi tại/i, "tự do tham quan và vui chơi tại");
@@ -442,6 +509,7 @@ function normalizeOneDaySectionItems(
   section: "morning" | "afternoon",
 ): ActivityItem[] {
   const returnDestination = draft.returnLocation?.trim() || draft.pickupLocation?.trim();
+  const pickupDestination = draft.pickupLocation?.trim();
   const hasLunchMenu = (draft.menu?.lunch?.length ?? 0) > 0;
 
   return items.map((item, index) => {
@@ -455,6 +523,10 @@ function normalizeOneDaySectionItems(
       return setActivityText(item, currentText);
     }
 
+    if (section === "afternoon" && END_PROGRAM_DUPLICATE_PATTERN.test(currentText)) {
+      return setActivityText(item, "");
+    }
+
     if (
       section === "afternoon" &&
       returnDestination &&
@@ -464,19 +536,17 @@ function normalizeOneDaySectionItems(
     }
 
     if (section === "afternoon") {
-      return setActivityText(
-        item,
-        compactFreePlayActivityText(currentText, {
-          greetingText: draft.greetingText,
-          addAfterMealPrefix: index === 0 && hasLunchMenu,
-        }),
-      );
+      const compacted = compactFreePlayActivityText(currentText, {
+        greetingText: draft.greetingText,
+        addAfterMealPrefix: index === 0 && hasLunchMenu,
+      });
+      return setActivityText(item, substituteLandmark(compacted, returnDestination));
     }
 
-    return setActivityText(
-      item,
-      replaceGreetingPrefix(normalizeWhitespace(currentText), draft.greetingText),
-    );
+    const compacted = compactFreePlayActivityText(currentText, {
+      greetingText: draft.greetingText,
+    });
+    return setActivityText(item, substituteLandmark(compacted, pickupDestination));
   });
 }
 
@@ -569,10 +639,50 @@ export function buildOneDayMenuPayload(draft: DraftInput): AutofillData {
   };
 }
 
+function normalizeTwoDaySectionItems(
+  items: ActivityItem[],
+  draft: TwoDayItineraryDraft,
+  section: "day1" | "day2",
+): ActivityItem[] {
+  const returnDestination = draft.returnLocation?.trim() || draft.pickupLocation?.trim();
+  const pickupDestination = draft.pickupLocation?.trim();
+
+  return items.map((item) => {
+    const currentText = getActivityText(item).trim();
+
+    if (!currentText) {
+      return item;
+    }
+
+    if (/^(Món ăn|Nước uống):/i.test(currentText)) {
+      return setActivityText(item, currentText);
+    }
+
+    if (section === "day2" && END_PROGRAM_DUPLICATE_PATTERN.test(currentText)) {
+      return setActivityText(item, "");
+    }
+
+    if (
+      section === "day2" &&
+      returnDestination &&
+      RETURN_TRAVEL_PATTERN.test(currentText)
+    ) {
+      return setActivityText(item, `Đoàn khởi hành về ${returnDestination}.`);
+    }
+
+    const compacted = compactFreePlayActivityText(currentText, {
+      greetingText: draft.greetingText,
+    });
+    const location = section === "day2" ? returnDestination : pickupDestination;
+    return setActivityText(item, substituteLandmark(compacted, location));
+  });
+}
+
 export function buildTwoDayItineraryPayload(draft: DraftInput): AutofillData {
   const d = (draft ?? {}) as TwoDayItineraryDraft;
-  const day1Items = d.itinerary?.day1 ?? [];
-  const day2WithEnd = ensureEndProgram(d.itinerary?.day2 ?? []);
+  const day1Items = normalizeTwoDaySectionItems(d.itinerary?.day1 ?? [], d, "day1");
+  const day2Items = normalizeTwoDaySectionItems(d.itinerary?.day2 ?? [], d, "day2");
+  const day2WithEnd = ensureEndProgram(day2Items);
 
   return {
     ...sharedFields(d),
@@ -583,15 +693,72 @@ export function buildTwoDayItineraryPayload(draft: DraftInput): AutofillData {
 
 export function buildTwoDayMenuPayload(draft: DraftInput): AutofillData {
   const d = (draft ?? {}) as TwoDayMenuDraft;
-  const day1Items = (d.menu?.day1 ?? []).map(
+  const morningDay1Items = (d.menu?.morning_day1 ?? []).map(
     (m) => m.text ?? m.item ?? "",
   );
-  const day2Items = (d.menu?.day2 ?? []).map(
+  const lunchDay1Items = (d.menu?.lunch_day1 ?? []).map(
     (m) => m.text ?? m.item ?? "",
   );
+  const afternoonDay1Items = (d.menu?.afternoon_day1 ?? []).map(
+    (m) => m.text ?? m.item ?? "",
+  );
+  const morningDay2Items = (d.menu?.morning_day2 ?? []).map(
+    (m) => m.text ?? m.item ?? "",
+  );
+  const lunchDay2Items = (d.menu?.lunch_day2 ?? []).map(
+    (m) => m.text ?? m.item ?? "",
+  );
+  const afternoonDay2Items = (d.menu?.afternoon_day2 ?? []).map(
+    (m) => m.text ?? m.item ?? "",
+  );
+
   return {
     ...sharedFields(d),
-    menu_day1_block: textField(joinMenuBlock(day1Items)),
-    menu_day2_block: textField(joinMenuBlock(day2Items)),
+    menu_morning_day1_block: textField(joinMenuBlock(morningDay1Items)),
+    menu_lunch_day1_block: textField(joinMenuBlock(lunchDay1Items)),
+    menu_afternoon_day1_block: textField(joinMenuBlock(afternoonDay1Items)),
+    menu_morning_day2_block: textField(joinMenuBlock(morningDay2Items)),
+    menu_lunch_day2_block: textField(joinMenuBlock(lunchDay2Items)),
+    menu_afternoon_day2_block: textField(joinMenuBlock(afternoonDay2Items)),
+  };
+}
+
+export function buildThreeDayItineraryPayload(draft: DraftInput): AutofillData {
+  const d = (draft ?? {}) as ThreeDayItineraryDraft;
+  const day1Items = d.itinerary?.day1 ?? [];
+  const day2Items = d.itinerary?.day2 ?? [];
+  const day3WithEnd = ensureEndProgram(d.itinerary?.day3 ?? []);
+
+  return {
+    ...sharedFields(d),
+    day1_block: textField(joinActivityBlock(day1Items)),
+    day2_block: textField(joinActivityBlock(day2Items)),
+    day3_block: textField(joinActivityBlock(day3WithEnd)),
+  };
+}
+
+export function buildThreeDayMenuPayload(draft: DraftInput): AutofillData {
+  const d = (draft ?? {}) as ThreeDayMenuDraft;
+  const morningDay1Items = (d.menu?.morning_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay1Items = (d.menu?.lunch_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay1Items = (d.menu?.afternoon_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const morningDay2Items = (d.menu?.morning_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay2Items = (d.menu?.lunch_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay2Items = (d.menu?.afternoon_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const morningDay3Items = (d.menu?.morning_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay3Items = (d.menu?.lunch_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay3Items = (d.menu?.afternoon_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+
+  return {
+    ...sharedFields(d),
+    menu_morning_day1_block: textField(joinMenuBlock(morningDay1Items)),
+    menu_lunch_day1_block: textField(joinMenuBlock(lunchDay1Items)),
+    menu_afternoon_day1_block: textField(joinMenuBlock(afternoonDay1Items)),
+    menu_morning_day2_block: textField(joinMenuBlock(morningDay2Items)),
+    menu_lunch_day2_block: textField(joinMenuBlock(lunchDay2Items)),
+    menu_afternoon_day2_block: textField(joinMenuBlock(afternoonDay2Items)),
+    menu_morning_day3_block: textField(joinMenuBlock(morningDay3Items)),
+    menu_lunch_day3_block: textField(joinMenuBlock(lunchDay3Items)),
+    menu_afternoon_day3_block: textField(joinMenuBlock(afternoonDay3Items)),
   };
 }

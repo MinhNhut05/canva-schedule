@@ -56,7 +56,6 @@ interface NavItem {
 const primaryItems: NavItem[] = [
   { href: "/dashboard", label: "Tổng quan" },
   { href: "/upload", label: "Tải tài liệu" },
-  { href: "/review", label: "Duyệt nội dung" },
   { href: "/history", label: "Lịch sử" },
   { href: "/settings/password", label: "Cài đặt" },
 ];
@@ -64,6 +63,7 @@ const primaryItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { href: "/admin/rules", label: "Quy tắc" },
   { href: "/admin/templates", label: "Mẫu Canva" },
+  { href: "/admin/canva", label: "Kết nối Canva" },
 ];
 
 function SidebarLink({
@@ -81,7 +81,7 @@ function SidebarLink({
     return (
       <span
         aria-disabled="true"
-        className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground/80"
+        className="flex min-h-11 items-center rounded-full px-4 text-sm font-semibold text-muted-foreground/70"
       >
         {item.label}
       </span>
@@ -93,10 +93,10 @@ function SidebarLink({
       href={item.href}
       onClick={onNavigate}
       className={cn(
-        "flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "flex min-h-11 items-center rounded-full px-4 text-sm font-semibold transition-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isActive
-          ? "border border-primary/20 bg-primary/10 text-primary shadow-semantic-light"
-          : "text-foreground hover:bg-muted",
+          ? "border border-primary/35 bg-primary/15 text-primary shadow-[0_0_26px_rgba(41,218,245,0.18)]"
+          : "text-muted-foreground hover:border hover:border-primary/20 hover:bg-primary/10 hover:text-foreground",
       )}
     >
       {item.label}
@@ -123,12 +123,12 @@ function SidebarContent({
   const displayUsername = useMemo(() => username?.trim() || "@chua-cap-nhat", [username]);
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col surface-panel-glass">
       <div className="px-5 py-6">
         <Link
-          href="/dashboard"
+          href="/"
           onClick={onNavigate}
-          className="inline-flex rounded-md text-xl font-semibold text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="inline-flex rounded-full bg-primary/10 px-4 py-2 text-xl font-semibold text-primary shadow-[0_0_28px_rgba(41,218,245,0.14)] transition-premium hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           SileTravel
         </Link>
@@ -160,7 +160,7 @@ function SidebarContent({
       <Separator />
 
       <div className="space-y-4 px-4 py-5">
-        <div className="space-y-1 rounded-xl bg-muted/50 px-4 py-3">
+        <div className="space-y-1 rounded-[24px] border border-primary/15 bg-primary/10 px-4 py-3 shadow-semantic-light">
           <p className="text-sm font-semibold text-foreground">{displayName}</p>
           <p className="text-sm text-muted-foreground">{displayUsername}</p>
         </div>
@@ -184,9 +184,9 @@ function MobileSidebar({ fullName, username, role, signOutAction }: MobileSideba
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b bg-white px-4 py-4 md:hidden">
+    <div className="border-b border-primary/20 surface-panel-glass px-4 py-4 md:hidden">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/dashboard" className="text-lg font-semibold text-foreground">
+        <Link href="/" className="text-lg font-semibold text-primary">
           SileTravel
         </Link>
 
@@ -195,7 +195,7 @@ function MobileSidebar({ fullName, username, role, signOutAction }: MobileSideba
             <Button
               variant="outline"
               size="icon"
-              className="border-border-light bg-surface-panel-glass transition-premium hover:bg-surface-panel-cool focus-visible:ring-2 focus-visible:ring-primary"
+              className="border-primary/25 bg-primary/10 text-primary transition-premium hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Mở điều hướng"
             >
               <MenuIcon />
@@ -233,7 +233,7 @@ export function AppSidebar({ fullName, username, role, signOutAction }: AppSideb
         signOutAction={signOutAction}
       />
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r bg-white md:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-primary/20 surface-panel-glass md:block">
         <SidebarContent
           pathname={pathname}
           fullName={fullName}

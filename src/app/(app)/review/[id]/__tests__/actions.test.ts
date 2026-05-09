@@ -14,9 +14,12 @@ const {
   buildOneDayMenuPayload,
   buildTwoDayItineraryPayload,
   buildTwoDayMenuPayload,
+  buildThreeDayItineraryPayload,
+  buildThreeDayMenuPayload,
   getCanvaGenerationOptions,
   getDraft,
   getOneDayMenuMergeWarning,
+  parseStructuredDraft,
   persistCanvaGenerationOptions,
   revalidatePath,
 } = vi.hoisted(() => ({
@@ -26,19 +29,27 @@ const {
   generateArtifact: vi.fn(),
   getArtifactsForUpload: vi.fn(),
   resolveArtifactUrls: vi.fn(),
-  resolveTemplatePair: vi.fn(async (duration: "ONE_DAY" | "TWO_DAY") => ({
+  resolveTemplatePair: vi.fn(async (duration: "ONE_DAY" | "TWO_DAY" | "THREE_DAY") => ({
     duration,
     itineraryTemplateId: `${duration}-itinerary-template`,
     menuTemplateId: `${duration}-menu-template`,
-    displayLabel: duration === "ONE_DAY" ? "Tour 1 ngày" : "Tour 2 ngày",
+    displayLabel:
+      duration === "ONE_DAY"
+        ? "Tour 1 ngày"
+        : duration === "TWO_DAY"
+          ? "Tour 2 ngày"
+          : "Tour 3 ngày",
   })),
   buildOneDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "one-day-itinerary" } })),
   buildOneDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "one-day-menu" } })),
   buildTwoDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "two-day-itinerary" } })),
   buildTwoDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "two-day-menu" } })),
+  buildThreeDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "three-day-itinerary" } })),
+  buildThreeDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "three-day-menu" } })),
   getCanvaGenerationOptions: vi.fn(),
   getDraft: vi.fn(),
   getOneDayMenuMergeWarning: vi.fn(),
+  parseStructuredDraft: vi.fn((value) => ({ success: true, data: value })),
   persistCanvaGenerationOptions: vi.fn(),
   revalidatePath: vi.fn(),
 }));
@@ -79,12 +90,15 @@ vi.mock("@/lib/canva/payload", () => ({
   buildOneDayMenuPayload,
   buildTwoDayItineraryPayload,
   buildTwoDayMenuPayload,
+  buildThreeDayItineraryPayload,
+  buildThreeDayMenuPayload,
 }));
 
 vi.mock("@/lib/review/draft", () => ({
   getCanvaGenerationOptions,
   getDraft,
   getOneDayMenuMergeWarning,
+  parseStructuredDraft,
   approveDraft: vi.fn(),
   saveCanvaGenerationOptions: persistCanvaGenerationOptions,
   saveDraft: vi.fn(),
@@ -120,6 +134,30 @@ const oneDayDraft = {
   clientName: "THCS An Thanh Tay",
   itinerary: { morning: [], afternoon: [] },
   menu: { morning: [], lunch: [], afternoon: [] },
+};
+
+const approvedThreeDayUpload = {
+  id: "upload-1",
+  reviewStatus: "APPROVED",
+  tourDuration: "THREE_DAY",
+};
+
+const threeDayDraft = {
+  duration: "THREE_DAY",
+  title: "Tour sample",
+  clientName: "THCS An Thanh Tay",
+  itinerary: { day1: [], day2: [], day3: [] },
+  menu: {
+    morning_day1: [],
+    lunch_day1: [],
+    afternoon_day1: [],
+    morning_day2: [],
+    lunch_day2: [],
+    afternoon_day2: [],
+    morning_day3: [],
+    lunch_day3: [],
+    afternoon_day3: [],
+  },
 };
 
 describe("review actions canva flow", () => {
@@ -222,6 +260,43 @@ describe("review actions canva flow", () => {
       isRateLimited: false,
       cooldownSeconds: undefined,
     });
+  });
+
+  it("generateCanva uses three-day payload builders", async () => {
+    findFirst.mockResolvedValueOnce(approvedThreeDayUpload);
+    getDraft.mockResolvedValueOnce(threeDayDraft);
+    generateArtifact
+      .mockResolvedValueOnce({
+        artifactType: "ITINERARY",
+        status: "SUCCEEDED",
+        designId: "design-itinerary",
+      })
+      .mockResolvedValueOnce({
+        artifactType: "MENU",
+        status: "SUCCEEDED",
+        designId: "design-menu",
+      });
+
+    const result = await generateCanva("upload-1");
+
+    expect(buildThreeDayItineraryPayload).toHaveBeenCalledWith(threeDayDraft);
+    expect(buildThreeDayMenuPayload).toHaveBeenCalledWith(threeDayDraft);
+    expect(resolveTemplatePair).toHaveBeenCalledWith("THREE_DAY");
+    expect(generateArtifact).toHaveBeenNthCalledWith(1, {
+      uploadId: "upload-1",
+      duration: "THREE_DAY",
+      kind: "ITINERARY",
+      data: { itinerary: { type: "text", text: "three-day-itinerary" } },
+      title: "SileTravel - Tour 3 ngày - Lịch trình",
+    });
+    expect(generateArtifact).toHaveBeenNthCalledWith(2, {
+      uploadId: "upload-1",
+      duration: "THREE_DAY",
+      kind: "MENU",
+      data: { menu: { type: "text", text: "three-day-menu" } },
+      title: "SileTravel - Tour 3 ngày - Thực đơn",
+    });
+    expect(result.success).toBe(true);
   });
 
   it("deduplicates concurrent generateCanva calls for the same upload", async () => {

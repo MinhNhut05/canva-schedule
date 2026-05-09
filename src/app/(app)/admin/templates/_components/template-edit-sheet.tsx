@@ -169,7 +169,7 @@ export function TemplateEditSheet({ template, onClose }: TemplateEditSheetProps)
             </div>
 
             {/* Field mapping explanation */}
-            <div className="rounded-md bg-muted p-3">
+            <div className="surface-panel-cool rounded-[16px] border border-semantic-light p-3">
               <p className="text-xs text-muted-foreground">
                 Cột bên trái là tên trường dữ liệu từ hệ thống. Cột bên phải là tên text element
                 tương ứng trong mẫu Canva. Chỉnh sửa cột bên phải khi cần cập nhật mapping.

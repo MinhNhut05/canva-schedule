@@ -391,14 +391,64 @@ const rule07MenuStructure: RuleDefinition = {
     }
 
     if (draft.duration === "TWO_DAY") {
-      const { day1, day2 } = draft.menu;
-      const totalItems = day1.length + day2.length;
+      const {
+        morning_day1,
+        lunch_day1,
+        afternoon_day1,
+        morning_day2,
+        lunch_day2,
+        afternoon_day2,
+      } = draft.menu;
+      const totalItems =
+        morning_day1.length +
+        lunch_day1.length +
+        afternoon_day1.length +
+        morning_day2.length +
+        lunch_day2.length +
+        afternoon_day2.length;
 
       if (totalItems === 0) {
         violations.push({
           ruleId: "RULE-07",
           field: "menu",
-          message: "Tour 2 ngày chưa có thực đơn (ngày 1/ngày 2). Cần bổ sung khi review.",
+          message:
+            "Tour 2 ngày chưa có thực đơn (sáng/trưa/chiều cho từng ngày). Cần bổ sung khi review.",
+          severity: "needs_review",
+          originalValue: null,
+          correctedValue: null,
+        });
+      }
+    }
+
+    if (draft.duration === "THREE_DAY") {
+      const {
+        morning_day1,
+        lunch_day1,
+        afternoon_day1,
+        morning_day2,
+        lunch_day2,
+        afternoon_day2,
+        morning_day3,
+        lunch_day3,
+        afternoon_day3,
+      } = draft.menu;
+      const totalItems =
+        morning_day1.length +
+        lunch_day1.length +
+        afternoon_day1.length +
+        morning_day2.length +
+        lunch_day2.length +
+        afternoon_day2.length +
+        morning_day3.length +
+        lunch_day3.length +
+        afternoon_day3.length;
+
+      if (totalItems === 0) {
+        violations.push({
+          ruleId: "RULE-07",
+          field: "menu",
+          message:
+            "Tour 3 ngày chưa có thực đơn (sáng/trưa/chiều cho từng ngày). Cần bổ sung khi review.",
           severity: "needs_review",
           originalValue: null,
           correctedValue: null,

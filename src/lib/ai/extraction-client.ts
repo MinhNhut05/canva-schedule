@@ -4,9 +4,13 @@ import OpenAI from "openai";
 
 import { getAiConfig } from "@/lib/ai/server-client";
 
-const AI_MODEL = process.env.AI_MODEL?.trim() || "cx/gpt-5.4";
+function normalizeModelName(model: string): string {
+  return model.trim();
+}
+
+const AI_MODEL = normalizeModelName(process.env.AI_MODEL?.trim() || "cx/gpt-5.4");
 const MAX_RETRIES = 1;
-const AI_TIMEOUT_MS = 120_000;
+const AI_TIMEOUT_MS = 240_000;
 
 const NON_RETRYABLE_STATUS_CODES = [400, 401, 403, 404, 406, 422];
 

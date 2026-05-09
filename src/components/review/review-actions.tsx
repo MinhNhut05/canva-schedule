@@ -49,11 +49,18 @@ export function ReviewActions({
       : "Tạo Canva";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white px-4 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] md:left-60">
-      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-semantic-light bg-surface-panel-glass/90 px-4 py-4 backdrop-blur md:left-60">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-foreground">
             {!isApproved ? "Giai đoạn 3 · Xác nhận nội dung" : "Giai đoạn 4 · Tạo thiết kế Canva"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {!isApproved
+              ? "Chỉ xác nhận khi bạn đã rà soát xong nội dung ở cả lịch trình và thực đơn."
+              : isRateLimited
+                ? "Hệ thống đang trong thời gian chờ trước khi tạo tiếp."
+                : "Khi mẫu đã đúng, bạn có thể bắt đầu tạo hoặc tạo lại liên kết Canva."}
           </p>
         </div>
 
@@ -61,7 +68,7 @@ export function ReviewActions({
           <Button
             onClick={onApprove}
             disabled={isApproving || !hasDraft}
-            className="gap-2 bg-[#1E3B8A] px-6 py-2.5 text-base font-semibold text-white hover:bg-[#1E3B8A]/90 focus-visible:ring-2 focus-visible:ring-[#1E3B8A]"
+            className="glow-accent gap-2 px-6 py-2.5 text-base font-semibold"
           >
             {isApproving ? (
               <>
@@ -76,7 +83,7 @@ export function ReviewActions({
           <Button
             onClick={onGenerate}
             disabled={disableGenerate || isGenerating || isRateLimited}
-            className="gap-2 bg-[#3B82F6] px-6 py-2.5 text-base font-semibold text-white hover:bg-[#3B82F6]/90 focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
+            className="glow-accent gap-2 px-6 py-2.5 text-base font-semibold"
           >
             {isGenerating ? (
               <>

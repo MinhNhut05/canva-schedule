@@ -61,8 +61,12 @@ function makeTwoDayGroupDraft(
       ],
     },
     menu: {
-      day1: [{ text: "Phở bò", needsReview: false }],
-      day2: [{ text: "Bún bò", needsReview: false }],
+      morning_day1: [{ text: "Phở bò", needsReview: false }],
+      lunch_day1: [{ text: "Cơm tấm", needsReview: false }],
+      afternoon_day1: [{ text: "Trà đá", needsReview: false }],
+      morning_day2: [{ text: "Bún bò", needsReview: false }],
+      lunch_day2: [{ text: "Cơm gà", needsReview: false }],
+      afternoon_day2: [{ text: "Nước suối", needsReview: false }],
     },
     ...overrides,
   } as TwoDayDraft;
@@ -336,7 +340,14 @@ describe("RULE-07: Menu separation and structure", () => {
 
   it("flags when TWO_DAY menu is completely empty", () => {
     const draft = makeTwoDayGroupDraft();
-    draft.menu = { day1: [], day2: [] };
+    draft.menu = {
+      morning_day1: [],
+      lunch_day1: [],
+      afternoon_day1: [],
+      morning_day2: [],
+      lunch_day2: [],
+      afternoon_day2: [],
+    };
 
     const result = applyRules(draft);
     const violations = result.violations.filter((v) => v.ruleId === "RULE-07");

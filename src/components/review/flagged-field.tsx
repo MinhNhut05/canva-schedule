@@ -12,7 +12,7 @@ function WarningIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4 shrink-0 text-[#F59E0B]"
+      className="size-4 shrink-0 text-amber-600"
     >
       <path d="M12 9v4" />
       <path d="M12 17h.01" />
@@ -37,12 +37,12 @@ export function FlaggedField({
   }
 
   return (
-    <div className={cn("rounded-lg border-2 border-[#F59E0B] bg-[#FFFBEB] p-3")}>
+    <div className={cn("rounded-lg border-2 border-amber-400 bg-amber-50 p-3")}>
       {children}
       {helperText ? (
         <div className="mt-2 flex items-start gap-1.5">
           <WarningIcon />
-          <p className="text-sm text-[#92400E]">{helperText}</p>
+          <p className="text-sm text-amber-800">{helperText}</p>
         </div>
       ) : null}
     </div>

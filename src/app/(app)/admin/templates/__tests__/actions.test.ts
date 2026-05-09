@@ -123,8 +123,12 @@ describe("Admin templates actions", () => {
     it("returns TWO_DAY_MENU fields for TWO_DAY + MENU", () => {
       const fields = getFieldsForTemplate("TWO_DAY", "MENU");
       expect(fields).toContain("title");
-      expect(fields).toContain("menu_day1_block");
-      expect(fields).toContain("menu_day2_block");
+      expect(fields).toContain("menu_morning_day1_block");
+      expect(fields).toContain("menu_lunch_day1_block");
+      expect(fields).toContain("menu_afternoon_day1_block");
+      expect(fields).toContain("menu_morning_day2_block");
+      expect(fields).toContain("menu_lunch_day2_block");
+      expect(fields).toContain("menu_afternoon_day2_block");
     });
 
     it("returns ONE_DAY_MENU fields for ONE_DAY + MENU", () => {
@@ -141,7 +145,7 @@ describe("Admin templates actions", () => {
     });
 
     it("returns empty array for unknown combination", () => {
-      const fields = getFieldsForTemplate("THREE_DAY", "ITINERARY");
+      const fields = getFieldsForTemplate("FOUR_DAY", "ITINERARY");
       expect(fields).toHaveLength(0);
     });
   });

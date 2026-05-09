@@ -2,22 +2,43 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { findFirst, upsert, getCanvaConfig } = vi.hoisted(() => ({
-  findFirst: vi.fn(),
-  upsert: vi.fn(),
-  getCanvaConfig: vi.fn(() => ({
-    clientId: "test-client-id",
-    clientSecret: "test-client-secret",
-    accessToken: undefined,
-    refreshToken: "env-refresh-token",
-  })),
-}));
+const { findFirst, upsert, update, executeRaw, transaction, getCanvaConfig } = vi.hoisted(() => {
+  const findFirst = vi.fn();
+  const upsert = vi.fn();
+  const update = vi.fn();
+  const executeRaw = vi.fn();
+
+  return {
+    findFirst,
+    upsert,
+    update,
+    executeRaw,
+    transaction: vi.fn((callback) =>
+      callback({
+        $executeRaw: executeRaw,
+        canvaToken: {
+          findFirst,
+          upsert,
+          update,
+        },
+      }),
+    ),
+    getCanvaConfig: vi.fn(() => ({
+      clientId: "test-client-id",
+      clientSecret: "test-client-secret",
+      accessToken: undefined,
+      refreshToken: "env-refresh-token",
+    })),
+  };
+});
 
 vi.mock("@/lib/db", () => ({
   db: {
+    $transaction: transaction,
     canvaToken: {
       findFirst,
       upsert,
+      update,
     },
   },
 }));
@@ -26,7 +47,7 @@ vi.mock("@/lib/canva/server-client", () => ({
   getCanvaConfig,
 }));
 
-import { getValidAccessToken } from "@/lib/canva/oauth";
+import { CanvaReconnectRequiredError, getValidAccessToken } from "@/lib/canva/oauth";
 
 function createTokenResponse(overrides?: Partial<Record<string, unknown>>) {
   return {
@@ -39,35 +60,44 @@ function createTokenResponse(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
+function createStoredToken(overrides?: Partial<Record<string, unknown>>) {
+  return {
+    id: "token-1",
+    accessToken: "stored-access-token",
+    refreshToken: "stored-refresh-token",
+    expiresAt: new Date(Date.now() + 10 * 60_000),
+    status: "ACTIVE",
+    ...overrides,
+  };
+}
+
 describe("getValidAccessToken", () => {
   const fetchMock = vi.fn<typeof fetch>();
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
+    executeRaw.mockResolvedValue(1);
     upsert.mockResolvedValue(undefined);
+    update.mockResolvedValue(undefined);
   });
 
   it("returns stored token when not expired", async () => {
-    findFirst.mockResolvedValue({
-      id: "token-1",
-      accessToken: "stored-access-token",
-      refreshToken: "stored-refresh-token",
-      expiresAt: new Date(Date.now() + 5 * 60_000),
-    });
+    findFirst.mockResolvedValue(createStoredToken());
 
     await expect(getValidAccessToken()).resolves.toBe("stored-access-token");
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(transaction).not.toHaveBeenCalled();
     expect(upsert).not.toHaveBeenCalled();
   });
 
   it("calls refresh endpoint when token is expired", async () => {
-    findFirst.mockResolvedValue({
-      id: "token-1",
-      accessToken: "expired-access-token",
-      refreshToken: "stored-refresh-token",
-      expiresAt: new Date(Date.now() - 1_000),
-    });
+    findFirst.mockResolvedValue(
+      createStoredToken({
+        accessToken: "expired-access-token",
+        expiresAt: new Date(Date.now() - 1_000),
+      }),
+    );
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify(createTokenResponse()), {
         status: 200,
@@ -77,6 +107,13 @@ describe("getValidAccessToken", () => {
 
     await expect(getValidAccessToken()).resolves.toBe("new-access-token");
 
+    expect(executeRaw).toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "token-1" },
+        data: expect.objectContaining({ status: "REFRESHING" }),
+      }),
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://api.canva.com/rest/v1/oauth/token");
@@ -110,12 +147,12 @@ describe("getValidAccessToken", () => {
   });
 
   it("persists rotated refresh token after refresh", async () => {
-    findFirst.mockResolvedValue({
-      id: "token-1",
-      accessToken: "expired-access-token",
-      refreshToken: "stored-refresh-token",
-      expiresAt: new Date(Date.now() - 1_000),
-    });
+    findFirst.mockResolvedValue(
+      createStoredToken({
+        accessToken: "expired-access-token",
+        expiresAt: new Date(Date.now() - 1_000),
+      }),
+    );
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify(
@@ -139,6 +176,9 @@ describe("getValidAccessToken", () => {
         update: expect.objectContaining({
           accessToken: "rotated-access-token",
           refreshToken: "rotated-refresh-token-2",
+          status: "ACTIVE",
+          refreshLockedUntil: null,
+          lastRefreshError: null,
           tokenType: "Bearer",
           scope: "design:content:write",
         }),
@@ -146,33 +186,39 @@ describe("getValidAccessToken", () => {
     );
   });
 
-  it("throws meaningful error on refresh failure", async () => {
-    findFirst.mockResolvedValue({
-      id: "token-1",
-      accessToken: "expired-access-token",
-      refreshToken: "stored-refresh-token",
-      expiresAt: new Date(Date.now() - 1_000),
-    });
+  it("marks token as needing reconnect on revoked lineage", async () => {
+    findFirst.mockResolvedValue(
+      createStoredToken({
+        accessToken: "expired-access-token",
+        expiresAt: new Date(Date.now() - 1_000),
+      }),
+    );
     fetchMock.mockResolvedValue(
-      new Response("invalid_grant", {
-        status: 401,
+      new Response('{"error":"invalid_grant","error_description":"Token lineage has been revoked"}', {
+        status: 400,
       })
     );
 
-    await expect(getValidAccessToken()).rejects.toThrow(
-      "Canva token refresh failed (401): invalid_grant"
+    await expect(getValidAccessToken()).rejects.toBeInstanceOf(CanvaReconnectRequiredError);
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: { id: "token-1" },
+        data: expect.objectContaining({
+          status: "NEEDS_RECONNECT",
+          refreshLockedUntil: null,
+        }),
+      }),
     );
   });
 
   it("deduplicates concurrent refresh calls (mutex)", async () => {
-    findFirst.mockResolvedValue({
-      id: "token-1",
-      accessToken: "expired-access-token",
-      refreshToken: "stored-refresh-token",
-      expiresAt: new Date(Date.now() - 1_000),
-    });
+    findFirst.mockResolvedValue(
+      createStoredToken({
+        accessToken: "expired-access-token",
+        expiresAt: new Date(Date.now() - 1_000),
+      }),
+    );
 
-    // Slow refresh that takes 50ms
     fetchMock.mockImplementation(
       () =>
         new Promise((resolve) =>
@@ -189,19 +235,16 @@ describe("getValidAccessToken", () => {
         )
     );
 
-    // Fire 3 concurrent refresh calls
     const [r1, r2, r3] = await Promise.all([
       getValidAccessToken({ forceRefresh: true }),
       getValidAccessToken({ forceRefresh: true }),
       getValidAccessToken({ forceRefresh: true }),
     ]);
 
-    // All 3 should return the same token
     expect(r1).toBe("new-access-token");
     expect(r2).toBe("new-access-token");
     expect(r3).toBe("new-access-token");
-
-    // But fetch should only be called ONCE (mutex prevents duplicates)
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(transaction).toHaveBeenCalledTimes(1);
   });
 });

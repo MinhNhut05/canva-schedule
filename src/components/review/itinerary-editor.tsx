@@ -34,6 +34,7 @@ const SECTION_LABELS: Record<string, string> = {
   afternoon: "Buoi chieu",
   day1: "Ngay 1",
   day2: "Ngay 2",
+  day3: "Ngay 3",
 };
 
 /** Map section keys to their theme variant */
@@ -42,6 +43,7 @@ const SECTION_THEMES: Record<string, SectionColors> = {
   day1: PRIMARY_SECTION,
   afternoon: SECONDARY_SECTION,
   day2: SECONDARY_SECTION,
+  day3: PRIMARY_SECTION,
 };
 
 function ActivityItem({
@@ -86,7 +88,7 @@ function ActivityItem({
           uploadId={uploadId}
           placeholder="VD: 6:00, 7:30 - 8:00"
           labelClassName={`text-xs opacity-70`}
-          displayClassName="hover:bg-white/10"
+          displayClassName="hover:bg-primary/10"
           renderValue={(val) => (
             <HighlightedText
               text={val}
@@ -106,7 +108,7 @@ function ActivityItem({
           uploadId={uploadId}
           multiline
           labelClassName={`text-xs opacity-70`}
-          displayClassName="hover:bg-white/10"
+          displayClassName="hover:bg-primary/10"
           renderValue={(val) => (
             <HighlightedText
               text={val}
@@ -138,13 +140,19 @@ export function ItineraryEditor({
           { key: "morning", activities: draft.itinerary.morning },
           { key: "afternoon", activities: draft.itinerary.afternoon },
         ]
-      : [
-          { key: "day1", activities: draft.itinerary.day1 },
-          { key: "day2", activities: draft.itinerary.day2 },
-        ];
+      : draft.duration === "THREE_DAY"
+        ? [
+            { key: "day1", activities: draft.itinerary.day1 },
+            { key: "day2", activities: draft.itinerary.day2 },
+            { key: "day3", activities: draft.itinerary.day3 },
+          ]
+        : [
+            { key: "day1", activities: draft.itinerary.day1 },
+            { key: "day2", activities: draft.itinerary.day2 },
+          ];
 
   return (
-    <Card className="border-border bg-white shadow-sm">
+    <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
       <CardHeader>
         <CardTitle>Lich trinh</CardTitle>
       </CardHeader>

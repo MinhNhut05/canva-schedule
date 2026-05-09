@@ -148,4 +148,40 @@ describe("extraction-client", () => {
       `AI phản hồi quá chậm (${AI_TIMEOUT_MS / 1000} giây). Vui lòng thử lại sau.`,
     );
   });
+
+  it("preserves provider-prefixed model IDs like cx/gpt-5.4", async () => {
+    const previousModel = process.env.AI_MODEL;
+    process.env.AI_MODEL = "cx/gpt-5.4";
+    vi.resetModules();
+
+    try {
+      const reloaded = await import("@/lib/ai/extraction-client");
+      expect(reloaded.AI_MODEL).toBe("cx/gpt-5.4");
+    } finally {
+      if (previousModel === undefined) {
+        delete process.env.AI_MODEL;
+      } else {
+        process.env.AI_MODEL = previousModel;
+      }
+      vi.resetModules();
+    }
+  });
+
+  it("defaults to provider-prefixed cx/gpt-5.4 when AI_MODEL is unset", async () => {
+    const previousModel = process.env.AI_MODEL;
+    delete process.env.AI_MODEL;
+    vi.resetModules();
+
+    try {
+      const reloaded = await import("@/lib/ai/extraction-client");
+      expect(reloaded.AI_MODEL).toBe("cx/gpt-5.4");
+    } finally {
+      if (previousModel === undefined) {
+        delete process.env.AI_MODEL;
+      } else {
+        process.env.AI_MODEL = previousModel;
+      }
+      vi.resetModules();
+    }
+  });
 });

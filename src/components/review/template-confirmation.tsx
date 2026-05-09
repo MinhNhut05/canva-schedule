@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-
 import type { TemplatePair, TourDuration } from "@/lib/canva/template-resolver";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -27,40 +27,43 @@ export function TemplateConfirmation({
 
   return React.createElement(
     Card,
-    {
-      className:
-        "border border-[#3B82F6]/40 bg-white shadow-sm ring-1 ring-[#3B82F6]/15",
-    },
+    { className: "surface-panel-glass border-semantic-light overflow-hidden shadow-semantic-light" },
     React.createElement(
       CardHeader,
-      { className: "space-y-2 p-4" },
+      { className: "space-y-3 border-b border-semantic-light bg-surface-panel-cool/60 p-5" },
       React.createElement(
-        CardTitle,
-        { className: "text-xl font-semibold text-foreground" },
-        "Xác nhận mẫu Canva",
+        Badge,
+        { variant: "outline", className: "w-fit border-primary/15 bg-primary/5 text-primary" },
+        "Giai đoạn 4 · Xác nhận mẫu Canva",
       ),
       React.createElement(
-        "p",
-        { className: "text-base text-muted-foreground" },
-        "Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.",
+        "div",
+        { className: "space-y-2" },
+        React.createElement(
+          CardTitle,
+          { className: "text-[1.35rem] leading-tight text-foreground" },
+          "Xác nhận mẫu Canva",
+        ),
+        React.createElement(
+          "p",
+          { className: "text-base leading-7 text-muted-foreground" },
+          "Nội dung đã được duyệt. Kiểm tra nhanh cặp mẫu bên dưới rồi bắt đầu tạo liên kết Canva.",
+        ),
       ),
     ),
     React.createElement(
       CardContent,
-      { className: "space-y-4 p-4 pt-0" },
+      { className: "space-y-5 p-5" },
       React.createElement(
         "div",
-        {
-          className:
-            "space-y-3 rounded-xl border border-[#3B82F6]/30 bg-white p-4",
-        },
+        { className: "surface-panel-cool space-y-3 rounded-[24px] border border-semantic-light p-4" },
         ...rows.map((row) =>
           React.createElement(
             "div",
             {
               key: row,
               className:
-                "rounded-lg border border-[#3B82F6]/20 bg-[#F8FAFC] px-4 py-3 text-base font-medium text-foreground",
+                "surface-panel-glass rounded-[18px] border border-primary/20 px-4 py-3 text-base font-medium text-foreground",
             },
             row,
           ),
@@ -74,8 +77,7 @@ export function TemplateConfirmation({
           {
             onClick: onConfirm,
             disabled,
-            className:
-              "bg-[#3B82F6] text-white hover:bg-[#3B82F6]/90 focus-visible:ring-[#3B82F6]",
+            className: "glow-accent focus-ring-premium transition-premium hover-lift-subtle",
           },
           "Tạo Canva",
         ),

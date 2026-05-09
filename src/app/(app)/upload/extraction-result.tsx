@@ -90,55 +90,68 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
   const quality = qualityContent[data.quality.level];
   const previewText = data.normalizedText || "Văn bản trích xuất sẽ hiển thị ở đây sau khi xử lý.";
   const shouldShowWarning = data.quality.level !== "good";
+  const qualityTone = shouldShowWarning ? "Cần kiểm tra trước khi sang review" : "Sẵn sàng sang bước duyệt";
 
   function handleContinueReview() {
     previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="border-border bg-white shadow-sm">
-        <CardHeader className="space-y-2">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-2">
-              <CardTitle>Kết quả trích xuất</CardTitle>
-              <p className="text-base text-muted-foreground">
-                {quality.summaryStatus === "Đã trích xuất"
-                  ? "Nội dung đã được trích xuất thành công. Bạn có thể đọc nhanh trước khi sang bước duyệt."
-                  : "Đã trích xuất văn bản nhưng cần kiểm tra kỹ trước khi dùng tiếp."}
-              </p>
+    <div className="space-y-6">
+      <Card className="surface-panel-glass border-semantic-light overflow-hidden shadow-semantic-light">
+        <CardHeader className="surface-hero hero-grid hero-grain relative space-y-4 border-b border-white/10 text-white">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(169,208,255,0.16),transparent_32%)]" />
+          <div className="relative flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-3">
+              <Badge className="w-fit border border-white/15 bg-white/10 text-white/85">
+                Giai đoạn 3 · Xem kết quả trích xuất
+              </Badge>
+              <div className="space-y-2">
+                <CardTitle className="text-[1.75rem] leading-tight text-white">Kết quả trích xuất</CardTitle>
+                <p className="max-w-2xl text-base leading-7 text-white/78">
+                  {quality.summaryStatus === "Đã trích xuất"
+                    ? "Nội dung đã được trích xuất thành công. Bạn có thể đọc nhanh trước khi sang bước duyệt."
+                    : "Nội dung đã được trích xuất nhưng cần kiểm tra kỹ trước khi chuyển tiếp sang bước duyệt."}
+                </p>
+              </div>
             </div>
-            <Badge className={cn("w-fit text-sm", quality.badgeClassName)}>{quality.summaryStatus}</Badge>
+            <div className="space-y-2 text-left md:text-right">
+              <Badge className={cn("w-fit text-sm", quality.badgeClassName)}>{quality.summaryStatus}</Badge>
+              <p className="text-sm leading-6 text-white/72">{qualityTone}</p>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-muted-foreground">Tên file</p>
-              <p className="break-all text-base text-foreground">{data.originalFileName}</p>
+        <CardContent className="space-y-6 p-6 lg:p-7">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Tên file</p>
+              <p className="mt-3 break-all text-base text-foreground">{data.originalFileName}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-muted-foreground">Loại file</p>
-              <p className="text-base text-foreground">{formatDocumentType(data.kind)}</p>
+            <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Loại file</p>
+              <p className="mt-3 text-base text-foreground">{formatDocumentType(data.kind)}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-muted-foreground">Thời gian xử lý</p>
-              <p className="text-base text-foreground">{formatProcessingTime(data.processingTimeMs)}</p>
+            <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Thời gian xử lý</p>
+              <p className="mt-3 text-base text-foreground">{formatProcessingTime(data.processingTimeMs)}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-muted-foreground">Chất lượng</p>
-              <Badge className={cn("w-fit text-sm", quality.badgeClassName)}>{quality.label}</Badge>
+            <div className="surface-panel-glass rounded-[20px] border border-primary/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/75">Bước tiếp theo</p>
+              <div className="mt-3 space-y-2">
+                <Badge className={cn("w-fit text-sm", quality.badgeClassName)}>{quality.label}</Badge>
+                <p className="text-sm leading-6 text-muted-foreground">Mở review để rà soát và xác nhận nội dung trước khi tạo Canva.</p>
+              </div>
             </div>
           </div>
 
           {shouldShowWarning ? (
-            <Alert className="border-[#FCD34D] bg-[#FEF3C7] text-[#92400E]">
+            <Alert className="rounded-[24px] border-amber-300/45 bg-amber-400/10 text-amber-100 shadow-none">
               <div className="flex gap-3">
                 <WarningIcon />
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <AlertTitle className="text-[#92400E]">{quality.warningTitle}</AlertTitle>
-                    <AlertDescription className="text-[#92400E]">
+                    <AlertTitle className="text-amber-100">{quality.warningTitle}</AlertTitle>
+                    <AlertDescription className="text-amber-100/80">
                       <p>{quality.warningBody}</p>
                     </AlertDescription>
                   </div>
@@ -146,7 +159,7 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
                     <Button
                       type="button"
                       onClick={handleContinueReview}
-                      className="bg-[#92400E] text-white hover:bg-[#78350F]"
+                      className="bg-amber-300 text-amber-950 hover:bg-amber-200"
                     >
                       Đọc preview trước khi sang review
                     </Button>
@@ -154,7 +167,7 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
                       type="button"
                       variant="outline"
                       onClick={onReset}
-                      className="border-[#92400E] bg-transparent text-[#92400E] hover:bg-[#FDE68A] hover:text-[#78350F]"
+                      className="border-amber-900 bg-transparent text-amber-900 hover:bg-amber-100 hover:text-amber-950"
                     >
                       Tải file khác
                     </Button>
@@ -164,40 +177,41 @@ export function ExtractionResult({ data, onReset, reviewHref }: ExtractionResult
             </Alert>
           ) : null}
 
-          <div className="rounded-xl border border-border bg-slate-50/70 p-4 text-sm text-muted-foreground">
-            Bạn có thể kiểm tra nhanh nội dung bên dưới trước khi chuyển sang bước trích xuất AI ở Phase 3.
+          <div className="surface-panel-cool rounded-[24px] border border-semantic-light p-5 text-sm leading-6 text-muted-foreground">
+            Đây là checkpoint trước khi duyệt. Hãy đọc nhanh preview bên dưới để xác nhận chất lượng trích xuất, rồi mới mở bước review chi tiết.
           </div>
 
           {reviewHref ? (
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="focus-visible:ring-2 focus-visible:ring-primary">
-                <Link href={reviewHref}>Mở bước kiểm tra</Link>
+              <Button asChild className="glow-accent focus-ring-premium transition-premium hover-lift-subtle">
+                <Link href={reviewHref}>{shouldShowWarning ? "Tiếp tục sang bước duyệt" : "Mở bước duyệt nội dung"}</Link>
               </Button>
-              {!shouldShowWarning ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onReset}
-                  className="focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  Tải file khác
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onReset}
+                className="focus-ring-premium"
+              >
+                Tải file khác
+              </Button>
             </div>
           ) : null}
         </CardContent>
       </Card>
 
-      <Card ref={previewRef} className="border-border bg-white shadow-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle>Nội dung văn bản</CardTitle>
-          <p className="text-base text-muted-foreground">
+      <Card
+        ref={previewRef}
+        className="surface-panel border-semantic-light overflow-hidden shadow-semantic-light"
+      >
+        <CardHeader className="space-y-2 border-b border-semantic-light bg-surface-panel-cool/60">
+          <CardTitle className="text-[1.5rem] leading-tight text-foreground">Nội dung văn bản</CardTitle>
+          <p className="text-base leading-7 text-muted-foreground">
             Nội dung được hiển thị dạng văn bản thuần để bạn dễ đọc, chọn và sao chép.
           </p>
         </CardHeader>
-        <CardContent>
-          <div className="max-h-[500px] min-h-[240px] overflow-y-auto rounded-xl border border-border bg-white p-4 md:min-h-[320px]">
-            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{previewText}</p>
+        <CardContent className="p-6">
+          <div className="surface-panel-glass max-h-[500px] min-h-[240px] overflow-y-auto rounded-[24px] border-semantic-light p-5 md:min-h-[320px]">
+            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-foreground">{previewText}</p>
           </div>
         </CardContent>
       </Card>

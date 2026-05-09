@@ -35,7 +35,7 @@ export function TemplatesTable({ templates }: TemplatesTableProps) {
 
   return (
     <>
-      <Card>
+      <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

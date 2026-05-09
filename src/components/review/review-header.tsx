@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,31 +77,33 @@ export function ReviewHeader({
 
   const durationLabel =
     tourDuration === "ONE_DAY"
-      ? "Tour 1 ngay"
+      ? "Tour 1 ngày"
       : tourDuration === "TWO_DAY"
-        ? "Tour 2 ngay"
-        : null;
+        ? "Tour 2 ngày"
+        : tourDuration === "THREE_DAY"
+          ? "Tour 3 ngày"
+          : null;
 
   const clientLabel =
     clientType === "SCHOOL"
-      ? "Truong hoc"
+      ? "Trường học"
       : clientType === "GROUP"
-        ? "Doan/Doanh nghiep"
+        ? "Đoàn/Doanh nghiệp"
         : null;
 
   const statusLabel =
     reviewStatus === "APPROVED"
-      ? "Da duyet"
+      ? "Đã duyệt"
       : reviewStatus === "PENDING_REVIEW"
-        ? "Cho duyet"
+        ? "Chờ duyệt"
         : reviewStatus === "REVIEWED"
-          ? "Da xem"
+          ? "Đã xem"
           : null;
 
   const statusColor =
     reviewStatus === "APPROVED"
       ? "bg-emerald-600 text-white"
-      : "bg-slate-200 text-slate-700";
+      : "bg-secondary text-secondary-foreground";
 
   function handleReExtractClick() {
     if (hasUserEdits) {
@@ -116,52 +119,75 @@ export function ReviewHeader({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-[28px] font-semibold leading-tight text-foreground">
-            Duyet noi dung trich xuat
-          </h1>
-          <p className="text-base text-muted-foreground">{fileName}</p>
+    <Card className="surface-panel-glass overflow-hidden border-semantic-light shadow-semantic-light">
+      <CardHeader className="space-y-4 border-b border-semantic-light bg-surface-panel-cool/60">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3">
+            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
+              Giai đoạn 1 · Kiểm tra đầu vào review
+            </Badge>
+            <div className="space-y-2">
+              <CardTitle className="text-[1.9rem] leading-tight text-foreground">
+                Duyệt nội dung trích xuất
+              </CardTitle>
+              <p className="text-base leading-7 text-muted-foreground">{fileName}</p>
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                Kiểm tra lại nội dung AI đã trích xuất, xác nhận các phần cần chỉnh sửa, rồi mới chuyển sang bước xác nhận và tạo Canva.
+              </p>
+            </div>
+          </div>
+
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={handleReExtractClick}
+                disabled={isReExtracting || reviewStatus === "APPROVED"}
+                className="focus-ring-premium shrink-0 gap-2"
+              >
+                {isReExtracting ? <SpinnerIcon /> : <RefreshIcon />}
+                {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Trích xuất lại?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Trích xuất lại sẽ thay thế các chỉnh sửa chưa được duyệt. Bạn có muốn tiếp tục không?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmReExtract}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Tiếp tục trích xuất
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4 p-6">
+        <div className="flex flex-wrap gap-2">
+          {durationLabel ? <Badge variant="secondary">{durationLabel}</Badge> : null}
+          {clientLabel ? <Badge variant="secondary">{clientLabel}</Badge> : null}
+          {statusLabel ? <Badge className={statusColor}>{statusLabel}</Badge> : null}
+          {hasUserEdits ? (
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-900">
+              Có chỉnh sửa chưa duyệt
+            </Badge>
+          ) : null}
         </div>
 
-        <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              onClick={handleReExtractClick}
-              disabled={isReExtracting || reviewStatus === "APPROVED"}
-              className="shrink-0 gap-2"
-            >
-              {isReExtracting ? <SpinnerIcon /> : <RefreshIcon />}
-              {isReExtracting ? "Dang trich xuat..." : "Trich xuat lai"}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Trich xuat lai?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Trich xuat lai se thay the cac chinh sua chua duoc duyet. Ban co muon tiep tuc khong?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Huy</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleConfirmReExtract}
-                className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
-              >
-                Tiep tuc trich xuat
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {durationLabel ? <Badge variant="secondary">{durationLabel}</Badge> : null}
-        {clientLabel ? <Badge variant="secondary">{clientLabel}</Badge> : null}
-        {statusLabel ? <Badge className={statusColor}>{statusLabel}</Badge> : null}
-      </div>
-    </div>
+        <div className="rounded-[20px] border border-semantic-light bg-primary/5 p-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            Mục tiêu của bước này là làm sạch nội dung trước khi xác nhận. Khi đã duyệt, hệ thống sẽ mở rõ phần mẫu Canva và hành động tạo liên kết ở giai đoạn tiếp theo.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

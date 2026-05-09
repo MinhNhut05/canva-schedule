@@ -201,18 +201,30 @@ describe("applyFieldMapping", () => {
   it("works with TWO_DAY menu fields", () => {
     const menuData = {
       title: { type: "text" as const, text: "Tour XYZ" },
-      menu_day1_block: { type: "text" as const, text: "Menu ngày 1" },
-      menu_day2_block: { type: "text" as const, text: "Menu ngày 2" },
+      menu_morning_day1_block: { type: "text" as const, text: "Sáng ngày 1" },
+      menu_lunch_day1_block: { type: "text" as const, text: "Trưa ngày 1" },
+      menu_afternoon_day1_block: { type: "text" as const, text: "Chiều ngày 1" },
+      menu_morning_day2_block: { type: "text" as const, text: "Sáng ngày 2" },
+      menu_lunch_day2_block: { type: "text" as const, text: "Trưa ngày 2" },
+      menu_afternoon_day2_block: { type: "text" as const, text: "Chiều ngày 2" },
     };
     const mapping = {
       title: "tieu_de",
-      menu_day1_block: "thuc_don_ngay_1",
-      menu_day2_block: "thuc_don_ngay_2",
+      menu_morning_day1_block: "thuc_don_sang_ngay_1",
+      menu_lunch_day1_block: "thuc_don_trua_ngay_1",
+      menu_afternoon_day1_block: "thuc_don_chieu_ngay_1",
+      menu_morning_day2_block: "thuc_don_sang_ngay_2",
+      menu_lunch_day2_block: "thuc_don_trua_ngay_2",
+      menu_afternoon_day2_block: "thuc_don_chieu_ngay_2",
     };
     const result = applyFieldMapping(menuData, mapping);
 
     expect(result["tieu_de"].text).toBe("Tour XYZ");
-    expect(result["thuc_don_ngay_1"].text).toBe("Menu ngày 1");
-    expect(result["thuc_don_ngay_2"].text).toBe("Menu ngày 2");
+    expect(result["thuc_don_sang_ngay_1"].text).toBe("Sáng ngày 1");
+    expect(result["thuc_don_trua_ngay_1"].text).toBe("Trưa ngày 1");
+    expect(result["thuc_don_chieu_ngay_1"].text).toBe("Chiều ngày 1");
+    expect(result["thuc_don_sang_ngay_2"].text).toBe("Sáng ngày 2");
+    expect(result["thuc_don_trua_ngay_2"].text).toBe("Trưa ngày 2");
+    expect(result["thuc_don_chieu_ngay_2"].text).toBe("Chiều ngày 2");
   });
 });

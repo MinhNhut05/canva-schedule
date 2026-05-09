@@ -1,63 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui,
+    sans-serif;
   --font-heading: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, system-ui,
     sans-serif;
 
-  --bg-dark: 218 58% 8%;
-  --bg-deep: 226 88% 36%;
-  --bg-accent: 218 91% 52%;
-  --bg-light: 220 43% 98%;
-  --bg-light-cool: 218 100% 97%;
-  --text-strong: 216 55% 11%;
-  --text-body: 216 39% 29%;
-  --text-on-dark: 220 43% 98%;
-  --accent-soft: 210 100% 74%;
-  --accent-light: 210 100% 83%;
+  --bg-dark: 220 70% 5%;
+  --bg-deep: 212 88% 13%;
+  --bg-accent: 188 92% 56%;
+  --bg-light: 219 62% 8%;
+  --bg-light-cool: 207 72% 11%;
+  --text-strong: 190 55% 94%;
+  --text-body: 196 28% 72%;
+  --text-on-dark: 190 70% 96%;
+  --accent-soft: 188 92% 66%;
+  --accent-light: 183 100% 78%;
 
   --background: var(--bg-light);
   --foreground: var(--text-strong);
-  --card: 0 0% 100%;
+  --card: 210 68% 10% / 0.72;
   --card-foreground: var(--text-strong);
-  --popover: 0 0% 100%;
+  --popover: 212 70% 8% / 0.94;
   --popover-foreground: var(--text-strong);
   --primary: var(--bg-accent);
-  --primary-foreground: var(--text-on-dark);
-  --secondary: var(--bg-light-cool);
+  --primary-foreground: 219 70% 5%;
+  --secondary: 205 65% 14% / 0.78;
   --secondary-foreground: var(--text-strong);
-  --muted: 218 100% 96%;
+  --muted: 206 50% 16% / 0.72;
   --muted-foreground: var(--text-body);
   --accent: var(--bg-accent);
-  --accent-foreground: var(--text-on-dark);
-  --destructive: 344 76% 50%;
+  --accent-foreground: 219 70% 5%;
+  --destructive: 350 84% 60%;
   --destructive-foreground: var(--text-on-dark);
-  --border: 218 84% 52% / 0.14;
-  --input: 218 84% 52% / 0.14;
+  --border: 188 92% 56% / 0.2;
+  --input: 188 92% 56% / 0.22;
   --ring: var(--bg-accent);
 
-  --surface-hero: 218 58% 8%;
+  --surface-hero: 220 70% 5%;
   --surface-hero-foreground: var(--text-on-dark);
-  --surface-hero-overlay: 218 58% 8% / 0.72;
-  --surface-hero-card: 218 58% 8% / 0.72;
-  --surface-panel: 220 43% 98%;
+  --surface-hero-overlay: 220 70% 5% / 0.78;
+  --surface-hero-card: 210 74% 10% / 0.7;
+  --surface-panel: 212 65% 9%;
   --surface-panel-foreground: var(--text-strong);
-  --surface-panel-cool: 218 100% 97%;
-  --surface-panel-glass: 0 0% 100% / 0.72;
-  --border-dark: 210 100% 83% / 0.18;
-  --border-light: 218 84% 52% / 0.14;
+  --surface-panel-cool: 202 68% 13%;
+  --surface-panel-glass: 205 72% 11% / 0.62;
+  --border-dark: 188 92% 56% / 0.28;
+  --border-light: 188 92% 56% / 0.2;
 
-  --shadow-dark: 0 12px 30px rgba(0, 0, 0, 0.22);
-  --shadow-light: 0 10px 30px rgba(11, 47, 174, 0.08);
-  --shadow-glow: 0 0 40px rgba(124, 184, 255, 0.18);
-  --gradient-hero: linear-gradient(135deg, #08101e 0%, #0b2fae 48%, #1464f4 100%);
-  --gradient-glow: radial-gradient(circle at top right, rgba(124, 184, 255, 0.18), transparent 52%);
+  --shadow-dark: 0 24px 70px rgba(0, 8, 24, 0.42);
+  --shadow-light: 0 18px 48px rgba(2, 218, 245, 0.08);
+  --shadow-glow: 0 0 42px rgba(41, 218, 245, 0.2);
+  --gradient-hero: linear-gradient(135deg, #020817 0%, #06283d 48%, #083b5f 100%);
+  --gradient-glow: radial-gradient(circle at top right, rgba(41, 218, 245, 0.22), transparent 44%), radial-gradient(circle at 12% 18%, rgba(70, 95, 255, 0.16), transparent 34%), radial-gradient(circle at 70% 95%, rgba(14, 165, 233, 0.14), transparent 38%);
   --motion-duration: 220ms;
   --motion-translate: -2px;
 
-  --radius: 1rem;
-  --radius-button: 1rem;
-  --radius-card: 1.25rem;
+  --radius: 1.5rem;
+  --radius-button: 999px;
+  --radius-card: 1.75rem;
   --radius-pill: 999px;
 }
 
@@ -120,9 +121,8 @@ body {
     linear-gradient(
       180deg,
       hsl(var(--surface-hero)) 0%,
-      hsl(var(--surface-hero)) 24%,
-      hsl(var(--background)) 24%,
-      hsl(var(--background)) 100%
+      hsl(var(--background)) 54%,
+      hsl(var(--surface-panel)) 100%
     );
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
@@ -184,8 +184,8 @@ label {
 .surface-panel-glass {
   background: hsl(var(--surface-panel-glass));
   border: 1px solid hsl(var(--border-light));
-  box-shadow: var(--shadow-light);
-  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-light), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
 }
 
 .border-semantic-dark {
@@ -280,9 +280,8 @@ label {
       linear-gradient(
         180deg,
         hsl(var(--surface-hero)) 0%,
-        hsl(var(--surface-hero)) 18%,
-        hsl(var(--background)) 18%,
-        hsl(var(--background)) 100%
+        hsl(var(--background)) 58%,
+        hsl(var(--surface-panel)) 100%
       );
   }
 }

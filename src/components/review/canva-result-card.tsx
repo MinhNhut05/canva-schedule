@@ -72,7 +72,7 @@ export function CanvaResultCard({
 
   return React.createElement(
     Card,
-    { className: "h-full border bg-white shadow-sm" },
+    { className: "h-full surface-panel-glass border-semantic-light shadow-semantic-light" },
     React.createElement(
       CardHeader,
       {
@@ -92,7 +92,7 @@ export function CanvaResultCard({
         ? React.createElement("img", {
             src: thumbnailUrl,
             alt: `Xem trước ${title}`,
-            className: "h-40 w-full rounded-lg border object-cover",
+            className: "h-40 w-full rounded-lg border border-semantic-light object-cover",
           })
         : null,
       React.createElement(
@@ -108,8 +108,6 @@ export function CanvaResultCard({
               Button,
               {
                 asChild: true,
-                className:
-                  "bg-[#3B82F6] text-white hover:bg-[#3B82F6]/90 focus-visible:ring-[#3B82F6]",
               },
               React.createElement(
                 "a",

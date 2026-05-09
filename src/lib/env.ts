@@ -95,10 +95,12 @@ export const env = {
 export function getAiEnv() {
   rejectPublicSecrets();
 
-  // Support both AI_API_URL/AI_API_KEY and ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY
+  // AI_API_URL/AI_API_KEY take priority; ANTHROPIC_* is fallback only.
+  // Shell-exported ANTHROPIC_* (e.g. from Claude Code CLI setup) must NOT
+  // override the project's .env AI credentials.
   const resolved = {
-    AI_API_URL: process.env.AI_API_URL || process.env.ANTHROPIC_BASE_URL,
-    AI_API_KEY: process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY,
+    AI_API_URL: process.env.AI_API_URL ?? process.env.ANTHROPIC_BASE_URL,
+    AI_API_KEY: process.env.AI_API_KEY ?? process.env.ANTHROPIC_API_KEY,
   };
 
   return aiEnvSchema.parse(resolved);

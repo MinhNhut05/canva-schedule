@@ -32,8 +32,32 @@ export const TWO_DAY_ITINERARY_FIELDS = [
 
 export const TWO_DAY_MENU_FIELDS = [
   ...SHARED_FIELDS,
-  "menu_day1_block",
-  "menu_day2_block",
+  "menu_morning_day1_block",
+  "menu_lunch_day1_block",
+  "menu_afternoon_day1_block",
+  "menu_morning_day2_block",
+  "menu_lunch_day2_block",
+  "menu_afternoon_day2_block",
+] as const;
+
+export const THREE_DAY_ITINERARY_FIELDS = [
+  ...SHARED_FIELDS,
+  "day1_block",
+  "day2_block",
+  "day3_block",
+] as const;
+
+export const THREE_DAY_MENU_FIELDS = [
+  ...SHARED_FIELDS,
+  "menu_morning_day1_block",
+  "menu_lunch_day1_block",
+  "menu_afternoon_day1_block",
+  "menu_morning_day2_block",
+  "menu_lunch_day2_block",
+  "menu_afternoon_day2_block",
+  "menu_morning_day3_block",
+  "menu_lunch_day3_block",
+  "menu_afternoon_day3_block",
 ] as const;
 
 /**
@@ -48,5 +72,7 @@ export function getFieldsForTemplate(
   if (tourDuration === "ONE_DAY" && artifactType === "MENU") return ONE_DAY_MENU_FIELDS;
   if (tourDuration === "TWO_DAY" && artifactType === "ITINERARY") return TWO_DAY_ITINERARY_FIELDS;
   if (tourDuration === "TWO_DAY" && artifactType === "MENU") return TWO_DAY_MENU_FIELDS;
+  if (tourDuration === "THREE_DAY" && artifactType === "ITINERARY") return THREE_DAY_ITINERARY_FIELDS;
+  if (tourDuration === "THREE_DAY" && artifactType === "MENU") return THREE_DAY_MENU_FIELDS;
   return [];
 }

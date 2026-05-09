@@ -43,7 +43,7 @@ export function RulesTable({ rules }: RulesTableProps) {
         <Button onClick={() => setShowCreate(true)}>Thêm quy tắc</Button>
       </div>
 
-      <Card>
+      <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

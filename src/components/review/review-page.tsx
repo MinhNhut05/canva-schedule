@@ -14,6 +14,7 @@ import {
   saveDraftField,
 } from "@/app/(app)/review/[id]/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { StructuredDraft } from "@/lib/ai/extraction-schema";
@@ -62,7 +63,7 @@ export interface ReviewPageUpload {
 
 type ReviewArtifactKind = "ITINERARY" | "MENU";
 type ReviewArtifactStatus = "SUCCEEDED" | "FAILED" | "PROCESSING";
-type ReviewDuration = "ONE_DAY" | "TWO_DAY";
+type ReviewDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY";
 
 interface InitialCanvaArtifact {
   id: string;
@@ -120,7 +121,7 @@ function isArtifactStatus(value: string): value is ReviewArtifactStatus {
 }
 
 function isReviewDuration(value: string | null): value is ReviewDuration {
-  return value === "ONE_DAY" || value === "TWO_DAY";
+  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY";
 }
 
 function normalizeArtifact(
@@ -484,7 +485,7 @@ export function ReviewPage({
           isReExtracting={isReExtracting}
           onReExtract={() => void handleReExtract()}
         />
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-[#F8FAFC] px-6 py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 px-6 py-16 text-center">
           <h2 className="text-xl font-semibold text-foreground">
             Chưa có nội dung để duyệt
           </h2>
@@ -495,8 +496,7 @@ export function ReviewPage({
             <Button
               onClick={() => void handleReExtract()}
               disabled={isReExtracting}
-              className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
-            >
+                          >
               {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
             </Button>
             <Button variant="outline" onClick={() => router.push("/upload")}>
@@ -542,8 +542,7 @@ export function ReviewPage({
                 <Button
                   onClick={() => void handleReExtract()}
                   disabled={isReExtracting}
-                  className="bg-[#1E3B8A] text-white hover:bg-[#1E3B8A]/90"
-                >
+                                  >
                   {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
                 </Button>
                 <Button variant="outline" onClick={() => router.push("/upload")}>
@@ -581,41 +580,77 @@ export function ReviewPage({
         onReExtract={() => void handleReExtract()}
       />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <ItineraryEditor
-          draft={draft!}
-          uploadId={upload.id}
-          onSaveField={handleSaveField}
-          onSaveSuccess={handleSaveSuccess}
-          onSaveError={handleSaveError}
-        />
-        <MenuEditor
-          draft={draft!}
-          uploadId={upload.id}
-          onSaveField={handleSaveField}
-          onSaveSuccess={handleSaveSuccess}
-          onSaveError={handleSaveError}
-        />
+      <div className="space-y-4">
+        <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
+          <div className="space-y-3">
+            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
+              Giai đoạn 2 · Rà soát và chỉnh sửa nội dung
+            </Badge>
+            <div className="space-y-2">
+              <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
+                Kiểm tra lịch trình và thực đơn trước khi duyệt
+              </h2>
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                Hãy chỉnh lại các phần AI trích xuất chưa chính xác, ưu tiên những trường được đánh dấu cần xem lại. Khi hoàn tất, bạn sẽ xác nhận nội dung để mở rõ giai đoạn Canva.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <ItineraryEditor
+            draft={draft!}
+            uploadId={upload.id}
+            onSaveField={handleSaveField}
+            onSaveSuccess={handleSaveSuccess}
+            onSaveError={handleSaveError}
+          />
+          <MenuEditor
+            draft={draft!}
+            uploadId={upload.id}
+            onSaveField={handleSaveField}
+            onSaveSuccess={handleSaveSuccess}
+            onSaveError={handleSaveError}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
+          <div className="space-y-3">
+            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
+              Giai đoạn 3 · Xác nhận để mở Canva
+            </Badge>
+            <div className="space-y-2">
+              <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
+                Chốt nội dung trước khi tạo thiết kế
+              </h2>
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                Sau khi xác nhận, hệ thống sẽ nhấn mạnh phần mẫu Canva, các tùy chọn tạo và kết quả thiết kế. Sticky action phía dưới luôn bám theo giai đoạn hiện tại để tránh rối CTA.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {showOneDayCanvaOptions ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 shadow-sm">
+        <div className="surface-panel-glass rounded-2xl border border-semantic-light p-5 shadow-semantic-light">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary/75">
                 Tùy chọn Canva 1 ngày
               </p>
               <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   Có nhập menu vào lịch trình không?
                 </h3>
-                <p className="max-w-2xl text-sm text-slate-600">
+                <p className="max-w-2xl text-sm text-muted-foreground">
                   Khi bật, các dòng menu ngắn sẽ được ghép vào lịch trình 1 ngày trước khi tạo Canva. Tùy chọn này được lưu riêng cho từng tài liệu.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-              <span className="text-sm font-medium text-slate-700">
+            <div className="flex items-center gap-3 rounded-full border border-semantic-light bg-surface-panel-glass px-4 py-2 shadow-semantic-light">
+              <span className="text-sm font-medium text-foreground/80">
                 {canvaOptions.mergeMenuIntoItinerary ? "Đang bật" : "Đang tắt"}
               </span>
               <Switch
@@ -627,14 +662,14 @@ export function ReviewPage({
             </div>
           </div>
 
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-muted-foreground">
             {canvaOptions.mergeMenuIntoItinerary
               ? "Menu sẽ được chèn vào block lịch trình tương ứng khi tạo Canva."
               : "Menu sẽ giữ riêng ở thiết kế thực đơn, không ghép vào lịch trình."}
           </p>
 
           {isSavingCanvaOptions ? (
-            <p className="mt-2 text-sm text-slate-500">Đang lưu lựa chọn...</p>
+            <p className="mt-2 text-sm text-muted-foreground/80">Đang lưu lựa chọn...</p>
           ) : null}
 
           {menuMergeWarning ? (
@@ -651,6 +686,21 @@ export function ReviewPage({
 
       {isApproved ? (
         <div className="space-y-6">
+          <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
+            <div className="space-y-3">
+              <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
+                Giai đoạn 4 · Xác nhận mẫu và tạo Canva
+              </Badge>
+              <div className="space-y-2">
+                <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
+                  Mở phần tạo thiết kế sau khi duyệt xong nội dung
+                </h2>
+                <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                  Ở giai đoạn này, bạn kiểm tra cặp mẫu, lưu tùy chọn Canva nếu có, rồi bắt đầu tạo hoặc tạo lại liên kết thiết kế.
+                </p>
+              </div>
+            </div>
+          </div>
           {/* Completion banner — replaces approved alert when generation is done */}
           {completionVariant ? (
             <CompletionBanner variant={completionVariant} />
@@ -714,9 +764,9 @@ export function ReviewPage({
                   <Button
                     onClick={() => void handleGenerate()}
                     disabled={generationDisabled}
-                    className="bg-[#3B82F6] text-white hover:bg-[#3B82F6]/90"
+                    className="glow-accent"
                   >
-                    Tạo lại
+                    Tạo lại Canva
                   </Button>
                 </div>
               ) : null}

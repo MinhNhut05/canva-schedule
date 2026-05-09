@@ -78,7 +78,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   if (totalCount === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold text-foreground">Lich su</h1>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Lịch sử xử lý</h1>
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+            Theo dõi các tài liệu đã tải lên, trạng thái tạo Canva và mở lại bản review khi cần kiểm tra.
+          </p>
+        </div>
         <HistoryEmpty />
       </div>
     );
@@ -98,24 +103,24 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
 
     let canvaLinkLabel: string;
     if (successCount === 2) {
-      canvaLinkLabel = "2 lien ket";
+      canvaLinkLabel = "2 liên kết";
     } else if (successCount === 1 && total === 2) {
-      canvaLinkLabel = "1/2 lien ket";
+      canvaLinkLabel = "1/2 liên kết";
     } else if (successCount === 1) {
-      canvaLinkLabel = "1 lien ket";
+      canvaLinkLabel = "1 liên kết";
     } else {
-      canvaLinkLabel = "Chua co lien ket";
+      canvaLinkLabel = "Chưa có liên kết";
     }
 
     let tourTypeLabel: string;
     if (row.tourDuration === "ONE_DAY") {
-      tourTypeLabel = "Tour 1 ngay";
+      tourTypeLabel = "Tour 1 ngày";
     } else if (row.tourDuration === "TWO_DAY") {
-      tourTypeLabel = "Tour 2 ngay";
+      tourTypeLabel = "Tour 2 ngày";
     } else if (row.tourDuration === "THREE_DAY") {
-      tourTypeLabel = "Tour 3 ngay";
+      tourTypeLabel = "Tour 3 ngày";
     } else {
-      tourTypeLabel = "Chua xac dinh";
+      tourTypeLabel = "Chưa xác định";
     }
 
     return {
@@ -123,7 +128,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
       fileName: row.originalFileName,
       createdAt: row.createdAt.toISOString(),
       status,
-      statusLabel: status === "success" ? "Thanh cong" : "Loi",
+      statusLabel: status === "success" ? "Thành công" : "Lỗi",
       tourTypeLabel,
       canvaLinkLabel,
     };
@@ -132,7 +137,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold text-foreground">Lich su</h1>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Lịch sử xử lý</h1>
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+            Theo dõi các tài liệu đã tải lên, trạng thái tạo Canva và mở lại bản review khi cần kiểm tra.
+          </p>
+        </div>
         <Suspense fallback={<HistorySkeleton />}>
           <HistoryTable jobs={jobs} />
         </Suspense>

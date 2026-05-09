@@ -10,7 +10,7 @@ export default async function AppLayout({
   const session = await auth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground hero-grid hero-grain">
       <AppSidebar
         fullName={session?.user?.name}
         username={session?.user?.username}
@@ -18,8 +18,8 @@ export default async function AppLayout({
         signOutAction={signOutAction}
       />
 
-      <main className="px-4 py-8 md:ml-60 md:px-8">
-        <div className="mx-auto w-full max-w-[960px]">{children}</div>
+      <main className="relative z-10 px-4 py-8 md:ml-60 md:px-8">
+        <div className="mx-auto w-full max-w-[1200px]">{children}</div>
       </main>
     </div>
   );

@@ -37,7 +37,7 @@ const sharedDraft = {
 };
 
 function assertSharedFields(data: Record<string, { type: string; text: string }>) {
-  expect(data["title"]).toEqual({ type: "text", text: "SÓC TRĂNG – CẦN THƠ" });
+  expect(data["title"]).toEqual({ type: "text", text: "SÓC TRĂNG - CẦN THƠ" });
   expect(data["program_label"]).toEqual({ type: "text", text: "CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ" });
   expect(data["tour_date"]).toEqual({ type: "text", text: "2026-03-25" });
 }
@@ -57,7 +57,7 @@ describe("buildOneDayItineraryPayload", () => {
       type: "text",
       text: "CHƯƠNG TRÌNH THAM QUAN",
     });
-    expect(data["title"]).toEqual({ type: "text", text: "SÓC TRĂNG – CẦN THƠ" });
+    expect(data["title"]).toEqual({ type: "text", text: "SÓC TRĂNG - CẦN THƠ" });
   });
 
   it("includes shared fields (title, tour_date)", () => {
@@ -117,10 +117,10 @@ describe("buildOneDayItineraryPayload", () => {
     };
     const data = buildOneDayItineraryPayload(draft);
     expect(data["morning_block"].text).toBe(
-      "01 giờ 00:\nXuất phát từ trường\n03 giờ 30:\nTham quan khu du lịch",
+      "01 giờ 00:\nXuất phát từ trường\n\n03 giờ 30:\nTham quan khu du lịch",
     );
     expect(data["afternoon_block"].text).toBe(
-      "Ăn trưa\n14 giờ 00:\nĐoàn khởi hành về Trường THPT Cai Nuoc.\nKết thúc chương trình!",
+      "Ăn trưa\n\n14 giờ 00:\nĐoàn khởi hành về Trường THPT Cai Nuoc.\nKết thúc chương trình!",
     );
   });
 
@@ -155,6 +155,78 @@ describe("buildOneDayItineraryPayload", () => {
     // Should appear exactly once, not twice
     const matches = data["afternoon_block"].text.match(/Kết thúc chương trình!/g);
     expect(matches).toHaveLength(1);
+  });
+
+  it("preserves bullet sub-items in morning activities", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        morning: [
+          {
+            timeLabel: "9:15",
+            text: "Quý đoàn tham quan trải nghiệm tại Tân Huê Viên:\n• Tham quan xưởng sản xuất.\n• Check-in kiến trúc.\n• Mua sắm đặc sản.",
+          },
+        ],
+        afternoon: [],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).toContain(
+      "• Tham quan xưởng sản xuất.\n• Check-in kiến trúc.\n• Mua sắm đặc sản.",
+    );
+  });
+
+  it("substitutes pickup landmark phrases in morning with pickupLocation", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        morning: [
+          { timeLabel: "5:00", text: "Xe và HDV có mặt đón Quý đoàn tại điểm hẹn." },
+        ],
+        afternoon: [],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).toContain("tại ACECOOK Vĩnh Long");
+    expect(data["morning_block"].text).not.toContain("tại điểm hẹn");
+  });
+
+  it("keeps source text for landmark phrases when pickupLocation is empty", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: undefined,
+      returnLocation: undefined,
+      itinerary: {
+        morning: [
+          { timeLabel: "5:00", text: "Xe và HDV có mặt đón Quý đoàn tại điểm hẹn." },
+        ],
+        afternoon: [],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).toContain("tại điểm hẹn");
+  });
+
+  it("strips trailing 'kết thúc chương trình' duplicate so ensureEndProgram is canonical", () => {
+    const draft = {
+      ...sharedDraft,
+      returnLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        morning: [],
+        afternoon: [
+          { timeLabel: "17:00", text: "Sau khi dùng bữa chiều, xe và HDV đưa Quý đoàn về lại điểm đón ban đầu." },
+          { timeLabel: "18:00", text: "Về đến điểm hẹn, kết thúc chương trình. Cảm ơn Quý đoàn." },
+        ],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    const matches = data["afternoon_block"].text.match(/Kết thúc chương trình/gi);
+    expect(matches).toHaveLength(1);
+    expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
+    expect(data["afternoon_block"].text).not.toContain("Về đến điểm hẹn");
+    expect(data["afternoon_block"].text).not.toContain("Cảm ơn Quý đoàn");
   });
 });
 
@@ -254,6 +326,61 @@ describe("buildTwoDayItineraryPayload", () => {
     expect(data["day1_block"].text).toBe("06 giờ 00:\nXuất phát\nTham quan");
     expect(data["day2_block"].text).toBe("07 giờ 00:\nĂn sáng\nKết thúc chương trình!");
   });
+
+  it("preserves bullet sub-items in day1 activities", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        day1: [
+          {
+            timeLabel: "8:00",
+            text: "Xe và HDV đưa Đoàn di chuyển tham quan:\n• Bạch Dinh.\n• Tượng đài Chúa Kitô.\n• Bảo tàng Vũ khí cổ Robert Taylor.",
+          },
+        ],
+        day2: [],
+      },
+    };
+    const data = buildTwoDayItineraryPayload(draft);
+    expect(data["day1_block"].text).toContain(
+      "• Bạch Dinh.\n• Tượng đài Chúa Kitô.\n• Bảo tàng Vũ khí cổ Robert Taylor.",
+    );
+  });
+
+  it("substitutes pickup landmark phrases in day1 with pickupLocation", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        day1: [
+          { timeLabel: "1:30", text: "Xe và HDV SOHA TRAVEL có mặt đón Quý khách tại điểm hẹn." },
+        ],
+        day2: [],
+      },
+    };
+    const data = buildTwoDayItineraryPayload(draft);
+    expect(data["day1_block"].text).toContain("tại ACECOOK Vĩnh Long");
+    expect(data["day1_block"].text).not.toContain("tại điểm hẹn");
+  });
+
+  it("strips trailing 'kết thúc chương trình' duplicate in day2", () => {
+    const draft = {
+      ...sharedDraft,
+      returnLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        day1: [],
+        day2: [
+          { timeLabel: "18:30", text: "Đoàn tiếp tục di chuyển về lại điểm đón ban đầu." },
+          { timeLabel: "20:00", text: "Về đến điểm hẹn, kết thúc chương trình tham quan." },
+        ],
+      },
+    };
+    const data = buildTwoDayItineraryPayload(draft);
+    const matches = data["day2_block"].text.match(/Kết thúc chương trình/gi);
+    expect(matches).toHaveLength(1);
+    expect(data["day2_block"].text).toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
+    expect(data["day2_block"].text).not.toContain("Về đến điểm hẹn");
+  });
 });
 
 // --------------------------------------------------------------------------
@@ -263,30 +390,59 @@ describe("buildTwoDayMenuPayload", () => {
   it("includes shared fields", () => {
     const draft = {
       ...sharedDraft,
-      menu: { day1: [], day2: [] },
+      menu: {
+        morning_day1: [],
+        lunch_day1: [],
+        afternoon_day1: [],
+        morning_day2: [],
+        lunch_day2: [],
+        afternoon_day2: [],
+      },
     };
     const data = buildTwoDayMenuPayload(draft);
     assertSharedFields(data);
   });
 
-  it("produces menu_day1_block and menu_day2_block fields", () => {
+  it("produces per-meal fields for day1/day2", () => {
     const draft = {
       ...sharedDraft,
-      menu: { day1: makeMenuItems(3), day2: makeMenuItems(2) },
+      menu: {
+        morning_day1: makeMenuItems(1),
+        lunch_day1: makeMenuItems(2),
+        afternoon_day1: makeMenuItems(1),
+        morning_day2: makeMenuItems(2),
+        lunch_day2: makeMenuItems(1),
+        afternoon_day2: makeMenuItems(1),
+      },
     };
     const data = buildTwoDayMenuPayload(draft);
-    expect(data["menu_day1_block"]).toBeDefined();
-    expect(data["menu_day2_block"]).toBeDefined();
+    expect(data["menu_morning_day1_block"]).toBeDefined();
+    expect(data["menu_lunch_day1_block"]).toBeDefined();
+    expect(data["menu_afternoon_day1_block"]).toBeDefined();
+    expect(data["menu_morning_day2_block"]).toBeDefined();
+    expect(data["menu_lunch_day2_block"]).toBeDefined();
+    expect(data["menu_afternoon_day2_block"]).toBeDefined();
   });
 
-  it("joins menu items with newlines", () => {
+  it("joins menu items with newlines per meal", () => {
     const draft = {
       ...sharedDraft,
-      menu: { day1: makeMenuItems(2), day2: makeMenuItems(1) },
+      menu: {
+        morning_day1: makeMenuItems(2),
+        lunch_day1: makeMenuItems(1),
+        afternoon_day1: makeMenuItems(1),
+        morning_day2: makeMenuItems(1),
+        lunch_day2: makeMenuItems(2),
+        afternoon_day2: makeMenuItems(1),
+      },
     };
     const data = buildTwoDayMenuPayload(draft);
-    expect(data["menu_day1_block"].text).toBe("item_1\nitem_2");
-    expect(data["menu_day2_block"].text).toBe("item_1");
+    expect(data["menu_morning_day1_block"].text).toBe("item_1\nitem_2");
+    expect(data["menu_lunch_day1_block"].text).toBe("item_1");
+    expect(data["menu_afternoon_day1_block"].text).toBe("item_1");
+    expect(data["menu_morning_day2_block"].text).toBe("item_1");
+    expect(data["menu_lunch_day2_block"].text).toBe("item_1\nitem_2");
+    expect(data["menu_afternoon_day2_block"].text).toBe("item_1");
   });
 });
 
@@ -363,7 +519,7 @@ describe("Menu 1 ngày — buildOneDayMenuPayload (realistic)", () => {
 
   it("preserves shared fields with Vietnamese diacritics", () => {
     const data = buildOneDayMenuPayload(oneDayMenuDraft);
-    expect(data["title"].text).toBe("SÓC TRĂNG – CẦN THƠ");
+    expect(data["title"].text).toBe("SÓC TRĂNG - CẦN THƠ");
     expect(data["tour_date"].text).toBe("Ngày 19/03/2026");
   });
 
@@ -383,62 +539,70 @@ describe("Menu 2 ngày — buildTwoDayMenuPayload (realistic)", () => {
   const twoDayMenuDraft = {
     ...realisticShared,
     menu: {
-      day1: [
-        { text: "Bữa sáng: Phở bò" },
-        { text: "Bữa trưa: Cơm tấm sườn bì chả" },
-        { text: "Bữa chiều: Bánh xèo miền Tây" },
-      ],
-      day2: [
-        { text: "Bữa sáng: Hủ tiếu Nam Vang" },
-        { text: "Bữa trưa: Lẩu mắm cá linh" },
-        { text: "Bữa chiều: Bánh cống Sóc Trăng" },
-      ],
+      morning_day1: [{ text: "Bữa sáng: Phở bò" }],
+      lunch_day1: [{ text: "Bữa trưa: Cơm tấm sườn bì chả" }],
+      afternoon_day1: [{ text: "Bữa chiều: Bánh xèo miền Tây" }],
+      morning_day2: [{ text: "Bữa sáng: Hủ tiếu Nam Vang" }],
+      lunch_day2: [{ text: "Bữa trưa: Lẩu mắm cá linh" }],
+      afternoon_day2: [{ text: "Bữa chiều: Bánh cống Sóc Trăng" }],
     },
   };
 
-  it("produces all 5 keys: shared + 2 menu day blocks", () => {
+  it("produces all 9 keys: shared + 6 menu meal blocks", () => {
     const data = buildTwoDayMenuPayload(twoDayMenuDraft);
     expect(Object.keys(data).sort()).toEqual([
-      "menu_day1_block",
-      "menu_day2_block",
+      "menu_afternoon_day1_block",
+      "menu_afternoon_day2_block",
+      "menu_lunch_day1_block",
+      "menu_lunch_day2_block",
+      "menu_morning_day1_block",
+      "menu_morning_day2_block",
       "program_label",
       "title",
       "tour_date",
     ]);
   });
 
-  it("formats day 1 menu with Vietnamese dish names", () => {
+  it("formats day 1 meal blocks with Vietnamese dish names", () => {
     const data = buildTwoDayMenuPayload(twoDayMenuDraft);
-    expect(data["menu_day1_block"].text).toBe(
-      "Bữa sáng: Phở bò\nBữa trưa: Cơm tấm sườn bì chả\nBữa chiều: Bánh xèo miền Tây"
-    );
+    expect(data["menu_morning_day1_block"].text).toBe("Bữa sáng: Phở bò");
+    expect(data["menu_lunch_day1_block"].text).toBe("Bữa trưa: Cơm tấm sườn bì chả");
+    expect(data["menu_afternoon_day1_block"].text).toBe("Bữa chiều: Bánh xèo miền Tây");
   });
 
-  it("formats day 2 menu with Vietnamese dish names", () => {
+  it("formats day 2 meal blocks with Vietnamese dish names", () => {
     const data = buildTwoDayMenuPayload(twoDayMenuDraft);
-    expect(data["menu_day2_block"].text).toBe(
-      "Bữa sáng: Hủ tiếu Nam Vang\nBữa trưa: Lẩu mắm cá linh\nBữa chiều: Bánh cống Sóc Trăng"
-    );
+    expect(data["menu_morning_day2_block"].text).toBe("Bữa sáng: Hủ tiếu Nam Vang");
+    expect(data["menu_lunch_day2_block"].text).toBe("Bữa trưa: Lẩu mắm cá linh");
+    expect(data["menu_afternoon_day2_block"].text).toBe("Bữa chiều: Bánh cống Sóc Trăng");
   });
 
-  it("preserves Vietnamese diacritics in all fields", () => {
+  it("preserves Vietnamese diacritics in all meal blocks", () => {
     const data = buildTwoDayMenuPayload(twoDayMenuDraft);
-    expect(data["menu_day1_block"].text).toContain("Phở");
-    expect(data["menu_day2_block"].text).toContain("Hủ tiếu");
-    expect(data["menu_day2_block"].text).toContain("Sóc Trăng");
+    expect(data["menu_morning_day1_block"].text).toContain("Phở");
+    expect(data["menu_morning_day2_block"].text).toContain("Hủ tiếu");
+    expect(data["menu_afternoon_day2_block"].text).toContain("Sóc Trăng");
   });
 
-  it("handles day with no menu items", () => {
+  it("handles missing meals as empty strings", () => {
     const partial = {
       ...realisticShared,
       menu: {
-        day1: [{ text: "Bữa sáng: Bánh cuốn" }],
-        day2: [],
+        morning_day1: [{ text: "Bữa sáng: Bánh cuốn" }],
+        lunch_day1: [],
+        afternoon_day1: [],
+        morning_day2: [],
+        lunch_day2: [],
+        afternoon_day2: [],
       },
     };
     const data = buildTwoDayMenuPayload(partial);
-    expect(data["menu_day1_block"].text).toBe("Bữa sáng: Bánh cuốn");
-    expect(data["menu_day2_block"].text).toBe("");
+    expect(data["menu_morning_day1_block"].text).toBe("Bữa sáng: Bánh cuốn");
+    expect(data["menu_lunch_day1_block"].text).toBe("");
+    expect(data["menu_afternoon_day1_block"].text).toBe("");
+    expect(data["menu_morning_day2_block"].text).toBe("");
+    expect(data["menu_lunch_day2_block"].text).toBe("");
+    expect(data["menu_afternoon_day2_block"].text).toBe("");
   });
 });
 
@@ -514,13 +678,14 @@ describe("Lịch trình 2 ngày — buildTwoDayItineraryPayload (realistic)", ()
     expect(day1).toContain("Bến Ninh Kiều");
     expect(day1).toContain("Chợ nổi Cái Răng");
     expect(day2).toContain("Khu du lịch Mỹ Khánh");
-    expect(day2).toContain("Cà Mau");
+    // RETURN_TRAVEL_PATTERN rewrites "Khởi hành về Cà Mau" → "Đoàn khởi hành về {returnLocation}"
+    expect(day2).toContain("Trường THPT Cai Nước");
   });
 
   it("separates activities with single newlines", () => {
     const data = buildTwoDayItineraryPayload(twoDayItineraryDraft);
     const day2 = data["day2_block"].text;
-    expect(day2).toContain("07 giờ 00:\nĂn sáng tại khách sạn\n08 giờ 00:\nTham quan Khu du lịch Mỹ Khánh");
+    expect(day2).toContain("07 giờ 00:\nĂn sáng tại khách sạn\n\n08 giờ 00:\nTham quan Khu du lịch Mỹ Khánh");
   });
 
   it("handles empty day gracefully", () => {
@@ -624,7 +789,10 @@ describe("Lịch trình 1 ngày — canonical Phase 7 sample", () => {
       withMerge["afternoon_block"].text.indexOf("15 giờ 30"),
     );
     expect(withMerge["afternoon_block"].text).not.toContain("Thực đơn trưa:");
-    expect(withMerge["afternoon_block"].text).not.toContain("\n\n");
+    // Merged menu lines stay tight (single \n) — no blank line between Món ăn and Nước uống
+    expect(withMerge["afternoon_block"].text).toContain(
+      "Món ăn: Cơm trưa, Canh rau\nNước uống: Nước suối",
+    );
     expect(withMerge["afternoon_block"].text).not.toBe(
       withoutMerge["afternoon_block"].text,
     );

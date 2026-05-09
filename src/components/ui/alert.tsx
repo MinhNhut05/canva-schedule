@@ -10,7 +10,7 @@ interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantClasses: Record<AlertVariant, string> = {
   default:
-    "border-border-light bg-surface-panel-glass text-card-foreground shadow-semantic-light",
+    "border-primary/20 bg-surface-panel-glass text-card-foreground shadow-semantic-light",
   destructive:
     "border-destructive/35 bg-destructive/10 text-destructive shadow-semantic-light",
 };
@@ -21,7 +21,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       ref={ref}
       role="alert"
       className={cn(
-        "relative w-full rounded-xl border px-4 py-3 text-sm transition-premium",
+        "relative w-full rounded-[24px] border px-4 py-3 text-sm transition-premium",
         variantClasses[variant],
         className,
       )}

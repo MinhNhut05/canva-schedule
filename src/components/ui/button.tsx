@@ -14,15 +14,15 @@ type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    "bg-primary text-primary-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-primary/95 hover:glow-accent focus-visible:ring-ring",
+    "bg-primary text-primary-foreground shadow-[0_0_30px_rgba(41,218,245,0.24)] transition-premium hover:-translate-y-[1px] hover:bg-accent-soft hover:glow-accent focus-visible:ring-ring",
   secondary:
-    "border border-border-light bg-surface-panel-glass text-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-surface-panel focus-visible:ring-ring",
+    "border border-primary/20 bg-surface-panel-glass text-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:border-primary/35 hover:bg-primary/10 focus-visible:ring-ring",
   outline:
-    "border border-border-light bg-transparent text-foreground transition-premium hover:bg-surface-panel-cool focus-visible:ring-ring",
+    "border border-primary/25 bg-surface-panel-glass/60 text-foreground transition-premium hover:border-primary/45 hover:bg-primary/10 hover:text-primary focus-visible:ring-ring",
   destructive:
-    "bg-destructive text-destructive-foreground shadow-semantic-light transition-premium hover:-translate-y-[1px] hover:bg-destructive/90 focus-visible:ring-ring",
+    "bg-destructive text-destructive-foreground shadow-[0_0_26px_rgba(244,63,94,0.18)] transition-premium hover:-translate-y-[1px] hover:bg-destructive/90 focus-visible:ring-ring",
   ghost:
-    "text-foreground transition-premium hover:bg-surface-panel-cool hover:text-foreground focus-visible:ring-ring",
+    "text-foreground transition-premium hover:bg-primary/10 hover:text-primary focus-visible:ring-ring",
   link: "text-primary underline-offset-4 transition-premium hover:text-primary/80 hover:underline focus-visible:ring-ring",
 };
 
@@ -52,7 +52,7 @@ function buttonVariants({
   className,
 }: ButtonVariantsOptions = {}) {
   return cn(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+    "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-premium disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     variantClasses[variant],
     sizeClasses[size],
     className,

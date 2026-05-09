@@ -5,6 +5,8 @@ import {
   ONE_DAY_MENU_FIELDS,
   TWO_DAY_ITINERARY_FIELDS,
   TWO_DAY_MENU_FIELDS,
+  THREE_DAY_ITINERARY_FIELDS,
+  THREE_DAY_MENU_FIELDS,
 } from "./field-map";
 
 interface TemplateSeedInput {
@@ -38,6 +40,18 @@ const TEMPLATE_SEEDS: TemplateSeedInput[] = [
     artifactType: "MENU",
     envVar: "CANVA_TEMPLATE_2DAY_MENU",
     fields: TWO_DAY_MENU_FIELDS,
+  },
+  {
+    tourDuration: "THREE_DAY",
+    artifactType: "ITINERARY",
+    envVar: "CANVA_TEMPLATE_3DAY_ITINERARY",
+    fields: THREE_DAY_ITINERARY_FIELDS,
+  },
+  {
+    tourDuration: "THREE_DAY",
+    artifactType: "MENU",
+    envVar: "CANVA_TEMPLATE_3DAY_MENU",
+    fields: THREE_DAY_MENU_FIELDS,
   },
 ];
 

@@ -23,7 +23,7 @@ export const clientTypeSchema = z.enum(["SCHOOL", "GROUP"]);
 export type ClientType = z.infer<typeof clientTypeSchema>;
 
 // --- Duration ---
-export const tourDurationSchema = z.enum(["ONE_DAY", "TWO_DAY"]);
+export const tourDurationSchema = z.enum(["ONE_DAY", "TWO_DAY", "THREE_DAY"]);
 export type TourDuration = z.infer<typeof tourDurationSchema>;
 
 // --- Common fields (shared between 1-day and 2-day) ---
@@ -62,8 +62,33 @@ export const twoDaySchema = commonFieldsSchema.extend({
     day2: z.array(activitySchema),
   }),
   menu: z.object({
-    day1: z.array(menuItemSchema).default([]),
-    day2: z.array(menuItemSchema).default([]),
+    morning_day1: z.array(menuItemSchema).default([]),
+    lunch_day1: z.array(menuItemSchema).default([]),
+    afternoon_day1: z.array(menuItemSchema).default([]),
+    morning_day2: z.array(menuItemSchema).default([]),
+    lunch_day2: z.array(menuItemSchema).default([]),
+    afternoon_day2: z.array(menuItemSchema).default([]),
+  }),
+});
+
+// --- Three-day tour schema ---
+export const threeDaySchema = commonFieldsSchema.extend({
+  duration: z.literal("THREE_DAY"),
+  itinerary: z.object({
+    day1: z.array(activitySchema),
+    day2: z.array(activitySchema),
+    day3: z.array(activitySchema),
+  }),
+  menu: z.object({
+    morning_day1: z.array(menuItemSchema).default([]),
+    lunch_day1: z.array(menuItemSchema).default([]),
+    afternoon_day1: z.array(menuItemSchema).default([]),
+    morning_day2: z.array(menuItemSchema).default([]),
+    lunch_day2: z.array(menuItemSchema).default([]),
+    afternoon_day2: z.array(menuItemSchema).default([]),
+    morning_day3: z.array(menuItemSchema).default([]),
+    lunch_day3: z.array(menuItemSchema).default([]),
+    afternoon_day3: z.array(menuItemSchema).default([]),
   }),
 });
 
@@ -71,8 +96,10 @@ export const twoDaySchema = commonFieldsSchema.extend({
 export const structuredDraftSchema = z.discriminatedUnion("duration", [
   oneDaySchema,
   twoDaySchema,
+  threeDaySchema,
 ]);
 
 export type StructuredDraft = z.infer<typeof structuredDraftSchema>;
 export type OneDayDraft = z.infer<typeof oneDaySchema>;
 export type TwoDayDraft = z.infer<typeof twoDaySchema>;
+export type ThreeDayDraft = z.infer<typeof threeDaySchema>;

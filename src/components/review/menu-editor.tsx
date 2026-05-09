@@ -24,8 +24,15 @@ const MENU_SECTION_LABELS: Record<string, string> = {
   morning: "Sang",
   lunch: "Trua",
   afternoon: "Chieu",
-  day1: "Ngay 1",
-  day2: "Ngay 2",
+  morning_day1: "Sang - Ngay 1",
+  lunch_day1: "Trua - Ngay 1",
+  afternoon_day1: "Chieu - Ngay 1",
+  morning_day2: "Sang - Ngay 2",
+  lunch_day2: "Trua - Ngay 2",
+  afternoon_day2: "Chieu - Ngay 2",
+  morning_day3: "Sang - Ngay 3",
+  lunch_day3: "Trua - Ngay 3",
+  afternoon_day3: "Chieu - Ngay 3",
 };
 
 function MenuItemRow({
@@ -79,13 +86,29 @@ export function MenuEditor({
           { key: "lunch", items: draft.menu.lunch },
           { key: "afternoon", items: draft.menu.afternoon },
         ]
-      : [
-          { key: "day1", items: draft.menu.day1 },
-          { key: "day2", items: draft.menu.day2 },
-        ];
+      : draft.duration === "THREE_DAY"
+        ? [
+            { key: "morning_day1", items: draft.menu.morning_day1 },
+            { key: "lunch_day1", items: draft.menu.lunch_day1 },
+            { key: "afternoon_day1", items: draft.menu.afternoon_day1 },
+            { key: "morning_day2", items: draft.menu.morning_day2 },
+            { key: "lunch_day2", items: draft.menu.lunch_day2 },
+            { key: "afternoon_day2", items: draft.menu.afternoon_day2 },
+            { key: "morning_day3", items: draft.menu.morning_day3 },
+            { key: "lunch_day3", items: draft.menu.lunch_day3 },
+            { key: "afternoon_day3", items: draft.menu.afternoon_day3 },
+          ]
+        : [
+            { key: "morning_day1", items: draft.menu.morning_day1 },
+            { key: "lunch_day1", items: draft.menu.lunch_day1 },
+            { key: "afternoon_day1", items: draft.menu.afternoon_day1 },
+            { key: "morning_day2", items: draft.menu.morning_day2 },
+            { key: "lunch_day2", items: draft.menu.lunch_day2 },
+            { key: "afternoon_day2", items: draft.menu.afternoon_day2 },
+          ];
 
   return (
-    <Card className="border-border bg-white shadow-sm">
+    <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
       <CardHeader>
         <CardTitle>Thuc don</CardTitle>
       </CardHeader>
