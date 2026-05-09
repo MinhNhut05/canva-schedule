@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+async function getSessionToken(request: NextRequest) {
+  return (
+    (await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: true,
+    })) ??
+    (await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: false,
+    }))
+  );
+}
+
 /**
  * Paths that do NOT require authentication.
  * Everything else redirects to /login with callbackUrl and reason=auth-required.
@@ -23,10 +38,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for valid JWT session token
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-  });
+  const token = await getSessionToken(request);
 
   if (!token) {
     // D-06: Redirect unauthenticated access to /login with callbackUrl and reason

@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+async function getSessionToken(request: NextRequest) {
+  return (
+    (await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: true,
+    })) ??
+    (await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: false,
+    }))
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search, origin } = request.nextUrl;
 
@@ -15,10 +30,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for valid session token
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-  });
+  const token = await getSessionToken(request);
 
   // Protect everything else
   if (!token) {
