@@ -46,9 +46,9 @@ test.describe("Personal website visual system", () => {
   test("primitive variants render with expected state classes", async ({ page }) => {
     await expect(page.getByRole("button", { name: "Primary action" })).toHaveClass(/bg-primary/);
     await expect(page.getByRole("button", { name: "Secondary action" })).toHaveClass(/bg-surface-panel-glass/);
-    await expect(page.getByRole("button", { name: "Outline action" })).toHaveClass(/border-border-light/);
-    await expect(page.getByLabel("Input sample")).toHaveClass(/bg-card/);
-    await expect(page.getByLabel("Textarea sample")).toHaveClass(/bg-card/);
+    await expect(page.getByRole("button", { name: "Outline action" })).toHaveClass(/border-primary\/25/);
+    await expect(page.getByLabel("Input sample")).toHaveClass(/bg-surface-panel-glass/);
+    await expect(page.getByLabel("Textarea sample")).toHaveClass(/bg-surface-panel-glass/);
   });
 
   test("overlay and feedback primitives open with premium states", async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe("Personal website visual system", () => {
 
   test("navigation links expose active and focus contract", async ({ page }) => {
     const activeLink = page.getByRole("link", { name: "Lịch sử" }).first();
-    await expect(activeLink).toHaveClass(/bg-primary\/10/);
+    await expect(activeLink).toHaveClass(/bg-primary\/15/);
 
     await activeLink.focus();
     const focusedClass = await activeLink.getAttribute("class");

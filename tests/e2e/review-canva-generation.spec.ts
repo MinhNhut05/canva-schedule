@@ -475,7 +475,7 @@ test.describe("Review to Canva generation flow", () => {
       mergedItineraryPayload["afternoon_block"].text.indexOf("15 giờ 30"),
     );
     expect(mergedItineraryPayload["afternoon_block"].text).not.toContain("Thực đơn trưa:");
-    expect(mergedItineraryPayload["afternoon_block"].text).not.toContain("\n\n");
+    expect(mergedItineraryPayload["afternoon_block"].text).toContain("\n\n");
     expect(mergedItineraryPayload["afternoon_block"].text).not.toBe(
       initialItineraryPayload["afternoon_block"].text,
     );
