@@ -112,7 +112,7 @@ describe("extraction-client", () => {
         ],
         max_tokens: AI_MAX_COMPLETION_TOKENS,
         response_format: { type: "json_object" },
-        temperature: 0.1,
+        ...(AI_MODEL.startsWith("gh/gpt-5") ? {} : { temperature: 0.1 }),
       },
       { signal: expect.any(AbortSignal) },
     );
@@ -169,14 +169,14 @@ describe("extraction-client", () => {
     }
   });
 
-  it("defaults to provider-prefixed cx/gpt-5.4 when AI_MODEL is unset", async () => {
+  it("defaults to provider-prefixed gh/gpt-5.4-mini when AI_MODEL is unset", async () => {
     const previousModel = process.env.AI_MODEL;
     delete process.env.AI_MODEL;
     vi.resetModules();
 
     try {
       const reloaded = await import("@/lib/ai/extraction-client");
-      expect(reloaded.AI_MODEL).toBe("cx/gpt-5.4");
+      expect(reloaded.AI_MODEL).toBe("gh/gpt-5.4-mini");
     } finally {
       if (previousModel === undefined) {
         delete process.env.AI_MODEL;

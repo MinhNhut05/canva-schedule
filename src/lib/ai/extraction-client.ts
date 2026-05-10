@@ -8,6 +8,10 @@ function normalizeModelName(model: string): string {
   return model.trim();
 }
 
+function supportsTemperature(model: string): boolean {
+  return !model.startsWith("gh/gpt-5");
+}
+
 function parsePositiveInteger(value: string | undefined, fallback: number): number {
   if (!value) {
     return fallback;
@@ -17,7 +21,9 @@ function parsePositiveInteger(value: string | undefined, fallback: number): numb
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const AI_MODEL = normalizeModelName(process.env.AI_MODEL?.trim() || "cx/gpt-5.4");
+const AI_MODEL = normalizeModelName(
+  process.env.AI_MODEL?.trim() || "gh/gpt-5.4-mini",
+);
 const MAX_RETRIES = 1;
 const AI_TIMEOUT_MS = 240_000;
 const AI_MAX_COMPLETION_TOKENS = parsePositiveInteger(
@@ -123,17 +129,19 @@ export async function callExtractionApi(
       const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
       try {
+        const request = {
+          model: AI_MODEL,
+          messages: [
+            { role: "system" as const, content: options.systemPrompt },
+            { role: "user" as const, content: options.userContent },
+          ],
+          max_tokens: AI_MAX_COMPLETION_TOKENS,
+          response_format: { type: "json_object" as const },
+          ...(supportsTemperature(AI_MODEL) ? { temperature: 0.1 } : {}),
+        };
+
         const completion = await client.chat.completions.create(
-          {
-            model: AI_MODEL,
-            messages: [
-              { role: "system", content: options.systemPrompt },
-              { role: "user", content: options.userContent },
-            ],
-            max_tokens: AI_MAX_COMPLETION_TOKENS,
-            response_format: { type: "json_object" },
-            temperature: 0.1,
-          },
+          request,
           { signal: controller.signal },
         );
 
