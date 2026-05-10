@@ -23,7 +23,7 @@ export const clientTypeSchema = z.enum(["SCHOOL", "GROUP"]);
 export type ClientType = z.infer<typeof clientTypeSchema>;
 
 // --- Duration ---
-export const tourDurationSchema = z.enum(["ONE_DAY", "TWO_DAY", "THREE_DAY"]);
+export const tourDurationSchema = z.enum(["ONE_DAY", "TWO_DAY", "THREE_DAY", "FOUR_DAY"]);
 export type TourDuration = z.infer<typeof tourDurationSchema>;
 
 // --- Common fields (shared between 1-day and 2-day) ---
@@ -92,14 +92,42 @@ export const threeDaySchema = commonFieldsSchema.extend({
   }),
 });
 
+// --- Four-day tour schema ---
+export const fourDaySchema = commonFieldsSchema.extend({
+  duration: z.literal("FOUR_DAY"),
+  itinerary: z.object({
+    night1: z.array(activitySchema),
+    day1: z.array(activitySchema),
+    day2: z.array(activitySchema),
+    day3: z.array(activitySchema),
+    day4: z.array(activitySchema),
+  }),
+  menu: z.object({
+    morning_day1: z.array(menuItemSchema).default([]),
+    lunch_day1: z.array(menuItemSchema).default([]),
+    afternoon_day1: z.array(menuItemSchema).default([]),
+    morning_day2: z.array(menuItemSchema).default([]),
+    lunch_day2: z.array(menuItemSchema).default([]),
+    afternoon_day2: z.array(menuItemSchema).default([]),
+    morning_day3: z.array(menuItemSchema).default([]),
+    lunch_day3: z.array(menuItemSchema).default([]),
+    afternoon_day3: z.array(menuItemSchema).default([]),
+    morning_day4: z.array(menuItemSchema).default([]),
+    lunch_day4: z.array(menuItemSchema).default([]),
+    afternoon_day4: z.array(menuItemSchema).default([]),
+  }),
+});
+
 // --- Discriminated union ---
 export const structuredDraftSchema = z.discriminatedUnion("duration", [
   oneDaySchema,
   twoDaySchema,
   threeDaySchema,
+  fourDaySchema,
 ]);
 
 export type StructuredDraft = z.infer<typeof structuredDraftSchema>;
 export type OneDayDraft = z.infer<typeof oneDaySchema>;
 export type TwoDayDraft = z.infer<typeof twoDaySchema>;
 export type ThreeDayDraft = z.infer<typeof threeDaySchema>;
+export type FourDayDraft = z.infer<typeof fourDaySchema>;

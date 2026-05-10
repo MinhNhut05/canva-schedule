@@ -19,7 +19,9 @@ export function extractImportantTerms(draft: StructuredDraft): string[] {
       ? [...draft.itinerary.morning, ...draft.itinerary.afternoon]
       : draft.duration === "THREE_DAY"
         ? [...draft.itinerary.day1, ...draft.itinerary.day2, ...draft.itinerary.day3]
-        : [...draft.itinerary.day1, ...draft.itinerary.day2];
+        : draft.duration === "FOUR_DAY"
+          ? [...draft.itinerary.night1, ...draft.itinerary.day1, ...draft.itinerary.day2, ...draft.itinerary.day3, ...draft.itinerary.day4]
+          : [...draft.itinerary.day1, ...draft.itinerary.day2];
 
   for (const activity of allActivities) {
     const extracted = extractPlaceNames(activity.text);

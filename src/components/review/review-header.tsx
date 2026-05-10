@@ -82,7 +82,9 @@ export function ReviewHeader({
         ? "Tour 2 ngày"
         : tourDuration === "THREE_DAY"
           ? "Tour 3 ngày"
-          : null;
+          : tourDuration === "FOUR_DAY"
+            ? "Tour 4 ngày"
+            : null;
 
   const clientLabel =
     clientType === "SCHOOL"

@@ -6,6 +6,7 @@ import {
   oneDaySchema,
   twoDaySchema,
   threeDaySchema,
+  fourDaySchema,
 } from "../extraction-schema";
 
 describe("activitySchema", () => {
@@ -111,6 +112,37 @@ describe("threeDaySchema", () => {
         morning_day3: [],
         lunch_day3: [],
         afternoon_day3: [],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("fourDaySchema", () => {
+  it("accepts valid four-day schema directly", () => {
+    const result = fourDaySchema.safeParse({
+      duration: "FOUR_DAY",
+      itinerary: {
+        night1: [{ text: "Khởi hành", sourceConfidence: "high" }],
+        day1: [{ text: "Tham quan Nha Trang", sourceConfidence: "high" }],
+        day2: [{ text: "Gala Dinner", sourceConfidence: "high" }],
+        day3: [{ text: "Đà Lạt", sourceConfidence: "high" }],
+        day4: [{ text: "Kết thúc chương trình!", sourceConfidence: "high" }],
+      },
+      menu: {
+        morning_day1: [],
+        lunch_day1: [],
+        afternoon_day1: [],
+        morning_day2: [],
+        lunch_day2: [],
+        afternoon_day2: [],
+        morning_day3: [],
+        lunch_day3: [],
+        afternoon_day3: [],
+        morning_day4: [],
+        lunch_day4: [],
+        afternoon_day4: [],
       },
     });
 
@@ -235,7 +267,7 @@ describe("SAFE-02: schema validation rejects invalid output", () => {
 
   it("rejects unknown duration value", () => {
     const result = structuredDraftSchema.safeParse({
-      duration: "FOUR_DAY",
+      duration: "FIVE_DAY",
       itinerary: {},
       menu: {},
     });

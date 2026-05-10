@@ -56,7 +56,7 @@ model Upload {
   aiAttemptCount   Int          @default(0)
   approvedAt       DateTime?
   clientType       String?      // SCHOOL | GROUP
-  tourDuration     String?      // ONE_DAY | TWO_DAY | THREE_DAY
+  tourDuration     String?      // ONE_DAY | TWO_DAY | THREE_DAY | FOUR_DAY
   aiErrorMessage   String?
 
   createdAt        DateTime     @default(now())

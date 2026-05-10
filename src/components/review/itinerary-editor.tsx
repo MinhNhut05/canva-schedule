@@ -32,18 +32,22 @@ interface ItineraryEditorProps {
 const SECTION_LABELS: Record<string, string> = {
   morning: "Buoi sang",
   afternoon: "Buoi chieu",
+  night1: "Dem 1",
   day1: "Ngay 1",
   day2: "Ngay 2",
   day3: "Ngay 3",
+  day4: "Ngay 4",
 };
 
 /** Map section keys to their theme variant */
 const SECTION_THEMES: Record<string, SectionColors> = {
   morning: PRIMARY_SECTION,
   day1: PRIMARY_SECTION,
+  night1: SECONDARY_SECTION,
   afternoon: SECONDARY_SECTION,
   day2: SECONDARY_SECTION,
   day3: PRIMARY_SECTION,
+  day4: SECONDARY_SECTION,
 };
 
 function ActivityItem({
@@ -146,10 +150,18 @@ export function ItineraryEditor({
             { key: "day2", activities: draft.itinerary.day2 },
             { key: "day3", activities: draft.itinerary.day3 },
           ]
-        : [
-            { key: "day1", activities: draft.itinerary.day1 },
-            { key: "day2", activities: draft.itinerary.day2 },
-          ];
+        : draft.duration === "FOUR_DAY"
+          ? [
+              { key: "night1", activities: draft.itinerary.night1 },
+              { key: "day1", activities: draft.itinerary.day1 },
+              { key: "day2", activities: draft.itinerary.day2 },
+              { key: "day3", activities: draft.itinerary.day3 },
+              { key: "day4", activities: draft.itinerary.day4 },
+            ]
+          : [
+              { key: "day1", activities: draft.itinerary.day1 },
+              { key: "day2", activities: draft.itinerary.day2 },
+            ];
 
   return (
     <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">

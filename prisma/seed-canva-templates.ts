@@ -62,6 +62,34 @@ const TEMPLATE_SEEDS = [
       "menu_afternoon_day3_block",
     ],
   },
+  {
+    tourDuration: "FOUR_DAY",
+    artifactType: "ITINERARY",
+    envVar: "CANVA_TEMPLATE_4DAY_ITINERARY",
+    fields: ["title", "program_label", "tour_date", "night1_block", "day1_block", "day2_block", "day3a_block", "day3b_block", "day4_block"],
+  },
+  {
+    tourDuration: "FOUR_DAY",
+    artifactType: "MENU",
+    envVar: "CANVA_TEMPLATE_4DAY_MENU",
+    fields: [
+      "title",
+      "program_label",
+      "tour_date",
+      "menu_morning_day1_block",
+      "menu_lunch_day1_block",
+      "menu_afternoon_day1_block",
+      "menu_morning_day2_block",
+      "menu_lunch_day2_block",
+      "menu_afternoon_day2_block",
+      "menu_morning_day3_block",
+      "menu_lunch_day3_block",
+      "menu_afternoon_day3_block",
+      "menu_morning_day4_block",
+      "menu_lunch_day4_block",
+      "menu_afternoon_day4_block",
+    ],
+  },
 ];
 
 function buildDefaultFieldMapping(fields: string[]): Record<string, string> {

@@ -119,6 +119,8 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
       tourTypeLabel = "Tour 2 ngày";
     } else if (row.tourDuration === "THREE_DAY") {
       tourTypeLabel = "Tour 3 ngày";
+    } else if (row.tourDuration === "FOUR_DAY") {
+      tourTypeLabel = "Tour 4 ngày";
     } else {
       tourTypeLabel = "Chưa xác định";
     }

@@ -86,6 +86,33 @@ interface ThreeDayMenuDraft extends DraftBase {
   };
 }
 
+interface FourDayItineraryDraft extends DraftBase {
+  itinerary?: {
+    night1?: ActivityItem[];
+    day1?: ActivityItem[];
+    day2?: ActivityItem[];
+    day3?: ActivityItem[];
+    day4?: ActivityItem[];
+  };
+}
+
+interface FourDayMenuDraft extends DraftBase {
+  menu?: {
+    morning_day1?: MenuItem[];
+    lunch_day1?: MenuItem[];
+    afternoon_day1?: MenuItem[];
+    morning_day2?: MenuItem[];
+    lunch_day2?: MenuItem[];
+    afternoon_day2?: MenuItem[];
+    morning_day3?: MenuItem[];
+    lunch_day3?: MenuItem[];
+    afternoon_day3?: MenuItem[];
+    morning_day4?: MenuItem[];
+    lunch_day4?: MenuItem[];
+    afternoon_day4?: MenuItem[];
+  };
+}
+
 // Callers pass Prisma Json (Record<string, unknown> | null), so we accept
 // a broad input and cast internally for type-safe field access.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -760,5 +787,61 @@ export function buildThreeDayMenuPayload(draft: DraftInput): AutofillData {
     menu_morning_day3_block: textField(joinMenuBlock(morningDay3Items)),
     menu_lunch_day3_block: textField(joinMenuBlock(lunchDay3Items)),
     menu_afternoon_day3_block: textField(joinMenuBlock(afternoonDay3Items)),
+  };
+}
+
+export function buildFourDayItineraryPayload(draft: DraftInput): AutofillData {
+  const d = (draft ?? {}) as FourDayItineraryDraft;
+  const night1Items = d.itinerary?.night1 ?? [];
+  const day1Items = d.itinerary?.day1 ?? [];
+  const day2Items = d.itinerary?.day2 ?? [];
+  const day3Items = d.itinerary?.day3 ?? [];
+  const day4WithEnd = ensureEndProgram(d.itinerary?.day4 ?? []);
+
+  // Day 3 is split across two Canva columns — split at midpoint
+  const splitAt = Math.ceil(day3Items.length / 2);
+  const day3aItems = day3Items.slice(0, splitAt);
+  const day3bItems = day3Items.slice(splitAt);
+
+  return {
+    ...sharedFields(d),
+    night1_block: textField(joinActivityBlock(night1Items)),
+    day1_block: textField(joinActivityBlock(day1Items)),
+    day2_block: textField(joinActivityBlock(day2Items)),
+    day3a_block: textField(joinActivityBlock(day3aItems)),
+    day3b_block: textField(joinActivityBlock(day3bItems)),
+    day4_block: textField(joinActivityBlock(day4WithEnd)),
+  };
+}
+
+export function buildFourDayMenuPayload(draft: DraftInput): AutofillData {
+  const d = (draft ?? {}) as FourDayMenuDraft;
+  const morningDay1Items = (d.menu?.morning_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay1Items = (d.menu?.lunch_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay1Items = (d.menu?.afternoon_day1 ?? []).map((m) => m.text ?? m.item ?? "");
+  const morningDay2Items = (d.menu?.morning_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay2Items = (d.menu?.lunch_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay2Items = (d.menu?.afternoon_day2 ?? []).map((m) => m.text ?? m.item ?? "");
+  const morningDay3Items = (d.menu?.morning_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay3Items = (d.menu?.lunch_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay3Items = (d.menu?.afternoon_day3 ?? []).map((m) => m.text ?? m.item ?? "");
+  const morningDay4Items = (d.menu?.morning_day4 ?? []).map((m) => m.text ?? m.item ?? "");
+  const lunchDay4Items = (d.menu?.lunch_day4 ?? []).map((m) => m.text ?? m.item ?? "");
+  const afternoonDay4Items = (d.menu?.afternoon_day4 ?? []).map((m) => m.text ?? m.item ?? "");
+
+  return {
+    ...sharedFields(d),
+    menu_morning_day1_block: textField(joinMenuBlock(morningDay1Items)),
+    menu_lunch_day1_block: textField(joinMenuBlock(lunchDay1Items)),
+    menu_afternoon_day1_block: textField(joinMenuBlock(afternoonDay1Items)),
+    menu_morning_day2_block: textField(joinMenuBlock(morningDay2Items)),
+    menu_lunch_day2_block: textField(joinMenuBlock(lunchDay2Items)),
+    menu_afternoon_day2_block: textField(joinMenuBlock(afternoonDay2Items)),
+    menu_morning_day3_block: textField(joinMenuBlock(morningDay3Items)),
+    menu_lunch_day3_block: textField(joinMenuBlock(lunchDay3Items)),
+    menu_afternoon_day3_block: textField(joinMenuBlock(afternoonDay3Items)),
+    menu_morning_day4_block: textField(joinMenuBlock(morningDay4Items)),
+    menu_lunch_day4_block: textField(joinMenuBlock(lunchDay4Items)),
+    menu_afternoon_day4_block: textField(joinMenuBlock(afternoonDay4Items)),
   };
 }

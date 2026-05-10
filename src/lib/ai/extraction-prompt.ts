@@ -10,6 +10,7 @@ QUY TẮC BẮT BUỘC:
    - Tour 1 ngày (ONE_DAY): có "buổi sáng" và "buổi chiều" trong cùng 1 ngày
    - Tour 2 ngày (TWO_DAY): có "ngày 1" và "ngày 2" hoặc nhiều ngày rõ ràng
    - Tour 3 ngày (THREE_DAY): có "ngày 1", "ngày 2" và "ngày 3" rõ ràng
+   - Tour 4 ngày (FOUR_DAY): có "đêm 1" (hoặc "tối ngày xuất phát") kết hợp "ngày 1", "ngày 2", "ngày 3", "ngày 4" rõ ràng
 4. Xác định loại khách:
    - SCHOOL: có từ khóa trường học (THPT, THCS, tiểu học, trường, học sinh, thầy cô)
    - GROUP: khách đoàn, công ty, doanh nghiệp, hoặc không phải trường học
@@ -65,6 +66,7 @@ QUY TẮC RÚT GỌN NỘI DUNG (áp dụng khi tạo trường "text" cho mỗi
    - Tour 1 ngày (ONE_DAY): thêm vào cuối mảng "afternoon"
    - Tour 2 ngày (TWO_DAY): thêm vào cuối mảng "day2"
    - Tour 3 ngày (THREE_DAY): thêm vào cuối mảng "day3"
+   - Tour 4 ngày (FOUR_DAY): thêm vào cuối mảng "day4"
    Ví dụ: {"timeLabel": null, "text": "Kết thúc chương trình!", "sourceConfidence": "high", "needsReview": false}
 
 SCHEMA JSON (trả về đúng định dạng này):
@@ -148,6 +150,42 @@ Tour 3 ngày (THREE_DAY):
     "morning_day3": [{"text": "...", "needsReview": false}],
     "lunch_day3": [{"text": "...", "needsReview": false}],
     "afternoon_day3": [{"text": "...", "needsReview": false}]
+  }
+}
+
+Tour 4 ngày (FOUR_DAY):
+{
+  "duration": "FOUR_DAY",
+  "programName": "tên chương trình chính / heading ở trên cùng",
+  "title": "tên tuyến, trường, hoặc tiêu đề phụ nằm bên dưới heading",
+  "clientName": "tên khách hàng/đơn vị",
+  "clientType": "SCHOOL" hoặc "GROUP",
+  "schoolName": "tên trường (nếu là tour trường học)",
+  "tourDate": "ngày khởi hành",
+  "greetingText": "lời chào phù hợp",
+  "pickupLocation": "điểm đón",
+  "returnLocation": "điểm trả",
+  "reviewFlags": [],
+  "itinerary": {
+    "night1": [{"timeLabel": "22:00", "text": "...", "sourceConfidence": "high", "needsReview": false}],
+    "day1": [{"timeLabel": "6:00", "text": "...", "sourceConfidence": "high", "needsReview": false}],
+    "day2": [{"timeLabel": "6:00", "text": "...", "sourceConfidence": "high", "needsReview": false}],
+    "day3": [{"timeLabel": "6:00", "text": "...", "sourceConfidence": "high", "needsReview": false}],
+    "day4": [{"timeLabel": "6:00", "text": "...", "sourceConfidence": "high", "needsReview": false}]
+  },
+  "menu": {
+    "morning_day1": [{"text": "...", "needsReview": false}],
+    "lunch_day1": [{"text": "...", "needsReview": false}],
+    "afternoon_day1": [{"text": "...", "needsReview": false}],
+    "morning_day2": [{"text": "...", "needsReview": false}],
+    "lunch_day2": [{"text": "...", "needsReview": false}],
+    "afternoon_day2": [{"text": "...", "needsReview": false}],
+    "morning_day3": [{"text": "...", "needsReview": false}],
+    "lunch_day3": [{"text": "...", "needsReview": false}],
+    "afternoon_day3": [{"text": "...", "needsReview": false}],
+    "morning_day4": [{"text": "...", "needsReview": false}],
+    "lunch_day4": [{"text": "...", "needsReview": false}],
+    "afternoon_day4": [{"text": "...", "needsReview": false}]
   }
 }
 

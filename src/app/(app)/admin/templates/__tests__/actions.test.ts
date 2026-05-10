@@ -145,8 +145,16 @@ describe("Admin templates actions", () => {
     });
 
     it("returns empty array for unknown combination", () => {
-      const fields = getFieldsForTemplate("FOUR_DAY", "ITINERARY");
+      const fields = getFieldsForTemplate("FIVE_DAY", "ITINERARY");
       expect(fields).toHaveLength(0);
+    });
+
+    it("returns correct fields for FOUR_DAY itinerary", () => {
+      const fields = getFieldsForTemplate("FOUR_DAY", "ITINERARY");
+      expect(fields).toContain("night1_block");
+      expect(fields).toContain("day3a_block");
+      expect(fields).toContain("day3b_block");
+      expect(fields).toContain("day4_block");
     });
   });
 });

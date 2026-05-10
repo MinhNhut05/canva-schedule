@@ -25,6 +25,10 @@ env:
   CANVA_TEMPLATE_1DAY_MENU: tpl-one-day-menu
   CANVA_TEMPLATE_2DAY_ITINERARY: tpl-two-day-itinerary
   CANVA_TEMPLATE_2DAY_MENU: tpl-two-day-menu
+  CANVA_TEMPLATE_3DAY_ITINERARY: tpl-three-day-itinerary
+  CANVA_TEMPLATE_3DAY_MENU: tpl-three-day-menu
+  CANVA_TEMPLATE_4DAY_ITINERARY: tpl-four-day-itinerary
+  CANVA_TEMPLATE_4DAY_MENU: tpl-four-day-menu
 
 jobs:
   validate:

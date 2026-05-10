@@ -2,7 +2,7 @@ import "server-only";
 
 import { db } from "@/lib/db";
 
-export type TourDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY";
+export type TourDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY" | "FOUR_DAY";
 export type ArtifactKind = "ITINERARY" | "MENU";
 export type TemplateKey = `${TourDuration}_${ArtifactKind}`;
 
@@ -22,6 +22,7 @@ const DURATION_LABELS: Record<TourDuration, string> = {
   ONE_DAY: "Tour 1 ngày",
   TWO_DAY: "Tour 2 ngày",
   THREE_DAY: "Tour 3 ngày",
+  FOUR_DAY: "Tour 4 ngày",
 };
 
 /**

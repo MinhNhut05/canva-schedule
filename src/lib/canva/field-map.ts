@@ -60,6 +60,32 @@ export const THREE_DAY_MENU_FIELDS = [
   "menu_afternoon_day3_block",
 ] as const;
 
+export const FOUR_DAY_ITINERARY_FIELDS = [
+  ...SHARED_FIELDS,
+  "night1_block",
+  "day1_block",
+  "day2_block",
+  "day3a_block",
+  "day3b_block",
+  "day4_block",
+] as const;
+
+export const FOUR_DAY_MENU_FIELDS = [
+  ...SHARED_FIELDS,
+  "menu_morning_day1_block",
+  "menu_lunch_day1_block",
+  "menu_afternoon_day1_block",
+  "menu_morning_day2_block",
+  "menu_lunch_day2_block",
+  "menu_afternoon_day2_block",
+  "menu_morning_day3_block",
+  "menu_lunch_day3_block",
+  "menu_afternoon_day3_block",
+  "menu_morning_day4_block",
+  "menu_lunch_day4_block",
+  "menu_afternoon_day4_block",
+] as const;
+
 /**
  * Resolve which source fields apply for a given tourDuration + artifactType combo.
  * Pure helper — safe to import from both client and server code.
@@ -74,5 +100,7 @@ export function getFieldsForTemplate(
   if (tourDuration === "TWO_DAY" && artifactType === "MENU") return TWO_DAY_MENU_FIELDS;
   if (tourDuration === "THREE_DAY" && artifactType === "ITINERARY") return THREE_DAY_ITINERARY_FIELDS;
   if (tourDuration === "THREE_DAY" && artifactType === "MENU") return THREE_DAY_MENU_FIELDS;
+  if (tourDuration === "FOUR_DAY" && artifactType === "ITINERARY") return FOUR_DAY_ITINERARY_FIELDS;
+  if (tourDuration === "FOUR_DAY" && artifactType === "MENU") return FOUR_DAY_MENU_FIELDS;
   return [];
 }

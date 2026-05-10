@@ -24,6 +24,8 @@ import {
   buildTwoDayMenuPayload,
   buildThreeDayItineraryPayload,
   buildThreeDayMenuPayload,
+  buildFourDayItineraryPayload,
+  buildFourDayMenuPayload,
 } from "@/lib/canva/payload";
 import { prisma } from "@/lib/db";
 import {
@@ -73,7 +75,7 @@ function setByPath(obj: unknown, path: string, value: unknown): unknown {
 }
 
 function isTourDuration(value: string | null | undefined): value is TourDuration {
-  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY";
+  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY" || value === "FOUR_DAY";
 }
 
 function getArtifactLabel(kind: ArtifactKind) {
@@ -89,11 +91,13 @@ function buildArtifactPayload(
   if (kind === "ITINERARY") {
     if (duration === "ONE_DAY") return buildOneDayItineraryPayload(draft, canvaOptions);
     if (duration === "THREE_DAY") return buildThreeDayItineraryPayload(draft);
+    if (duration === "FOUR_DAY") return buildFourDayItineraryPayload(draft);
     return buildTwoDayItineraryPayload(draft);
   }
 
   if (duration === "ONE_DAY") return buildOneDayMenuPayload(draft);
   if (duration === "THREE_DAY") return buildThreeDayMenuPayload(draft);
+  if (duration === "FOUR_DAY") return buildFourDayMenuPayload(draft);
   return buildTwoDayMenuPayload(draft);
 }
 

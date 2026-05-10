@@ -33,6 +33,9 @@ const MENU_SECTION_LABELS: Record<string, string> = {
   morning_day3: "Sang - Ngay 3",
   lunch_day3: "Trua - Ngay 3",
   afternoon_day3: "Chieu - Ngay 3",
+  morning_day4: "Sang - Ngay 4",
+  lunch_day4: "Trua - Ngay 4",
+  afternoon_day4: "Chieu - Ngay 4",
 };
 
 function MenuItemRow({
@@ -98,14 +101,29 @@ export function MenuEditor({
             { key: "lunch_day3", items: draft.menu.lunch_day3 },
             { key: "afternoon_day3", items: draft.menu.afternoon_day3 },
           ]
-        : [
-            { key: "morning_day1", items: draft.menu.morning_day1 },
-            { key: "lunch_day1", items: draft.menu.lunch_day1 },
-            { key: "afternoon_day1", items: draft.menu.afternoon_day1 },
-            { key: "morning_day2", items: draft.menu.morning_day2 },
-            { key: "lunch_day2", items: draft.menu.lunch_day2 },
-            { key: "afternoon_day2", items: draft.menu.afternoon_day2 },
-          ];
+        : draft.duration === "FOUR_DAY"
+          ? [
+              { key: "morning_day1", items: draft.menu.morning_day1 },
+              { key: "lunch_day1", items: draft.menu.lunch_day1 },
+              { key: "afternoon_day1", items: draft.menu.afternoon_day1 },
+              { key: "morning_day2", items: draft.menu.morning_day2 },
+              { key: "lunch_day2", items: draft.menu.lunch_day2 },
+              { key: "afternoon_day2", items: draft.menu.afternoon_day2 },
+              { key: "morning_day3", items: draft.menu.morning_day3 },
+              { key: "lunch_day3", items: draft.menu.lunch_day3 },
+              { key: "afternoon_day3", items: draft.menu.afternoon_day3 },
+              { key: "morning_day4", items: draft.menu.morning_day4 },
+              { key: "lunch_day4", items: draft.menu.lunch_day4 },
+              { key: "afternoon_day4", items: draft.menu.afternoon_day4 },
+            ]
+          : [
+              { key: "morning_day1", items: draft.menu.morning_day1 },
+              { key: "lunch_day1", items: draft.menu.lunch_day1 },
+              { key: "afternoon_day1", items: draft.menu.afternoon_day1 },
+              { key: "morning_day2", items: draft.menu.morning_day2 },
+              { key: "lunch_day2", items: draft.menu.lunch_day2 },
+              { key: "afternoon_day2", items: draft.menu.afternoon_day2 },
+            ];
 
   return (
     <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">

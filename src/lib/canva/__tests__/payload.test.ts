@@ -5,6 +5,7 @@ import {
   buildOneDayMenuPayload,
   buildTwoDayItineraryPayload,
   buildTwoDayMenuPayload,
+  buildFourDayItineraryPayload,
 } from "@/lib/canva/payload";
 
 // Helper to build a mock activity list
@@ -845,5 +846,79 @@ describe("Lịch trình 1 ngày — canonical Phase 7 sample", () => {
     expect(withMerge["afternoon_block"].text).toContain(
       "02 giờ 30:\nSau khi dùng bữa, Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Khu du lịch Đại Nam:",
     );
+  });
+});
+
+describe("buildFourDayItineraryPayload — day3 split", () => {
+  function makeDraft(day3Items: { text: string }[]) {
+    return {
+      title: "ĐỒNG THÁP - NHA TRANG - ĐÀ LẠT",
+      tourDate: "24-27/5/2026",
+      itinerary: {
+        night1: [{ text: "Xe đón Quý đoàn tại điểm hẹn." }],
+        day1: [{ text: "Tham quan Bãi Kính." }],
+        day2: [{ text: "Làm việc với địa phương." }],
+        day3: day3Items,
+        day4: [{ text: "Về lại điểm đón." }],
+      },
+    };
+  }
+
+  it("splits 6 day3 activities evenly: day3a=3, day3b=3", () => {
+    const draft = makeDraft([
+      { text: "A1" }, { text: "A2" }, { text: "A3" },
+      { text: "A4" }, { text: "A5" }, { text: "A6" },
+    ]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["day3a_block"].text).toContain("A1");
+    expect(result["day3a_block"].text).toContain("A3");
+    expect(result["day3a_block"].text).not.toContain("A4");
+    expect(result["day3b_block"].text).toContain("A4");
+    expect(result["day3b_block"].text).toContain("A6");
+    expect(result["day3b_block"].text).not.toContain("A3");
+  });
+
+  it("splits 5 day3 activities: day3a=3 (ceil), day3b=2", () => {
+    const draft = makeDraft([
+      { text: "A1" }, { text: "A2" }, { text: "A3" },
+      { text: "A4" }, { text: "A5" },
+    ]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["day3a_block"].text).toContain("A3");
+    expect(result["day3a_block"].text).not.toContain("A4");
+    expect(result["day3b_block"].text).toContain("A4");
+    expect(result["day3b_block"].text).toContain("A5");
+  });
+
+  it("splits 1 day3 activity: day3a has it, day3b is empty", () => {
+    const draft = makeDraft([{ text: "Solo" }]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["day3a_block"].text).toContain("Solo");
+    expect(result["day3b_block"].text).toBe("");
+  });
+
+  it("handles 0 day3 activities: both blocks empty", () => {
+    const draft = makeDraft([]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["day3a_block"].text).toBe("");
+    expect(result["day3b_block"].text).toBe("");
+  });
+
+  it("appends Kết thúc chương trình! only to day4", () => {
+    const draft = makeDraft([{ text: "Hoạt động ngày 3." }]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["day4_block"].text).toContain("Kết thúc chương trình!");
+    expect(result["day3b_block"].text).not.toContain("Kết thúc chương trình!");
+    expect(result["night1_block"].text).not.toContain("Kết thúc chương trình!");
+  });
+
+  it("populates all 7 blocks (night1, day1-4, day3a, day3b)", () => {
+    const draft = makeDraft([{ text: "Ngày 3 hoạt động." }]);
+    const result = buildFourDayItineraryPayload(draft);
+    expect(result["night1_block"].text).toContain("Xe đón");
+    expect(result["day1_block"].text).toContain("Bãi Kính");
+    expect(result["day2_block"].text).toContain("địa phương");
+    expect(result["day4_block"].text).toContain("điểm đón");
+    expect("day3_block" in result).toBe(false);
   });
 });

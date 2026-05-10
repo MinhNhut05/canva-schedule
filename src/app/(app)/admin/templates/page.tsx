@@ -6,6 +6,7 @@ const DURATION_LABELS: Record<string, string> = {
   ONE_DAY: "Tour 1 ngày",
   TWO_DAY: "Tour 2 ngày",
   THREE_DAY: "Tour 3 ngày",
+  FOUR_DAY: "Tour 4 ngày",
 };
 
 const ARTIFACT_LABELS: Record<string, string> = {

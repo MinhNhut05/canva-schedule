@@ -63,7 +63,7 @@ export interface ReviewPageUpload {
 
 type ReviewArtifactKind = "ITINERARY" | "MENU";
 type ReviewArtifactStatus = "SUCCEEDED" | "FAILED" | "PROCESSING";
-type ReviewDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY";
+type ReviewDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY" | "FOUR_DAY";
 
 interface InitialCanvaArtifact {
   id: string;
@@ -121,7 +121,7 @@ function isArtifactStatus(value: string): value is ReviewArtifactStatus {
 }
 
 function isReviewDuration(value: string | null): value is ReviewDuration {
-  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY";
+  return value === "ONE_DAY" || value === "TWO_DAY" || value === "THREE_DAY" || value === "FOUR_DAY";
 }
 
 function normalizeArtifact(
