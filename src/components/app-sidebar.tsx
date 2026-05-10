@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -128,9 +129,9 @@ function SidebarContent({
         <Link
           href="/"
           onClick={onNavigate}
-          className="inline-flex rounded-full bg-primary/10 px-4 py-2 text-xl font-semibold text-primary shadow-[0_0_28px_rgba(41,218,245,0.14)] transition-premium hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          SileTravel
+          <Image src="/logo.png" alt="SileTravel" width={160} height={56} className="h-14 w-auto" priority />
         </Link>
       </div>
 
@@ -186,8 +187,8 @@ function MobileSidebar({ fullName, username, role, signOutAction }: MobileSideba
   return (
     <div className="border-b border-primary/20 surface-panel-glass px-4 py-4 md:hidden">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/" className="text-lg font-semibold text-primary">
-          SileTravel
+        <Link href="/" className="inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <Image src="/logo.png" alt="SileTravel" width={120} height={42} className="h-10 w-auto" priority />
         </Link>
 
         <Sheet open={open} onOpenChange={setOpen}>
