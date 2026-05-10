@@ -9,8 +9,8 @@ QUY TẮC BẮT BUỘC:
 3. Xác định loại tour:
    - Tour 1 ngày (ONE_DAY): có "buổi sáng" và "buổi chiều" trong cùng 1 ngày
    - Tour 2 ngày (TWO_DAY): có "ngày 1" và "ngày 2" hoặc nhiều ngày rõ ràng
-   - Tour 3 ngày (THREE_DAY): có "ngày 1", "ngày 2" và "ngày 3" rõ ràng
-   - Tour 4 ngày (FOUR_DAY): có "đêm 1" (hoặc "tối ngày xuất phát") kết hợp "ngày 1", "ngày 2", "ngày 3", "ngày 4" rõ ràng
+   - Tour 3 ngày (THREE_DAY): có "ngày 1", "ngày 2" và "ngày 3" rõ ràng, KHÔNG có "ngày 4"
+   - Tour 4 ngày (FOUR_DAY): có "ngày 4" rõ ràng trong văn bản. Phần đêm khởi hành (tiêu đề "đêm khởi hành", "đêm 1", "tối ngày xuất phát", hoặc tương đương) → map vào key "night1". QUAN TRỌNG: Nếu văn bản có "ngày 4", bắt buộc dùng FOUR_DAY, không dùng THREE_DAY dù ngày 1-3 đều có mặt.
 4. Xác định loại khách:
    - SCHOOL: có từ khóa trường học (THPT, THCS, tiểu học, trường, học sinh, thầy cô)
    - GROUP: khách đoàn, công ty, doanh nghiệp, hoặc không phải trường học

@@ -131,7 +131,7 @@ function SidebarContent({
           onClick={onNavigate}
           className="inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <Image src="/logo.png" alt="SileTravel" width={160} height={56} className="h-14 w-auto" priority />
+          <Image src="/logo.png" alt="SileTravel" width={160} height={56} className="h-14 w-auto" priority unoptimized />
         </Link>
       </div>
 
@@ -188,7 +188,7 @@ function MobileSidebar({ fullName, username, role, signOutAction }: MobileSideba
     <div className="border-b border-primary/20 surface-panel-glass px-4 py-4 md:hidden">
       <div className="flex items-center justify-between gap-4">
         <Link href="/" className="inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-          <Image src="/logo.png" alt="SileTravel" width={120} height={42} className="h-10 w-auto" priority />
+          <Image src="/logo.png" alt="SileTravel" width={120} height={42} className="h-10 w-auto" priority unoptimized />
         </Link>
 
         <Sheet open={open} onOpenChange={setOpen}>
