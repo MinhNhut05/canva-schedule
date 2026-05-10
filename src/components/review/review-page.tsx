@@ -97,8 +97,8 @@ interface ReviewArtifact {
 
 interface TemplatePairSummary {
   duration: string;
-  itineraryTemplateId: string;
-  menuTemplateId: string;
+  itineraryTemplateId: string | null;
+  menuTemplateId: string | null;
   displayLabel: string;
 }
 

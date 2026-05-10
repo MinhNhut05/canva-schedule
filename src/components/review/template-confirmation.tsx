@@ -14,8 +14,11 @@ interface TemplateConfirmationProps {
   disabled: boolean;
 }
 
-function getTemplateRows(label: string) {
-  return [`${label} — Lịch trình`, `${label} — Thực đơn`];
+function getTemplateRows(pair: TemplatePair): { label: string; missing: boolean }[] {
+  return [
+    { label: `${pair.displayLabel} — Lịch trình`, missing: !pair.itineraryTemplateId },
+    { label: `${pair.displayLabel} — Thực đơn`, missing: !pair.menuTemplateId },
+  ];
 }
 
 export function TemplateConfirmation({
@@ -23,7 +26,8 @@ export function TemplateConfirmation({
   onConfirm,
   disabled,
 }: TemplateConfirmationProps) {
-  const rows = getTemplateRows(templatePair.displayLabel);
+  const rows = getTemplateRows(templatePair);
+  const allMissing = rows.every((r) => r.missing);
 
   return React.createElement(
     Card,
@@ -61,11 +65,12 @@ export function TemplateConfirmation({
           React.createElement(
             "div",
             {
-              key: row,
-              className:
-                "surface-panel-glass rounded-[18px] border border-primary/20 px-4 py-3 text-base font-medium text-foreground",
+              key: row.label,
+              className: row.missing
+                ? "rounded-[18px] border border-dashed border-muted-foreground/30 px-4 py-3 text-base font-medium text-muted-foreground/60"
+                : "surface-panel-glass rounded-[18px] border border-primary/20 px-4 py-3 text-base font-medium text-foreground",
             },
-            row,
+            row.missing ? `${row.label} (chưa cấu hình mẫu)` : row.label,
           ),
         ),
       ),
@@ -76,7 +81,7 @@ export function TemplateConfirmation({
           Button,
           {
             onClick: onConfirm,
-            disabled,
+            disabled: disabled || allMissing,
             className: "glow-accent focus-ring-premium transition-premium hover-lift-subtle",
           },
           "Tạo Canva",

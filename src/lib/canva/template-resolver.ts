@@ -13,8 +13,8 @@ export interface ResolvedTemplate {
 
 export interface TemplatePair {
   duration: TourDuration;
-  itineraryTemplateId: string;
-  menuTemplateId: string;
+  itineraryTemplateId: string | null;
+  menuTemplateId: string | null;
   displayLabel: string;
 }
 
@@ -95,15 +95,33 @@ export function applyFieldMapping(
   return remapped;
 }
 
+async function tryResolveTemplate(
+  duration: TourDuration,
+  kind: ArtifactKind,
+): Promise<ResolvedTemplate | null> {
+  const template = await db.canvaTemplate.findUnique({
+    where: { tourDuration_artifactType: { tourDuration: duration, artifactType: kind } },
+  });
+  if (!template || !template.isActive) return null;
+  const raw = template.fieldMapping;
+  const mapping: Record<string, string> =
+    raw && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, string>)
+      : {};
+  return { templateId: template.templateId, fieldMapping: mapping };
+}
+
 export async function resolveTemplatePair(
   duration: TourDuration,
 ): Promise<TemplatePair> {
-  const itinerary = await resolveTemplate(duration, "ITINERARY");
-  const menu = await resolveTemplate(duration, "MENU");
+  const [itinerary, menu] = await Promise.all([
+    tryResolveTemplate(duration, "ITINERARY"),
+    tryResolveTemplate(duration, "MENU"),
+  ]);
   return {
     duration,
-    itineraryTemplateId: itinerary.templateId,
-    menuTemplateId: menu.templateId,
+    itineraryTemplateId: itinerary?.templateId ?? null,
+    menuTemplateId: menu?.templateId ?? null,
     displayLabel: DURATION_LABELS[duration],
   };
 }
