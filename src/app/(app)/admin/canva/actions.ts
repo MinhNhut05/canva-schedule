@@ -8,6 +8,7 @@ import { createCanvaAuthorizationUrl } from "@/lib/canva/oauth";
 
 const CANVA_OAUTH_STATE_COOKIE = "canva_oauth_state";
 const CANVA_OAUTH_VERIFIER_COOKIE = "canva_oauth_verifier";
+const CANVA_OAUTH_REDIRECT_URI_COOKIE = "canva_oauth_redirect_uri";
 const COOKIE_MAX_AGE_SECONDS = 10 * 60;
 
 export async function startCanvaConnect() {
@@ -36,6 +37,13 @@ export async function startCanvaConnect() {
     maxAge: COOKIE_MAX_AGE_SECONDS,
     path: "/admin/canva",
   });
+  cookieStore.set(CANVA_OAUTH_REDIRECT_URI_COOKIE, redirectUri, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+    maxAge: COOKIE_MAX_AGE_SECONDS,
+    path: "/admin/canva",
+  });
 
   redirect(authorizeUrl);
 }
@@ -46,7 +54,7 @@ export async function getCanvaOAuthSession() {
   return {
     state: cookieStore.get(CANVA_OAUTH_STATE_COOKIE)?.value ?? null,
     verifier: cookieStore.get(CANVA_OAUTH_VERIFIER_COOKIE)?.value ?? null,
-    redirectUri: await getCanvaRedirectUri(),
+    redirectUri: cookieStore.get(CANVA_OAUTH_REDIRECT_URI_COOKIE)?.value ?? await getCanvaRedirectUri(),
   };
 }
 
@@ -55,6 +63,7 @@ export async function clearCanvaOAuthSession() {
 
   cookieStore.delete(CANVA_OAUTH_STATE_COOKIE);
   cookieStore.delete(CANVA_OAUTH_VERIFIER_COOKIE);
+  cookieStore.delete(CANVA_OAUTH_REDIRECT_URI_COOKIE);
 }
 
 async function getCanvaRedirectUri() {

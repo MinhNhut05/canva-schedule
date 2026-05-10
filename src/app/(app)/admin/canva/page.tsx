@@ -8,12 +8,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCanvaTokenStatus } from "@/lib/canva/oauth";
+import { getCanvaConfig } from "@/lib/canva/server-client";
 
 import { startCanvaConnect } from "./actions";
 
 export const metadata = {
   title: "Kết nối Canva | SileTravel",
 };
+
+function maskClientId(id: string) {
+  if (id.length <= 4) return "****";
+  return "*".repeat(id.length - 4) + id.slice(-4);
+}
 
 function formatDate(value: Date | null) {
   if (!value) return "Chưa có";
@@ -39,6 +45,7 @@ export default async function AdminCanvaPage({
     getCanvaTokenStatus(),
     searchParams ?? Promise.resolve({} as { connected?: string; error?: string }),
   ]);
+  const canvaConfig = getCanvaConfig();
   const statusTone = status.isConnected
     ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
     : "border-destructive/40 bg-destructive/10 text-destructive";
@@ -100,6 +107,10 @@ export default async function AdminCanvaPage({
             <div className="rounded-[20px] border border-primary/15 bg-primary/5 p-4">
               <dt className="text-sm font-medium text-muted-foreground">Cooldown Canva</dt>
               <dd className="mt-2 text-base font-semibold text-foreground">{formatDate(status.cooldownUntil)}</dd>
+            </div>
+            <div className="rounded-[20px] border border-primary/15 bg-primary/5 p-4 sm:col-span-2">
+              <dt className="text-sm font-medium text-muted-foreground">Canva App ID</dt>
+              <dd className="mt-2 font-mono text-base font-semibold text-foreground">{maskClientId(canvaConfig.clientId)}</dd>
             </div>
           </dl>
 

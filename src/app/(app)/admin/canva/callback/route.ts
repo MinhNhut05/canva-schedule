@@ -7,6 +7,7 @@ import { getCanvaOAuthSession } from "../actions";
 
 const CANVA_OAUTH_STATE_COOKIE = "canva_oauth_state";
 const CANVA_OAUTH_VERIFIER_COOKIE = "canva_oauth_verifier";
+const CANVA_OAUTH_REDIRECT_URI_COOKIE = "canva_oauth_redirect_uri";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -62,10 +63,12 @@ export async function GET(request: NextRequest) {
 }
 
 function clearCookiesAndRedirect(request: NextRequest, path: string) {
-  const response = NextResponse.redirect(new URL(path, request.url));
+  const baseUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? request.nextUrl.origin;
+  const response = NextResponse.redirect(new URL(path, baseUrl));
 
   response.cookies.delete(CANVA_OAUTH_STATE_COOKIE);
   response.cookies.delete(CANVA_OAUTH_VERIFIER_COOKIE);
+  response.cookies.delete(CANVA_OAUTH_REDIRECT_URI_COOKIE);
 
   return response;
 }
