@@ -69,6 +69,13 @@ docker run --rm \
   --env-file "${APP_RUNTIME_ENV_FILE}" \
   --env-file "${release_env_file}" \
   "${APP_IMAGE}:${IMAGE_TAG}" \
+  npx tsx prisma/seed-company-rules.ts
+
+docker run --rm \
+  --network "${app_network}" \
+  --env-file "${APP_RUNTIME_ENV_FILE}" \
+  --env-file "${release_env_file}" \
+  "${APP_IMAGE}:${IMAGE_TAG}" \
   npx tsx prisma/seed-canva-templates.ts
 
 docker compose --env-file "${release_env_file}" -f "${compose_file}" up -d --remove-orphans
