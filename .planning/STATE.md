@@ -2,14 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-03-28T08:03:34.478Z"
+status: milestone_complete
+stopped_at: Production deploy e3ae0ec successful
+last_updated: "2026-05-10T00:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
+  total_phases: 8
+  completed_phases: 8
+  total_plans: 26
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -19,31 +20,32 @@ progress:
 See: .planning/PROJECT.md (updated 2025-03-22)
 
 **Core value:** Team members can transform a detailed tour program into a professional, condensed Canva design in seconds instead of manually reading, summarizing, and re-typing into Canva.
-**Current focus:** Phase 01 — capability-gate-secure-access
+**Current focus:** Production CI/CD deployed; Phase 08 remains the latest planned product phase
 
 ## Current Position
 
-Phase: 02
+Phase: 08
 Plan: Not started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 9 min
-- Total execution time: 0.2 hours
+- Total plans completed: 27
+- Average duration: See per-plan summaries
+- Total execution time: See per-plan summaries
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 02 | 1 | 9 min | 9 min |
+| 08 | 4 | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-01 (9 min)
-- Trend: Stable
+- Last 5 plans: 06-01, 06-02, 07-01, 07-02, 07-03
+- Trend: Phase 7 completed
 
 *Updated after each plan completion*
 | Phase 02 P01 | 9 min | 4 tasks | 23 files |
@@ -66,6 +68,9 @@ Plan: Not started
 | Phase 01 P01 | 13 min | 3 tasks | 10 files |
 | Phase 01 P03 | 5 min | 2 tasks | 3 files |
 | Phase 01 P02 | 7 min | 3 tasks | 6 files |
+| Phase 07 P01 | not-tracked | 3 tasks | 5 files |
+| Phase 07 P02 | not-tracked | 3 tasks | 8 files |
+| Phase 07 P03 | not-tracked | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -110,6 +115,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Resolve fresh design URLs after success instead of trusting stale edit URLs returned during creation.
 - [Phase 04]: Keep approval and Canva generation separate while hydrating persisted artifact results on revisit.
 - [Phase 04]: Allow Canva API and token URL overrides only through server env so Playwright can exercise the review generation flow against a local mock server.
+- [Phase 04]: Production-ready Canva OAuth token handling added on 2026-05-06: DB status fields, Postgres advisory refresh lock, proactive refresh buffer, NEEDS_RECONNECT state, and admin reconnect flow at `/admin/canva`.
+- [Phase 04]: Local Canva reconnect completed successfully on 2026-05-06 via `http://127.0.0.1:3001/admin/canva/callback`; local/staging/production must each authorize separately and must not share `CANVA_REFRESH_TOKEN` lineage.
 
 - [Phase 05-01]: Add User.role field to DB with default "member" and propagate through Auth.js JWT/session pipeline.
 - [Phase 05-01]: Use db push (not migrate dev) for schema changes when agent is running to avoid blocked reset prompts.
@@ -135,17 +142,33 @@ Recent decisions affecting current work:
 - [Phase 01]: Verdict NO-GO: Canva Enterprise and real SOHA credentials required before autofill workflow can be validated — Probe ran against current env — no Canva credentials configured. Research confirms Brand Template/autofill API requires Canva Enterprise, not just Pro.
 - [Phase 01]: Move getFieldsForTemplate from use server actions to shared field-map module for Next.js 15.5 async requirement
 
+### Roadmap Evolution
+
+- Phase 7 added: One-day itinerary fidelity and menu merge controls
+- Phase 7 planning decisions: keep the existing 4-template model, improve 1-day wording fidelity for both SCHOOL and GROUP tours, and persist a per-upload menu-merge choice instead of adding template-family architecture
+- [Phase 07]: Persist one-day Canva generation preferences on `Upload.canvaOptions` JSON, separate from the reviewed structured draft
+- [Phase 07]: When merge is enabled, inject concise menu lines into the 1-day itinerary block before the return leg if no meal sentence exists
+- Phase 7 completed on 2026-04-11 with extraction/rule fidelity, persisted review options, and Canva payload regressions in place
+- Phase 8 added: Personal Website Visual System
+- Phase 8 scoped as a design-system phase for a personal website using futuristic blue editorial tech styling, ready for `/gsd-ui-phase 8`
+
 ### Pending Todos
 
-None yet.
+- Reconnect staging and production from `/admin/canva` if Canva token status shows NEEDS_RECONNECT; each environment must use its own Canva authorization.
+
+### Deployment Notes
+
+- Production deploy for `canva.devteamos.me` completed successfully on 2026-05-09 from commit `e3ae0ec` after CI and staging passed.
+- Public `/api/health` is part of the deployed app so CI/CD and reverse-proxy health checks can avoid auth redirects.
 
 ### Blockers/Concerns
 
 - [Phase 1] Current Canva Pro setup may not support production autofill without Brand Templates or Enterprise capability.
 - [Phase 2] Vietnamese PDF/DOCX extraction quality may vary; scanned or table-heavy files could require fallback handling.
+- [Canva OAuth] Canva refresh tokens are single-use rotating tokens; copying the same refresh token between local/staging/production can revoke the token lineage and break generation until that environment reconnects.
 
 ## Session Continuity
 
-Last session: 2026-03-28T07:56:13.382Z
-Stopped at: Completed 01-02-PLAN.md
-Resume file: None
+Last session: --stopped-at
+Stopped at: Canva OAuth token lock/reconnect flow verified locally
+Resume file: --resume-file

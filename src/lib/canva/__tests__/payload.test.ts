@@ -121,7 +121,7 @@ describe("buildOneDayItineraryPayload", () => {
       "01 giờ 00:\nXuất phát từ trường\n\n03 giờ 30:\nTham quan khu du lịch",
     );
     expect(data["afternoon_block"].text).toBe(
-      "Ăn trưa\n\n14 giờ 00:\nĐoàn khởi hành về Trường THPT Cai Nuoc.\nKết thúc chương trình!",
+      "Ăn trưa\n\n14 giờ 00:\nVề trường\nKết thúc chương trình!",
     );
   });
 
@@ -178,7 +178,7 @@ describe("buildOneDayItineraryPayload", () => {
     );
   });
 
-  it("substitutes pickup landmark phrases in morning with pickupLocation", () => {
+  it("substitutes generic pickup landmark phrases in morning with pickupLocation", () => {
     const draft = {
       ...sharedDraft,
       pickupLocation: "ACECOOK Vĩnh Long",
@@ -210,6 +210,26 @@ describe("buildOneDayItineraryPayload", () => {
     expect(data["morning_block"].text).toContain("tại điểm hẹn");
   });
 
+  it("keeps explicitly approved initial meeting point wording", () => {
+    const draft = {
+      ...sharedDraft,
+      pickupLocation: "ACECOOK Vĩnh Long",
+      returnLocation: "ACECOOK Vĩnh Long",
+      itinerary: {
+        morning: [
+          { timeLabel: "5:30", text: "Xe và HDV SOHA TRAVEL có mặt đón Quý khách tại điểm hẹn ban đầu." },
+        ],
+        afternoon: [
+          { timeLabel: "16:00", text: "Đoàn khởi hành về điểm hẹn ban đầu." },
+        ],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).toContain("tại điểm hẹn ban đầu");
+    expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về điểm hẹn ban đầu.");
+    expect(data["afternoon_block"].text).not.toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
+  });
+
   it("strips trailing 'kết thúc chương trình' duplicate so ensureEndProgram is canonical", () => {
     const draft = {
       ...sharedDraft,
@@ -225,7 +245,9 @@ describe("buildOneDayItineraryPayload", () => {
     const data = buildOneDayItineraryPayload(draft);
     const matches = data["afternoon_block"].text.match(/Kết thúc chương trình/gi);
     expect(matches).toHaveLength(1);
-    expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
+    expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về điểm hẹn ban đầu.");
+    expect(data["afternoon_block"].text).not.toContain("Sau khi dùng bữa chiều, xe và HDV đưa Quý đoàn về lại điểm đón ban đầu.");
+    expect(data["afternoon_block"].text).not.toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
     expect(data["afternoon_block"].text).not.toContain("Về đến điểm hẹn");
     expect(data["afternoon_block"].text).not.toContain("Cảm ơn Quý đoàn");
   });
@@ -379,7 +401,8 @@ describe("buildTwoDayItineraryPayload", () => {
     const data = buildTwoDayItineraryPayload(draft);
     const matches = data["day2_block"].text.match(/Kết thúc chương trình/gi);
     expect(matches).toHaveLength(1);
-    expect(data["day2_block"].text).toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
+    expect(data["day2_block"].text).toContain("tiếp tục di chuyển về lại điểm đón ban đầu.");
+    expect(data["day2_block"].text).not.toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
     expect(data["day2_block"].text).not.toContain("Về đến điểm hẹn");
   });
 });
@@ -758,7 +781,7 @@ describe("Lịch trình 1 ngày — canonical Phase 7 sample", () => {
     );
     expect(data["morning_block"].text).not.toContain("Món ăn:");
     expect(data["afternoon_block"].text).toContain(
-      "13 giờ 00:\nSau khi dùng bữa, Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
+      "13 giờ 00:\nQuý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
     );
     expect(data["afternoon_block"].text).toContain("Giang Sơn Bách Thú.");
     expect(data["afternoon_block"].text).toContain("Thủy cung Suối Tiên.");
@@ -766,7 +789,7 @@ describe("Lịch trình 1 ngày — canonical Phase 7 sample", () => {
       "Các trò chơi tuổi thơ, phổ thông, cảm giác mạnh.",
     );
     expect(data["afternoon_block"].text).toContain(
-      "15 giờ 30:\nĐoàn khởi hành về Trường tiểu học Long Tuyền 2.",
+      "15 giờ 30:\nKhởi hành về Trường tiểu học Long Tuyền 2.",
     );
     expect(data["afternoon_block"].text).not.toContain("Thực đơn trưa:");
   });
@@ -844,8 +867,156 @@ describe("Lịch trình 1 ngày — canonical Phase 7 sample", () => {
     );
     expect(withMerge["afternoon_block"].text).not.toContain("Nước uống: Trà đá");
     expect(withMerge["afternoon_block"].text).toContain(
-      "02 giờ 30:\nSau khi dùng bữa, Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Khu du lịch Đại Nam:",
+      "02 giờ 30:\nQuý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Khu du lịch Đại Nam:",
     );
+  });
+
+  it("filters restaurant-name menu leaks and normalizes long return wording", () => {
+    const generatedDraft = {
+      programName: "CHƯƠNG TRÌNH THAM QUAN ĐẶC BIỆT",
+      title: "VĨNH LONG - CẦN THƠ",
+      tourDate: "24/5/2026",
+      greetingText: "Quý khách",
+      pickupLocation: undefined,
+      returnLocation: "điểm hẹn ban đầu",
+      itinerary: {
+        morning: [
+          {
+            timeLabel: "5:30",
+            text: "Xe và HDV SOHA TRAVEL có mặt đón Quý khách tại điểm hẹn.",
+          },
+          {
+            timeLabel: "7:00",
+            text: "Đến Cần Thơ, Quý khách dùng bữa sáng tại nhà hàng Hoa Viên 68 – Cơm niêu Cần Thơ.",
+          },
+        ],
+        afternoon: [
+          {
+            timeLabel: "12:00",
+            text: "Quý khách dùng buffet trưa tại nhà hàng Hải sản Biển Đông.",
+          },
+          {
+            timeLabel: "16:00",
+            text: "Xe và HDV đưa Quý khách về lại điểm đón ban đầu.",
+          },
+          {
+            timeLabel: "17:00",
+            text: "Kết thúc chương trình!",
+          },
+        ],
+      },
+      menu: {
+        morning: [],
+        lunch: [
+          { text: "Với hơn 200 món ăn chế biến sẵn các loại." },
+          { text: "Tôm, cua/ghẹ bắt sống tại hồ không giới hạn." },
+          { text: "Bia, nước, trái cây miễn phí - không giới hạn." },
+          { text: "Món ăn: Nhà hàng Hải sản Biển Đông." },
+        ],
+        afternoon: [],
+      },
+    };
+
+    const data = buildOneDayItineraryPayload(generatedDraft, {
+      mergeMenuIntoItinerary: true,
+    });
+
+    expect(data["afternoon_block"].text).toContain(
+      "Với hơn 200 món ăn chế biến sẵn các loại.",
+    );
+    expect(data["afternoon_block"].text).toContain(
+      "Tôm, cua/ghẹ bắt sống tại hồ không giới hạn.",
+    );
+    expect(data["afternoon_block"].text).toContain(
+      "Bia, nước, trái cây miễn phí - không giới hạn.",
+    );
+    expect(data["afternoon_block"].text).toContain(
+      "Đoàn khởi hành về điểm hẹn ban đầu.",
+    );
+    expect(data["afternoon_block"].text).not.toContain("Món ăn: Nhà hàng");
+    expect(data["afternoon_block"].text).not.toContain(
+      "Xe và HDV đưa Quý khách về lại điểm đón ban đầu.",
+    );
+  });
+
+  it("preserves ACECOOK-like approved menu wording when merging into itinerary", () => {
+    const acecookDraft = {
+      programName: "CHƯƠNG TRÌNH THAM QUAN ĐẶC BIỆT",
+      title: "VĨNH LONG - CẦN THƠ",
+      tourDate: "Ngày 24/5/2026",
+      greetingText: "Quý khách",
+      pickupLocation: "ACECOOK VĨNH LONG",
+      returnLocation: "điểm hẹn ban đầu",
+      itinerary: {
+        morning: [
+          {
+            timeLabel: "5:30",
+            text: "Xe và HDV SOHA TRAVEL có mặt đón Quý khách tại ACECOOK VĨNH LONG.",
+          },
+          {
+            timeLabel: "7:00",
+            text: "Đến Cần Thơ, Quý khách dùng bữa sáng tại Nhà hàng Hoa Viên 68 – Cơm niêu Cần Thơ.",
+          },
+          {
+            timeLabel: "8:30",
+            text:
+              "Quý khách tham quan vui chơi tại Cần Thơ Eco Wonderland:\nThưởng thức trái cây theo mùa miễn phí.\nVườn thú Eco Safari.\nPhim trường lò gạch chụp ảnh check in.\nDạo chơi và chụp ảnh với các tiểu cảnh, check in tại không gian Nhà tranh dân gian Nam Bộ “xưa”.",
+          },
+          {
+            timeLabel: "11:30",
+            text: "Xe và HDV đưa Quý khách di chuyển đến nhà hàng dùng buffet trưa.",
+          },
+        ],
+        afternoon: [
+          {
+            timeLabel: "12:00",
+            text: "Quý khách dùng buffet trưa tại Nhà hàng Hải Sản Biển Đông với hơn 200 món ăn chế biến sẵn các loại.",
+          },
+          {
+            timeLabel: "16:00",
+            text: "Đoàn khởi hành về điểm hẹn ban đầu.",
+          },
+          {
+            timeLabel: "17:00",
+            text: "Kết thúc chương trình!",
+          },
+        ],
+      },
+      menu: {
+        morning: [
+          { text: "Món ăn (chọn 1 trong các món): Hủ tiếu thịt lợn, Cơm sườn, Bò Beefsteak,..." },
+          { text: "Món uống chọn 1 trong các món: Lipton, Nước đóng chai. Nước uống: Trà đường, Café đá/sữa." },
+        ],
+        lunch: [
+          { text: "Buffet hải sản với hơn 200 món ăn chế biến sẵn các loại. Tôm, cua/ghẹ bắt sống tại hồ không giới hạn. Bia, nước, trái cây miễn phí - không giới hạn." },
+        ],
+        afternoon: [],
+      },
+    };
+
+    const data = buildOneDayItineraryPayload(acecookDraft, {
+      mergeMenuIntoItinerary: true,
+    });
+
+    expect(data["morning_block"].text).toContain("tại ACECOOK VĨNH LONG");
+    expect(data["morning_block"].text).toContain(
+      "Món ăn (chọn 1 trong các món): Hủ tiếu thịt lợn, Cơm sườn, Bò Beefsteak,...",
+    );
+    expect(data["morning_block"].text).toContain(
+      "Món uống chọn 1 trong các món: Lipton, Nước đóng chai. Nước uống: Trà đường, Café đá/sữa.",
+    );
+    expect(data["morning_block"].text).toContain("Thưởng thức trái cây theo mùa miễn phí.");
+    expect(data["morning_block"].text).toContain(
+      "Dạo chơi và chụp ảnh với các tiểu cảnh, check in tại không gian Nhà tranh dân gian Nam Bộ “xưa”.",
+    );
+    expect(data["afternoon_block"].text).toContain(
+      "Quý khách dùng buffet trưa tại Nhà hàng Hải Sản Biển Đông với hơn 200 món ăn chế biến sẵn các loại.",
+    );
+    expect(data["afternoon_block"].text).toContain(
+      "Buffet hải sản với hơn 200 món ăn chế biến sẵn các loại. Tôm, cua/ghẹ bắt sống tại hồ không giới hạn. Bia, nước, trái cây miễn phí - không giới hạn.",
+    );
+    expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về điểm hẹn ban đầu.");
+    expect(data["afternoon_block"].text).not.toContain("Đoàn khởi hành về ACECOOK VĨNH LONG.");
   });
 });
 

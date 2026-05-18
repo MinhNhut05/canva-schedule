@@ -93,7 +93,7 @@ describe("extractTour", () => {
     expect(result.attemptCount).toBe(1);
   });
 
-  it("sends the Phase 7 one-day fidelity guidance in the extraction prompt", async () => {
+  it("sends reusable source-fidelity guidance in the extraction prompt", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: VALID_ONE_DAY_RESPONSE,
       model: "gpt-5.4",
@@ -107,10 +107,22 @@ describe("extractTour", () => {
       'Không được rút còn "Khởi hành đi." hoặc "Khởi hành về."',
     );
     expect(systemPrompt).toContain(
-      'Không được tự thay heading nguồn bằng nhãn chung.',
+      "Áp dụng cho mọi loại tour: ưu tiên giữ wording gần văn bản nguồn",
     );
     expect(systemPrompt).toContain(
-      'Không tự thêm "Sau khi dùng bữa trưa" nếu phiên bản rút gọn đã duyệt không dùng cụm này.',
+      'Không gộp "Món ăn", "Món uống", "Nước uống" thành một dòng nếu nguồn tách riêng.',
+    );
+    expect(systemPrompt).toContain(
+      "hãy dùng tên đơn vị/địa điểm ngắn gọn làm \"pickupLocation\"",
+    );
+    expect(systemPrompt).toContain(
+      "Không rút gọn thành \"bao gồm các hoạt động vô cùng hấp dẫn\" rồi bỏ danh sách hoạt động.",
+    );
+    expect(systemPrompt).toContain(
+      "Không đưa tên nhà hàng hoặc địa điểm ăn uống thành item menu dạng \"Món ăn: Nhà hàng...\".",
+    );
+    expect(systemPrompt).toContain(
+      'Giữ các cụm như "chọn 1 trong các món", "miễn phí", "hơn 200 món ăn chế biến sẵn các loại", "tại hồ", "không giới hạn"',
     );
     expect(systemPrompt).toContain(
       'đặt "sourceConfidence" là "low" hoặc "medium", và bật "needsReview": true.',

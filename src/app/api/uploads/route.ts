@@ -31,6 +31,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json<UploadApiResponse>(
+        {
+          success: false,
+          error: AUTH_ERROR,
+        },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const formFile = formData.get("file");
     const file = formFile instanceof File ? formFile : null;

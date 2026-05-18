@@ -1,4 +1,4 @@
-import type { Activity } from "@/lib/ai/extraction-schema";
+import type { Activity, MenuItem } from "@/lib/ai/extraction-schema";
 import type { RuleDefinition, RuleViolation } from "./types";
 
 const SCHOOL_GREETING = "Quý thầy cô và các bạn học sinh";
@@ -27,6 +27,104 @@ function countPrimaryBullets(text: string) {
   return text
     .split("\n")
     .filter((line) => /^\s*[•*-]\s+/.test(line.trim())).length;
+}
+
+function hasChoiceWording(text: string) {
+  return /chọn\s*1\s*trong\s*các\s*món/i.test(text);
+}
+
+function looksLikeFlattenedChoices(text: string) {
+  const slashCount = text.match(/\s*\/\s*/g)?.length ?? 0;
+  return !hasChoiceWording(text) && slashCount >= 2;
+}
+
+function mixesFoodAndDrinkGroups(text: string) {
+  const raw = text.normalize("NFC").toLowerCase();
+  const normalized = normalizeComparisonValue(text);
+  const hasFoodLabel = /món ăn\s*:/.test(raw);
+  const hasDrinkLabel = /(?:món uống|nước uống|thức uống)\s*:/.test(raw);
+
+  if (hasFoodLabel && hasDrinkLabel) {
+    return false;
+  }
+
+  const foodMatches = normalized.match(/\b(?:hủ tiếu|cơm|bò beefsteak|phở|bún|bánh|buffet|tôm|cua|ghẹ|hải sản)\b/g) ?? [];
+  const drinkMatches = normalized.match(/\b(?:lipton|trà|cafe|café|nước|bia|sữa)\b/g) ?? [];
+
+  return foodMatches.length > 0 && drinkMatches.length > 0;
+}
+
+function looksLikeShortenedBuffetText(text: string) {
+  const normalized = normalizeComparisonValue(text);
+
+  return (
+    (/buffet|hải sản|hai san/.test(normalized) && /hơn 200 món/.test(normalized) && !/chế biến sẵn/.test(normalized)) ||
+    (/tôm|cua|ghẹ/.test(normalized) && /bắt sống/.test(normalized) && !/tại hồ/.test(normalized)) ||
+    (/bia/.test(normalized) && /trái cây/.test(normalized) && !/miễn phí/.test(normalized))
+  );
+}
+
+function flagMenuItemForReview(
+  violations: RuleViolation[],
+  field: string,
+  item: MenuItem,
+  message: string,
+) {
+  if (!item.needsReview) {
+    item.needsReview = true;
+  }
+
+  violations.push({
+    ruleId: "RULE-07",
+    field,
+    message,
+    severity: "needs_review",
+    originalValue: item.text,
+    correctedValue: null,
+  });
+}
+
+function applyMenuFidelityChecks(
+  violations: RuleViolation[],
+  fieldPrefix: string,
+  items: MenuItem[],
+) {
+  items.forEach((item, index) => {
+    const text = normalizeSpaces(item.text);
+
+    if (!text) {
+      return;
+    }
+
+    const field = `${fieldPrefix}[${index}]`;
+
+    if (looksLikeFlattenedChoices(text)) {
+      flagMenuItemForReview(
+        violations,
+        field,
+        item,
+        "Mục menu có dấu hiệu bị rút gọn mất cấu trúc lựa chọn. Cần giữ wording như \"chọn 1 trong các món\" nếu nguồn có.",
+      );
+    }
+
+    if (mixesFoodAndDrinkGroups(text)) {
+      flagMenuItemForReview(
+        violations,
+        field,
+        item,
+        "Mục menu có dấu hiệu gộp món ăn và món uống. Cần tách đúng nhóm theo nguồn/phiên bản duyệt.",
+      );
+    }
+
+    if (looksLikeShortenedBuffetText(text)) {
+      flagMenuItemForReview(
+        violations,
+        field,
+        item,
+        "Mục buffet/hải sản có dấu hiệu mất qualifier quan trọng như chế biến sẵn, tại hồ, miễn phí hoặc không giới hạn.",
+      );
+    }
+  });
 }
 
 function looksLikeGenericTravelLine(text: string) {
@@ -388,6 +486,10 @@ const rule07MenuStructure: RuleDefinition = {
           correctedValue: null,
         });
       }
+
+      applyMenuFidelityChecks(violations, "menu.morning", morning);
+      applyMenuFidelityChecks(violations, "menu.lunch", lunch);
+      applyMenuFidelityChecks(violations, "menu.afternoon", afternoon);
     }
 
     if (draft.duration === "TWO_DAY") {
@@ -418,6 +520,13 @@ const rule07MenuStructure: RuleDefinition = {
           correctedValue: null,
         });
       }
+
+      applyMenuFidelityChecks(violations, "menu.morning_day1", morning_day1);
+      applyMenuFidelityChecks(violations, "menu.lunch_day1", lunch_day1);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day1", afternoon_day1);
+      applyMenuFidelityChecks(violations, "menu.morning_day2", morning_day2);
+      applyMenuFidelityChecks(violations, "menu.lunch_day2", lunch_day2);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day2", afternoon_day2);
     }
 
     if (draft.duration === "THREE_DAY") {
@@ -454,6 +563,71 @@ const rule07MenuStructure: RuleDefinition = {
           correctedValue: null,
         });
       }
+
+      applyMenuFidelityChecks(violations, "menu.morning_day1", morning_day1);
+      applyMenuFidelityChecks(violations, "menu.lunch_day1", lunch_day1);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day1", afternoon_day1);
+      applyMenuFidelityChecks(violations, "menu.morning_day2", morning_day2);
+      applyMenuFidelityChecks(violations, "menu.lunch_day2", lunch_day2);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day2", afternoon_day2);
+      applyMenuFidelityChecks(violations, "menu.morning_day3", morning_day3);
+      applyMenuFidelityChecks(violations, "menu.lunch_day3", lunch_day3);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day3", afternoon_day3);
+    }
+
+    if (draft.duration === "FOUR_DAY") {
+      const {
+        morning_day1,
+        lunch_day1,
+        afternoon_day1,
+        morning_day2,
+        lunch_day2,
+        afternoon_day2,
+        morning_day3,
+        lunch_day3,
+        afternoon_day3,
+        morning_day4,
+        lunch_day4,
+        afternoon_day4,
+      } = draft.menu;
+      const totalItems =
+        morning_day1.length +
+        lunch_day1.length +
+        afternoon_day1.length +
+        morning_day2.length +
+        lunch_day2.length +
+        afternoon_day2.length +
+        morning_day3.length +
+        lunch_day3.length +
+        afternoon_day3.length +
+        morning_day4.length +
+        lunch_day4.length +
+        afternoon_day4.length;
+
+      if (totalItems === 0) {
+        violations.push({
+          ruleId: "RULE-07",
+          field: "menu",
+          message:
+            "Tour 4 ngày chưa có thực đơn (sáng/trưa/chiều cho từng ngày). Cần bổ sung khi review.",
+          severity: "needs_review",
+          originalValue: null,
+          correctedValue: null,
+        });
+      }
+
+      applyMenuFidelityChecks(violations, "menu.morning_day1", morning_day1);
+      applyMenuFidelityChecks(violations, "menu.lunch_day1", lunch_day1);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day1", afternoon_day1);
+      applyMenuFidelityChecks(violations, "menu.morning_day2", morning_day2);
+      applyMenuFidelityChecks(violations, "menu.lunch_day2", lunch_day2);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day2", afternoon_day2);
+      applyMenuFidelityChecks(violations, "menu.morning_day3", morning_day3);
+      applyMenuFidelityChecks(violations, "menu.lunch_day3", lunch_day3);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day3", afternoon_day3);
+      applyMenuFidelityChecks(violations, "menu.morning_day4", morning_day4);
+      applyMenuFidelityChecks(violations, "menu.lunch_day4", lunch_day4);
+      applyMenuFidelityChecks(violations, "menu.afternoon_day4", afternoon_day4);
     }
 
     return { draft, violations };

@@ -36,6 +36,8 @@
 - [x] **RULE-05**: School name must stay logically intact and not be split into separate broken lines in generated content preparation
 - [x] **RULE-06**: Phrases about returning to school must include the specific school name when the source document indicates a school-based tour
 - [x] **RULE-07**: Menu content is generated separately from itinerary content and follows the selected template structure for 1-day or 2-day tours
+- [x] **RULE-08**: For 1-day tours, itinerary condensation preserves source-near destination wording and primary activity bullets; if shortening confidence is low, the system flags for review instead of inventing broader paraphrases
+- [x] **RULE-09**: For 1-day itinerary generation, `programName` and `title` remain separate reviewed fields, and the Canva program label uses the reviewed source heading when present instead of collapsing to a generic fallback
 
 ### Canva Generation
 
@@ -46,6 +48,7 @@
 - [x] **CANVA-05**: Canva integration handles asynchronous job completion and reports failure clearly when generation does not succeed
 - [x] **CANVA-06**: Template identifiers and mappings are managed outside hardcoded business logic so template changes can be updated safely
 - [x] **CANVA-07**: Canva plan/template capability is verified before production reliance on autofill workflow
+- [x] **CANVA-08**: For 1-day itineraries, the Canva payload supports brand-accurate program label/title mapping plus optional inline meal/menu lines from the saved per-upload generation choice
 
 ### UX & Feedback
 
@@ -53,6 +56,8 @@
 - [ ] **UX-02**: User receives human-readable error messages when parsing, AI extraction, or Canva generation fails
 - [x] **UX-03**: User can copy or open the generated Canva link directly from the app
 - [x] **UX-04**: User can clearly see which template type is being used for the current generation
+- [x] **UX-05**: User can choose per reviewed upload whether concise meal/menu lines should be merged into the 1-day itinerary before Canva generation
+- [x] **UX-06**: Before generating a merged 1-day itinerary, the app warns when the content is likely too long for the template and preserves the saved choice for later regenerate attempts
 
 ### History & Admin
 
@@ -125,6 +130,8 @@
 | RULE-05 | Phase 3 | Complete |
 | RULE-06 | Phase 3 | Complete |
 | RULE-07 | Phase 3 | Complete |
+| RULE-08 | Phase 7 | Complete |
+| RULE-09 | Phase 7 | Complete |
 | CANVA-01 | Phase 4 | Complete |
 | CANVA-02 | Phase 4 | Complete |
 | CANVA-03 | Phase 4 | Complete |
@@ -132,10 +139,13 @@
 | CANVA-05 | Phase 4 | Complete |
 | CANVA-06 | Phase 4 | Complete |
 | CANVA-07 | Phase 1 | Complete |
+| CANVA-08 | Phase 7 | Complete |
 | UX-01 | Phase 6 | Pending |
 | UX-02 | Phase 6 | Pending |
 | UX-03 | Phase 4 | Complete |
 | UX-04 | Phase 4 | Complete |
+| UX-05 | Phase 7 | Complete |
+| UX-06 | Phase 7 | Complete |
 | HIST-01 | Phase 5 | Pending |
 | HIST-02 | Phase 5 | Pending |
 | ADMIN-01 | Phase 5 | Pending |
@@ -146,8 +156,8 @@
 | SAFE-04 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 39 total
-- Mapped to phases: 39
+- v1 requirements: 44 total
+- Mapped to phases: 44
 - Unmapped: 0 ✓
 
 ---

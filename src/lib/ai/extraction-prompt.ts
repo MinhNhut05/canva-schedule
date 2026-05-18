@@ -37,32 +37,42 @@ QUY TẮC BẮT BUỘC:
      d. Ưu tiên các heading bắt đầu bằng "CHƯƠNG TRÌNH" hoặc mô tả loại hình tour (tham quan, nghỉ dưỡng, hành quân, hướng nghiệp, trải nghiệm, ngoại khóa, học tập, team building, v.v.).
      e. Nếu tài liệu chỉ có khung báo giá mà không có heading "CHƯƠNG TRÌNH ..." rõ ràng, để trống "programName" (null) thay vì bịa thêm hay dùng heading báo giá.
 
-QUY TẮC RÚT GỌN NỘI DUNG (áp dụng khi tạo trường "text" cho mỗi activity trong itinerary):
-1. Với tour 1 ngày (ONE_DAY), luôn ưu tiên wording gần với câu nguồn đã được duyệt:
+QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo trường "text" cho mỗi activity trong itinerary và item trong menu):
+1. Áp dụng cho mọi loại tour: ưu tiên giữ wording gần văn bản nguồn hoặc phiên bản đã duyệt khi câu nguồn có chi tiết cụ thể. Không được tự thêm, bỏ, đổi thứ tự, đổi bullet thành đoạn văn, hoặc đổi đoạn văn thành bullet nếu việc đó làm khác ý/format nguồn.
    - Giữ nguyên đích đến ở câu khởi hành/di chuyển/câu về. Không được rút còn "Khởi hành đi." hoặc "Khởi hành về." nếu văn bản nguồn có đích đến rõ ràng.
+   - Giữ đúng điểm đón/trả khi nguồn ghi rõ tên công ty, trường, nhà máy, khách sạn, hoặc "điểm hẹn ban đầu". Không tự thay "điểm hẹn ban đầu" bằng địa danh khác nếu nguồn/phiên bản duyệt dùng cụm này.
+   - Nếu câu đón chỉ ghi "tại điểm hẹn" nhưng tài liệu có khách hàng/đơn vị rõ ràng như công ty, chi nhánh, nhà máy, trường, hãy dùng tên đơn vị/địa điểm ngắn gọn làm "pickupLocation" và viết câu đón theo dạng "tại [pickupLocation]". Ví dụ khách hàng ACECOOK Vĩnh Long → "tại ACECOOK VĨNH LONG".
    - Không được tự thay heading nguồn bằng nhãn chung. Khi văn bản có heading rõ ràng, giữ heading đó vào "programName"; "title" chỉ là tiêu đề tuyến/tiêu đề phụ ngắn hơn.
-   - Với khối điểm đến lớn như Suối Tiên, giữ câu mở đầu + các bullet chính; không thêm bullet mới, không mở rộng chi tiết sâu.
-   - Không tự thêm "Sau khi dùng bữa trưa" nếu phiên bản rút gọn đã duyệt không dùng cụm này.
+   - Giữ đúng chữ hoa/thường của tên riêng, nhà hàng, khu du lịch, ví dụ "Nhà hàng Hải Sản Biển Đông" nếu nguồn viết như vậy.
    - Nếu không chắc rút gọn thế nào cho an toàn, giữ wording gần nguồn hơn, đặt "sourceConfidence" là "low" hoặc "medium", và bật "needsReview": true.
-2. Khởi hành/di chuyển: Chỉ giữ câu chính có đích đến rõ ràng, bỏ các câu marketing/miêu tả phụ (nghỉ ngơi trên xe, làm quen, giao lưu...) nếu không cần thiết.
+2. Thực đơn phải giữ cấu trúc lựa chọn và nhóm món:
+   - Không gộp "Món ăn", "Món uống", "Nước uống" thành một dòng nếu nguồn tách riêng.
+   - Giữ các cụm như "chọn 1 trong các món", "miễn phí", "hơn 200 món ăn chế biến sẵn các loại", "tại hồ", "không giới hạn", "Bia, nước, trái cây miễn phí - không giới hạn".
+   - Không đổi "Tôm, cua/ghẹ bắt sống tại hồ" thành "tại quầy" hoặc đổi loại nước/trái cây nếu nguồn không ghi vậy.
+   - Không đưa tên nhà hàng hoặc địa điểm ăn uống thành item menu dạng "Món ăn: Nhà hàng...". Tên nhà hàng thuộc câu lịch trình, menu chỉ chứa món/nhóm món/đồ uống.
+   - Giữ dấu và khoảng cách có ý nghĩa trong lựa chọn như "Café đá/sữa"; không tách thành "Café đá/ sữa".
+3. Khởi hành/di chuyển: Chỉ bỏ câu marketing/miêu tả phụ (nghỉ ngơi trên xe, làm quen, giao lưu...) khi câu chính vẫn giữ đủ đích đến rõ ràng.
    Ví dụ: "Khởi hành đi Đồng Tháp. Quý khách nghỉ ngơi trên xe..." → "Khởi hành đi Đồng Tháp."
-3. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan", chỉ giữ tên địa điểm, bỏ mô tả chi tiết.
+4. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan" khi cần đồng bộ format, nhưng không được làm mất tên địa điểm hoặc thông tin quan trọng.
    - SCHOOL: "Quý thầy cô và các bạn học sinh tham quan [Tên địa điểm]."
    - GROUP: "Quý đoàn tham quan [Tên địa điểm]."
    Ví dụ SCHOOL: "Tham quan Khu di tích Nguyễn Sinh Sắc – nơi lưu giữ cội nguồn..." → "Quý thầy cô và các bạn học sinh tham quan Khu di tích Nguyễn Sinh Sắc."
    Ví dụ GROUP: "Tham quan Khu di tích Xẻo Quýt. Trải nghiệm ngồi xuồng..." → "Quý đoàn tham quan Khu di tích Xẻo Quýt."
-4. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng với dấu chấm tròn (•) đầu dòng. Với tour 1 ngày, chỉ giữ các bullet chính thực sự cần cho bố cục Canva.
+5. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng với dấu chấm tròn (•) đầu dòng nếu nguồn/phiên bản duyệt dùng bullet.
+   - Không thêm câu mới như "Đến [địa điểm]." nếu phiên bản duyệt không có.
+   - Không rút gọn thành "bao gồm các hoạt động vô cùng hấp dẫn" rồi bỏ danh sách hoạt động. Phải giữ các hoạt động chính trong nguồn, đặc biệt các dòng có "miễn phí", "Vườn thú", "Phim trường", "Dạo chơi", "chụp ảnh", "check in".
+   - Không rút gọn mất các ý như "miễn phí", "dạo chơi và chụp ảnh", "check in tại không gian..." nếu nguồn có.
    Ví dụ:
    "Sau khi dùng bữa trưa, Quý đoàn tự do tham quan và vui chơi tại Khu du lịch Văn Hóa Phương Nam:
 • Xem biểu diễn xiếc thú: Khỉ, Chó, Dê.
 • Vui chơi tại Công viên nước
 • Trải nghiệm trò chơi dân gian, trò chơi liên hoàn nước"
-5. Khung giờ sau ăn trưa: Chỉ thêm "Sau khi dùng bữa trưa, ..." khi câu nguồn hoặc phương án duyệt thực sự cần cụm đó để tự nhiên. Không coi đây là cụm bắt buộc.
+6. Khung giờ sau ăn trưa: Chỉ thêm "Sau khi dùng bữa trưa, ..." khi câu nguồn hoặc phương án duyệt thực sự cần cụm đó để tự nhiên. Không coi đây là cụm bắt buộc.
    - GROUP: "Sau khi dùng bữa trưa, Quý đoàn..."
    - SCHOOL: "Sau khi dùng bữa trưa, Quý thầy cô và các bạn học sinh..."
-6. Dấu chấm cuối tên địa điểm: Mỗi tên địa điểm kết thúc bằng dấu chấm "."
+7. Dấu chấm cuối tên địa điểm: Mỗi tên địa điểm kết thúc bằng dấu chấm "."
    Ví dụ: "Tham quan Khu di tích Nguyễn Sinh Sắc." / "Khởi hành đi Đồng Tháp."
-7. Kết thúc chương trình: LUÔN thêm một activity cuối cùng với text "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình.
+8. Kết thúc chương trình: LUÔN thêm một activity cuối cùng với text "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình.
    - Tour 1 ngày (ONE_DAY): thêm vào cuối mảng "afternoon"
    - Tour 2 ngày (TWO_DAY): thêm vào cuối mảng "day2"
    - Tour 3 ngày (THREE_DAY): thêm vào cuối mảng "day3"

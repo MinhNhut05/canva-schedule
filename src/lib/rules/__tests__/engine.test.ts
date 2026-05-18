@@ -368,6 +368,57 @@ describe("RULE-07: Menu separation and structure", () => {
     const result = applyRules(draft);
     expect(result.violations.filter((v) => v.ruleId === "RULE-07")).toHaveLength(0);
   });
+
+  it("flags compressed breakfast choices that lost approved choice wording", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        menu: {
+          morning: [
+            {
+              text: "Món ăn: Hủ tiếu thịt lợn/ Cơm sườn/ Bò Beefsteak\nNước uống: Lipton/ Nước đóng chai/ Trà đường/ Café đá/ sữa",
+              needsReview: false,
+            },
+          ],
+          lunch: [],
+          afternoon: [],
+        },
+      }),
+    );
+
+    const violations = result.violations.filter((v) => v.ruleId === "RULE-07");
+    expect(violations.some((v) => v.field === "menu.morning[0]")).toBe(true);
+    expect(violations.every((v) => v.severity === "needs_review")).toBe(true);
+    expect(result.correctedDraft.duration).toBe("ONE_DAY");
+    if (result.correctedDraft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+    expect(result.correctedDraft.menu.morning[0].needsReview).toBe(true);
+  });
+
+  it("flags shortened buffet wording that loses source qualifiers", () => {
+    const result = applyRules(
+      makeOneDaySchoolDraft({
+        menu: {
+          morning: [],
+          lunch: [
+            {
+              text: "Buffet hải sản hơn 200 món\nTôm cua/ ghẹ bắt sống tại quầy\nBia, nước ngọt và trái cây không giới hạn",
+              needsReview: false,
+            },
+          ],
+          afternoon: [],
+        },
+      }),
+    );
+
+    const violations = result.violations.filter((v) => v.ruleId === "RULE-07");
+    expect(violations.some((v) => v.field === "menu.lunch[0]")).toBe(true);
+    expect(result.correctedDraft.duration).toBe("ONE_DAY");
+    if (result.correctedDraft.duration !== "ONE_DAY") {
+      throw new Error("Expected ONE_DAY draft");
+    }
+    expect(result.correctedDraft.menu.lunch[0].needsReview).toBe(true);
+  });
 });
 
 describe("RULE-08: One-day wording fidelity", () => {

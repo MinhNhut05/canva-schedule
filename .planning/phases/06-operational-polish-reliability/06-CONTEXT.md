@@ -34,6 +34,7 @@ Make the weekly internal workflow (upload -> extract -> review -> generate -> do
 - **D-14:** Console/server logs for error tracking only. No DB error log table or external monitoring service needed for v1 volume.
 - **D-15:** Add request timeouts: AI extraction timeout at 30 seconds, Canva polling timeout at 2 minutes. On timeout, return clear error message instead of hanging indefinitely.
 - **D-16:** Global cooldown UI: yellow warning banner at top of page with countdown ("He thong dang cho Canva — con X phut"). Generate button disabled during cooldown.
+- **D-16A:** Canva token-lineage failures are operational recovery events, not normal retry errors. Mark token state `NEEDS_RECONNECT` and route admins to `/admin/canva` to reconnect the affected environment.
 
 ### Completion State
 - **D-17:** When both Canva links (Itinerary + Menu) succeed: show green success banner "Hoan thanh! Tai lieu da san sang tren Canva" + the 2 result cards + CTA buttons "Tao tour moi" (links to /upload) and "Xem lich su" (links to /history). Stepper shows final step with checkmark.
@@ -78,6 +79,8 @@ Make the weekly internal workflow (upload -> extract -> review -> generate -> do
 
 ### Key codebase files
 - `src/lib/canva/client.ts` — CanvaRateLimitError class, canvaFetch with 429 handling and auto-retry on 401
+- `src/lib/canva/oauth.ts` — Canva token state, DB advisory refresh lock, proactive refresh, and reconnect-required error handling
+- `src/app/(app)/admin/canva` — Admin recovery UI for reconnecting revoked/expired Canva token lineage
 - `src/lib/ai/extraction-client.ts` — AI retry logic (MAX_RETRIES=2), exponential backoff pattern, OpenAI API error handling
 - `src/components/review/review-page.tsx` — Main review page with Canva generation flow, rate limit cooldown state, artifact result handling
 - `src/components/review/canva-generation-panel.tsx` — Current generating/rate-limited display

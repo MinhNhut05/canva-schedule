@@ -306,6 +306,7 @@ const LUNCH_MEAL_PATTERN =
 const AFTERNOON_SNACK_PATTERN = /(ăn nhẹ|ăn xế|ăn chiều|giải lao)/i;
 const RETURN_TRAVEL_PATTERN = /(khởi hành về|trở về|về trường|về lại|quay về)/i;
 const END_PROGRAM_DUPLICATE_PATTERN = /kết thúc chương trình/i;
+const GENERIC_RETURN_PATTERN = /^(?:đoàn\s+)?(?:khởi hành|di chuyển|trở|quay|về)(?:\s+(?:về|lại|đến))*\.?$/i;
 
 const PICKUP_LANDMARK_REPLACEMENTS: { pattern: RegExp; format: (loc: string) => string }[] = [
   { pattern: /tại điểm (?:hẹn|đón)(?: ban đầu)?/gi, format: (loc) => `tại ${loc}` },
@@ -316,15 +317,30 @@ const PICKUP_LANDMARK_REPLACEMENTS: { pattern: RegExp; format: (loc: string) => 
 
 function substituteLandmark(text: string, location: string | undefined): string {
   const trimmed = location?.trim();
-  if (!trimmed) return text;
+  if (!trimmed || /điểm (?:hẹn|đón) ban đầu/i.test(text)) return text;
   let out = text;
   for (const { pattern, format } of PICKUP_LANDMARK_REPLACEMENTS) {
     out = out.replace(pattern, format(trimmed));
   }
   return out;
 }
+
+function shouldRewriteReturnText(text: string): boolean {
+  const normalized = normalizeWhitespace(text);
+  return !/điểm (?:hẹn|đón)/i.test(normalized) && GENERIC_RETURN_PATTERN.test(normalized);
+}
+
+function normalizeReturnText(text: string): string {
+  if (/xe và hdv.*(?:đưa|đón).*(?:về lại|về|đến).*(?:điểm hẹn|điểm đón)/i.test(text)) {
+    return "Đoàn khởi hành về điểm hẹn ban đầu.";
+  }
+
+  return text;
+}
+
 const MENU_FOOD_LABEL_PATTERN = /^món ăn\s*:\s*(.+)$/i;
 const MENU_DRINK_LABEL_PATTERN = /^(?:món uống|nước uống|thức uống)\s*:\s*(.+)$/i;
+const RESTAURANT_MENU_VALUE_PATTERN = /^(?:món ăn\s*:\s*)?(?:nhà hàng|quán|resort|khách sạn)\b/i;
 const DRINK_KEYWORD_PATTERN =
   /(trà|nước suối|nước ngọt|nước ép|nước mía|nước chanh|nước cam|sữa|cà phê|cafe|coffee|pepsi|coca|sprite|7up|fanta|lavie|trà sữa|sinh tố|juice|matcha|yaourt uống)/i;
 const GAME_DETAIL_PATTERN =
@@ -377,9 +393,18 @@ function splitMenuSegments(value: string): string[] {
     .filter((segment) => segment !== "" && segment !== "-");
 }
 
-function classifyMenuItems(items: MenuItem[]): { foods: string[]; drinks: string[] } {
+function shouldPreserveMenuLine(value: string): boolean {
+  return (
+    /chọn\s*1\s*trong\s*các\s*món/i.test(value) ||
+    /miễn phí|không giới hạn|bắt sống tại hồ|hơn\s*200\s*món|café đá\/sữa/i.test(value) ||
+    (/\n/.test(value) && MENU_FOOD_LABEL_PATTERN.test(value))
+  );
+}
+
+function classifyMenuItems(items: MenuItem[]): { foods: string[]; drinks: string[]; preserved: string[] } {
   const foods: string[] = [];
   const drinks: string[] = [];
+  const preserved: string[] = [];
 
   const pushSegments = (segments: string[], target: "foods" | "drinks") => {
     if (target === "foods") {
@@ -393,7 +418,12 @@ function classifyMenuItems(items: MenuItem[]): { foods: string[]; drinks: string
   for (const item of items) {
     const rawValue = normalizeWhitespace(item.text ?? item.item ?? "");
 
-    if (!rawValue) {
+    if (!rawValue || RESTAURANT_MENU_VALUE_PATTERN.test(rawValue)) {
+      continue;
+    }
+
+    if (shouldPreserveMenuLine(item.text ?? item.item ?? "")) {
+      preserved.push(item.text ?? item.item ?? "");
       continue;
     }
 
@@ -421,12 +451,13 @@ function classifyMenuItems(items: MenuItem[]): { foods: string[]; drinks: string
   return {
     foods: dedupeLines(foods),
     drinks: dedupeLines(drinks),
+    preserved,
   };
 }
 
 function buildMergedMenuLines(items: MenuItem[]): ActivityItem[] {
-  const { foods, drinks } = classifyMenuItems(items);
-  const lines: ActivityItem[] = [];
+  const { foods, drinks, preserved } = classifyMenuItems(items);
+  const lines: ActivityItem[] = preserved.map((text) => ({ text }));
 
   const foodsText = joinInlineMenuItems(foods);
   if (foodsText) {
@@ -444,7 +475,7 @@ function buildMergedMenuLines(items: MenuItem[]): ActivityItem[] {
 function replaceGreetingPrefix(text: string, greetingText?: string): string {
   const greeting = greetingText?.trim();
 
-  if (!greeting) {
+  if (!greeting || /^(?:đoàn\s+)?(?:khởi hành|di chuyển|trở|quay|về)\b/i.test(text)) {
     return text;
   }
 
@@ -484,9 +515,6 @@ function compactFreePlayActivityText(
     header = header.replace(/tự do vui chơi tại/i, "tự do tham quan và vui chơi tại");
   }
 
-  if (options.addAfterMealPrefix && !/^Sau khi dùng bữa/i.test(header)) {
-    header = `Sau khi dùng bữa, ${header}`;
-  }
 
   const compactDetails: string[] = [];
   let hasGameDetails = false;
@@ -557,7 +585,8 @@ function normalizeOneDaySectionItems(
     if (
       section === "afternoon" &&
       returnDestination &&
-      RETURN_TRAVEL_PATTERN.test(currentText)
+      RETURN_TRAVEL_PATTERN.test(currentText) &&
+      shouldRewriteReturnText(currentText)
     ) {
       return setActivityText(item, `Đoàn khởi hành về ${returnDestination}.`);
     }
@@ -567,7 +596,10 @@ function normalizeOneDaySectionItems(
         greetingText: draft.greetingText,
         addAfterMealPrefix: index === 0 && hasLunchMenu,
       });
-      return setActivityText(item, substituteLandmark(compacted, returnDestination));
+      const normalizedReturn = RETURN_TRAVEL_PATTERN.test(compacted)
+        ? normalizeReturnText(compacted)
+        : compacted;
+      return setActivityText(item, substituteLandmark(normalizedReturn, returnDestination));
     }
 
     const compacted = compactFreePlayActivityText(currentText, {
@@ -692,7 +724,8 @@ function normalizeTwoDaySectionItems(
     if (
       section === "day2" &&
       returnDestination &&
-      RETURN_TRAVEL_PATTERN.test(currentText)
+      RETURN_TRAVEL_PATTERN.test(currentText) &&
+      shouldRewriteReturnText(currentText)
     ) {
       return setActivityText(item, `Đoàn khởi hành về ${returnDestination}.`);
     }

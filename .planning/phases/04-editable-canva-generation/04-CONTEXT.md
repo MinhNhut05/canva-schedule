@@ -52,6 +52,8 @@ Map reviewed, approved tour content into supported Canva templates and return ed
 - **D-26:** On generation failure (timeout, API error, invalid template): show Vietnamese error message on the review page + "Thu lai" (Retry) button. Approved content is never lost.
 - **D-27:** Partial success handling: If one of the two generations succeeds but the other fails, show the successful Canva link immediately and provide a retry button only for the failed one. No all-or-nothing behavior.
 - **D-28:** Rate limit handling: Show Vietnamese message "Canva dang ban, vui long thu lai sau X phut" + temporarily disable the generate button with a cooldown timer.
+- **D-29:** Canva refresh tokens are single-use and must not be shared across local, staging, or production. Each environment reconnects independently through `/admin/canva`; revoked token lineage is stored as `NEEDS_RECONNECT` and surfaced to admins.
+- **D-30:** Canva token refresh uses a Postgres advisory transaction lock plus the existing in-process mutex so concurrent requests and multiple server instances cannot refresh the same token at the same time.
 
 ### Claude's Discretion
 - Canva Connect API integration approach (based on research findings)
@@ -84,6 +86,8 @@ Map reviewed, approved tour content into supported Canva templates and return ed
 
 ### Codebase patterns (established in Phase 1-3)
 - `src/lib/canva/server-client.ts` — Canva config accessor (`getCanvaConfig()`) — server-only wrapper
+- `src/lib/canva/oauth.ts` — Canonical Canva OAuth/token lifecycle path: proactive refresh, DB advisory lock, `NEEDS_RECONNECT`, and app OAuth helper functions
+- `src/app/(app)/admin/canva` — Admin Canva connection status and reconnect flow
 - `src/lib/env.ts` — Canva env schema (`getCanvaEnv()`) with CANVA_CLIENT_ID, CANVA_CLIENT_SECRET, CANVA_ACCESS_TOKEN, CANVA_REFRESH_TOKEN, CANVA_TEMPLATE_ID; forbidden public prefixes for Canva secrets
 - `src/lib/ai/extraction-schema.ts` — `structuredDraftSchema` (discriminated union), `oneDaySchema`, `twoDaySchema`, `activitySchema`, `menuItemSchema` — the data structures to map into Canva
 - `src/lib/review/draft.ts` — Draft persistence (`getDraft()`, `saveDraft()`, `approveDraft()`), review flag generation

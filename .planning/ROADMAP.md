@@ -10,7 +10,7 @@ SileTravel v1 is sequenced around the riskiest dependency first, then the strict
 - Human review/edit is a hard gate between AI extraction and Canva generation.
 - Parsing risk is handled before AI risk; AI/rules risk is handled before Canva integration risk.
 - Admin, history, and polish come after the first complete reviewed-to-Canva workflow is working.
-- Coverage: 39/39 v1 requirements mapped exactly once.
+- Coverage: 44/44 tracked requirements mapped exactly once.
 
 ## Phases
 
@@ -26,6 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Editable Canva Generation** - Map reviewed content into supported Canva templates and return editable links. (completed 2026-03-25)
 - [ ] **Phase 5: History & Admin Control** - Persist jobs and let authorized users maintain rules and template mappings safely.
 - [ ] **Phase 6: Operational Polish & Reliability** - Make the weekly internal workflow clear, resilient, and stable at v1 volume.
+- [x] **Phase 7: One-day itinerary fidelity and menu merge controls** - Tighten 1-day wording fidelity, program-label/title handling, and optional menu injection into itinerary output. (completed 2026-04-11)
 
 ## Phase Details
 
@@ -134,10 +135,45 @@ Plans:
 - [x] 06-01: Add end-to-end step feedback and clearer recovery-oriented error UX.
 - [x] 06-02: Harden the pipeline for routine volume, backoff, and external API limits.
 
+### Phase 7: One-day itinerary fidelity and menu merge controls
+**Goal**: 1-day tour output stays closer to the approved source wording and brand layout, while letting the user persist a per-upload choice to merge concise menu lines into the itinerary before Canva generation.
+**Depends on**: Phase 6
+**Requirements**: RULE-08, RULE-09, UX-05, UX-06, CANVA-08
+**Success Criteria** (what must be TRUE):
+  1. For 1-day tours, condensed itinerary text keeps critical destinations and approved source meaning instead of collapsing to generic lines like `Khởi hành về`.
+  2. `program_label` uses the reviewed program heading when the source provides one, and the short left title remains a separate reviewed field rather than a full route dump.
+  3. The review flow lets the user save whether concise meal/menu lines should be merged into the 1-day itinerary, and regenerate uses the same saved choice.
+  4. When merged 1-day content is likely too long for the template, the app warns the user before generation instead of silently overfilling the layout.
+  5. The 1-day Canva payload respects reviewed wording for school/group tours and applies the saved menu-merge option to the editable result.
+**Plans**: 3 plans
+**Notes/Risks**: This phase intentionally keeps the existing 4-template model. It does not add template-family architecture. The canonical acceptance sample is the user-provided school PDF plus the manually corrected Canva screenshot, but the runtime logic must still branch correctly for both school and group 1-day tours.
+
+Plans:
+- [x] 07-01: Refine 1-day extraction prompt and deterministic condensation rules.
+- [x] 07-02: Persist per-upload 1-day Canva options and review warnings.
+- [x] 07-03: Apply saved 1-day options in Canva payload generation and regression coverage.
+
+### Phase 8: Personal Website Visual System
+**Goal**: Define and implement a personal website visual direction that translates the approved futuristic blue editorial tech style into a reusable web UI system ready for UI specification and later build phases.
+**Depends on:** Phase 7
+**Requirements**: PW-UI-01, PW-UI-02, PW-UI-03, PW-UI-04, PW-UI-05, PW-UI-06
+**Success Criteria** (what must be TRUE):
+  1. The website has a locked visual direction built around dark hero + light body sections, cool white surfaces, and electric-blue accents.
+  2. Typography is locked to Space Grotesk for headlines and Inter for body copy, with clear rules for headline casing, weight, and readability.
+  3. The style translation defines reusable component behavior for navigation, buttons, cards, links, and hover states rather than only poster-like inspiration.
+  4. Texture, glow, gradients, borders, and shadows are specified with restrained usage rules so the UI stays premium and readable instead of noisy.
+  5. The phase produces enough visual/system detail for `/gsd-ui-phase 8` to generate a concrete UI contract without re-asking the foundational style questions.
+  6. Layout composition, content strategy, and personal-brand copywriting remain out of scope for this phase.
+**Plans:** 0 plans
+**Notes/Risks**: This phase is design-system-first, not full implementation. Keep style scoped to colors, typography, surfaces, effects, and component translation. Avoid layout exploration and avoid drifting into unrelated SileTravel product flows.
+
+Plans:
+- [ ] TBD (run /gsd-ui-phase 8, then /gsd-plan-phase 8)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -147,7 +183,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Editable Canva Generation | 3/3 | Complete | 2026-03-25 |
 | 5. History & Admin Control | 2/2 | Complete | 2026-03-27 |
 | 6. Operational Polish & Reliability | 2/2 | Complete | 2026-03-27 |
+| 7. One-day itinerary fidelity and menu merge controls | 3/3 | Complete | 2026-04-11 |
+| 8. Personal Website Visual System | 0/0 | Not started | - |
 
 ## Recommended Next Command
 
-`/gsd:plan-phase 1`
+`/gsd-ui-phase 8`
