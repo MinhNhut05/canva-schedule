@@ -267,6 +267,10 @@ function sharedFields(draft: DraftBase): AutofillData {
  */
 function formatActivity(item: ActivityItem): string {
   const text = getActivityText(item).trim();
+  if (!text) {
+    return "";
+  }
+
   if (item.timeLabel) {
     return `${formatTimeLabel(item.timeLabel)}\n${text}`;
   }
@@ -317,7 +321,10 @@ const PICKUP_LANDMARK_REPLACEMENTS: { pattern: RegExp; format: (loc: string) => 
 
 function substituteLandmark(text: string, location: string | undefined): string {
   const trimmed = location?.trim();
-  if (!trimmed || /điểm (?:hẹn|đón) ban đầu/i.test(text)) return text;
+  if (!trimmed) return text;
+  if (/điểm (?:hẹn|đón) ban đầu/i.test(text)) return text;
+  if (/^về đến\s+điểm (?:hẹn|đón)/i.test(text)) return text;
+  if (/^về lại\s+điểm (?:hẹn|đón)/i.test(text)) return text;
   let out = text;
   for (const { pattern, format } of PICKUP_LANDMARK_REPLACEMENTS) {
     out = out.replace(pattern, format(trimmed));
@@ -336,6 +343,15 @@ function normalizeReturnText(text: string): string {
   }
 
   return text;
+}
+
+function extractArrivalBeforeEndProgram(text: string): string | null {
+  if (!/^về đến\b/i.test(text) || !END_PROGRAM_DUPLICATE_PATTERN.test(text)) {
+    return null;
+  }
+
+  const arrival = text.split(/[,.;]*\s*kết thúc chương trình/i)[0]?.trim();
+  return arrival ? ensureSentence(arrival) : null;
 }
 
 const MENU_FOOD_LABEL_PATTERN = /^món ăn\s*:\s*(.+)$/i;
@@ -506,6 +522,8 @@ function compactFreePlayActivityText(
     return [header, ...preservedDetails].join("\n");
   }
 
+  const sourceUsesBullets = lines.slice(1).some((line) => /^[•+\-]\s+/.test(line));
+
   const details = lines
     .slice(1)
     .map((line) => normalizeWhitespace(line.replace(/^[•+\-]\s*/, "")))
@@ -514,7 +532,6 @@ function compactFreePlayActivityText(
   if (/tự do vui chơi tại/i.test(header) && !/tự do tham quan và vui chơi tại/i.test(header)) {
     header = header.replace(/tự do vui chơi tại/i, "tự do tham quan và vui chơi tại");
   }
-
 
   const compactDetails: string[] = [];
   let hasGameDetails = false;
@@ -555,7 +572,11 @@ function compactFreePlayActivityText(
     return header;
   }
 
-  return [ensureHeading(header), ...dedupedDetails].join("\n");
+  const renderedDetails = sourceUsesBullets
+    ? dedupedDetails.map((detail) => `• ${detail}`)
+    : dedupedDetails;
+
+  return [ensureHeading(header), ...renderedDetails].join("\n");
 }
 
 function normalizeOneDaySectionItems(
@@ -574,12 +595,12 @@ function normalizeOneDaySectionItems(
       return item;
     }
 
-    if (/^(Món ăn|Nước uống):/i.test(currentText)) {
+    if (/^•?\s*(Món ăn|Nước uống):/i.test(currentText)) {
       return setActivityText(item, currentText);
     }
 
     if (section === "afternoon" && END_PROGRAM_DUPLICATE_PATTERN.test(currentText)) {
-      return setActivityText(item, "");
+      return setActivityText(item, extractArrivalBeforeEndProgram(currentText) ?? "");
     }
 
     if (
@@ -718,7 +739,7 @@ function normalizeTwoDaySectionItems(
     }
 
     if (section === "day2" && END_PROGRAM_DUPLICATE_PATTERN.test(currentText)) {
-      return setActivityText(item, "");
+      return setActivityText(item, extractArrivalBeforeEndProgram(currentText) ?? "");
     }
 
     if (

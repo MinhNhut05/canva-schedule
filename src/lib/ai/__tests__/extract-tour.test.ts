@@ -113,10 +113,19 @@ describe("extractTour", () => {
       'Không gộp "Món ăn", "Món uống", "Nước uống" thành một dòng nếu nguồn tách riêng.',
     );
     expect(systemPrompt).toContain(
-      "hãy dùng tên đơn vị/địa điểm ngắn gọn làm \"pickupLocation\"",
+      "Điểm đón/trả (pickupLocation, returnLocation)",
     );
     expect(systemPrompt).toContain(
-      "Không rút gọn thành \"bao gồm các hoạt động vô cùng hấp dẫn\" rồi bỏ danh sách hoạt động.",
+      'giữ literal "điểm hẹn" hoặc "điểm đón ban đầu" theo nguồn',
+    );
+    expect(systemPrompt).toContain(
+      "Giữ y nguyên chủ ngữ của câu nguồn",
+    );
+    expect(systemPrompt).toContain(
+      "Giữ y nguyên separator của nguồn",
+    );
+    expect(systemPrompt).toContain(
+      "Nếu nguồn có câu \"Về đến [địa điểm]\" / \"Về đến điểm hẹn\"",
     );
     expect(systemPrompt).toContain(
       "Không đưa tên nhà hàng hoặc địa điểm ăn uống thành item menu dạng \"Món ăn: Nhà hàng...\".",

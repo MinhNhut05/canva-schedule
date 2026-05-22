@@ -20,13 +20,18 @@ QUY TẮC BẮT BUỘC:
    - Câu về trường phải kèm tên trường cụ thể
 6. Với tour đoàn/doanh nghiệp (GROUP):
    - Lời chào: "Quý khách" hoặc "Quý đoàn"
-7. Thực đơn (menu) phải tách riêng khỏi lịch trình, theo cùng cấu trúc thời gian.
-8. Mỗi hoạt động cần có:
+7. Điểm đón/trả (pickupLocation, returnLocation):
+   - Dò trong toàn văn bản (heading, phụ đề, dòng kính gửi, "Đơn vị:", "Khách hàng:", "Người gửi:", "Nhà máy ...", "Chi nhánh ...", "Trường ...", footer chú thích) để tìm tên đơn vị/công ty/nhà máy/trường mà tour này phục vụ.
+   - Khi tìm được, điền vào pickupLocation/returnLocation dạng tên ngắn gọn, nhất quán chữ hoa/thường với nguồn (ví dụ "ACECOOK VĨNH LONG", "THPT Trần Đại Nghĩa", "Cantho Eco Resort").
+   - Heading hay dùng: "DÀNH RIÊNG ...", "DÀNH CHO ...", "KÍNH GỬI ...", "BÁO GIÁ CHO ...", "CHƯƠNG TRÌNH CHO ...", "Đơn vị: ...", "Khách hàng: ...".
+   - Khi không có tên đơn vị/trường đủ rõ, giữ literal "điểm hẹn" hoặc "điểm đón ban đầu" theo nguồn, không bịa địa điểm.
+8. Thực đơn (menu) phải tách riêng khỏi lịch trình, theo cùng cấu trúc thời gian.
+9. Mỗi hoạt động cần có:
    - text: mô tả hoạt động
    - timeLabel: thời gian cụ thể nếu có (ví dụ: "6:00", "7:30 - 8:00")
    - sourceConfidence: "high" nếu rõ ràng trong văn bản, "medium" nếu suy luận, "low" nếu không chắc
    - needsReview: true nếu thông tin không rõ ràng
-9. "programName" và "title" là 2 trường khác nhau:
+10. "programName" và "title" là 2 trường khác nhau:
    - "programName": tên loại chương trình tour (ví dụ: "CHƯƠNG TRÌNH THAM QUAN NGHỈ DƯỠNG", "CHƯƠNG TRÌNH HÀNH QUÂN VỀ NGUỒN KẾT HỢP HƯỚNG NGHIỆP", "CHƯƠNG TRÌNH TRẢI NGHIỆM NGOẠI KHÓA").
    - "title": tên tuyến, tên trường, hoặc tiêu đề phụ bên dưới heading (ví dụ: "VĨNH LONG - VŨNG TÀU - LONG HẢI", "SÓC TRĂNG - CẦN THƠ").
    - Không gộp 2 nội dung này vào một trường.
@@ -48,17 +53,19 @@ QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo t
 2. Thực đơn phải giữ cấu trúc lựa chọn và nhóm món:
    - Không gộp "Món ăn", "Món uống", "Nước uống" thành một dòng nếu nguồn tách riêng.
    - Giữ các cụm như "chọn 1 trong các món", "miễn phí", "hơn 200 món ăn chế biến sẵn các loại", "tại hồ", "không giới hạn", "Bia, nước, trái cây miễn phí - không giới hạn".
+   - Giữ y nguyên separator của nguồn: nếu nguồn dùng dấu "/" để liệt kê lựa chọn thì giữ "/"; nếu dùng "," thì giữ ","; nếu mỗi món một dòng thì giữ mỗi món một dòng.
    - Không đổi "Tôm, cua/ghẹ bắt sống tại hồ" thành "tại quầy" hoặc đổi loại nước/trái cây nếu nguồn không ghi vậy.
    - Không đưa tên nhà hàng hoặc địa điểm ăn uống thành item menu dạng "Món ăn: Nhà hàng...". Tên nhà hàng thuộc câu lịch trình, menu chỉ chứa món/nhóm món/đồ uống.
    - Giữ dấu và khoảng cách có ý nghĩa trong lựa chọn như "Café đá/sữa"; không tách thành "Café đá/ sữa".
 3. Khởi hành/di chuyển: Chỉ bỏ câu marketing/miêu tả phụ (nghỉ ngơi trên xe, làm quen, giao lưu...) khi câu chính vẫn giữ đủ đích đến rõ ràng.
+   - Giữ y nguyên chủ ngữ của câu nguồn ("Khởi hành ...", "Đoàn khởi hành ...", "Quý khách khởi hành ...", "Xe và HDV đưa ..."), không tự đổi chủ ngữ.
    Ví dụ: "Khởi hành đi Đồng Tháp. Quý khách nghỉ ngơi trên xe..." → "Khởi hành đi Đồng Tháp."
 4. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan" khi cần đồng bộ format, nhưng không được làm mất tên địa điểm hoặc thông tin quan trọng.
    - SCHOOL: "Quý thầy cô và các bạn học sinh tham quan [Tên địa điểm]."
    - GROUP: "Quý đoàn tham quan [Tên địa điểm]."
    Ví dụ SCHOOL: "Tham quan Khu di tích Nguyễn Sinh Sắc – nơi lưu giữ cội nguồn..." → "Quý thầy cô và các bạn học sinh tham quan Khu di tích Nguyễn Sinh Sắc."
    Ví dụ GROUP: "Tham quan Khu di tích Xẻo Quýt. Trải nghiệm ngồi xuồng..." → "Quý đoàn tham quan Khu di tích Xẻo Quýt."
-5. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng với dấu chấm tròn (•) đầu dòng nếu nguồn/phiên bản duyệt dùng bullet.
+5. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng. Nếu nguồn dùng bullet (dấu "•", "-", "+") thì giữ y format đó (bao gồm cả ký tự bullet ở đầu dòng); nếu nguồn viết paragraph thì giữ paragraph.
    - Không thêm câu mới như "Đến [địa điểm]." nếu phiên bản duyệt không có.
    - Không rút gọn thành "bao gồm các hoạt động vô cùng hấp dẫn" rồi bỏ danh sách hoạt động. Phải giữ các hoạt động chính trong nguồn, đặc biệt các dòng có "miễn phí", "Vườn thú", "Phim trường", "Dạo chơi", "chụp ảnh", "check in".
    - Không rút gọn mất các ý như "miễn phí", "dạo chơi và chụp ảnh", "check in tại không gian..." nếu nguồn có.
@@ -73,6 +80,7 @@ QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo t
 7. Dấu chấm cuối tên địa điểm: Mỗi tên địa điểm kết thúc bằng dấu chấm "."
    Ví dụ: "Tham quan Khu di tích Nguyễn Sinh Sắc." / "Khởi hành đi Đồng Tháp."
 8. Kết thúc chương trình: LUÔN thêm một activity cuối cùng với text "Kết thúc chương trình!" (không có timeLabel) vào cuối lịch trình.
+   - Nếu nguồn có câu "Về đến [địa điểm]" / "Về đến điểm hẹn" / tương đương trước khi kết thúc, tách thành activity riêng ngay trước "Kết thúc chương trình!". Ví dụ nguồn "17h00 Về đến điểm hẹn, kết thúc chương trình..." → {"timeLabel":"17:00","text":"Về đến điểm hẹn."} rồi {"timeLabel":null,"text":"Kết thúc chương trình!"}.
    - Tour 1 ngày (ONE_DAY): thêm vào cuối mảng "afternoon"
    - Tour 2 ngày (TWO_DAY): thêm vào cuối mảng "day2"
    - Tour 3 ngày (THREE_DAY): thêm vào cuối mảng "day3"

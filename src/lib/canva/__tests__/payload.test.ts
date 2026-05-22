@@ -248,8 +248,49 @@ describe("buildOneDayItineraryPayload", () => {
     expect(data["afternoon_block"].text).toContain("Đoàn khởi hành về điểm hẹn ban đầu.");
     expect(data["afternoon_block"].text).not.toContain("Sau khi dùng bữa chiều, xe và HDV đưa Quý đoàn về lại điểm đón ban đầu.");
     expect(data["afternoon_block"].text).not.toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
-    expect(data["afternoon_block"].text).not.toContain("Về đến điểm hẹn");
+    // "Về đến điểm hẹn." được giữ thành dòng riêng trước "Kết thúc chương trình!" (đã bỏ phần "Cảm ơn ...").
+    expect(data["afternoon_block"].text).toContain("Về đến điểm hẹn.");
     expect(data["afternoon_block"].text).not.toContain("Cảm ơn Quý đoàn");
+  });
+
+  it("keeps source bullet markers and slash separators verbatim in compact free-play block", () => {
+    const draft = {
+      ...sharedDraft,
+      itinerary: {
+        morning: [
+          {
+            timeLabel: "8:30",
+            text:
+              "Quý khách tham quan vui chơi tại Cần Thơ Eco Wonderland:\n• Thưởng thức trái cây theo mùa.\n• Vườn thú Eco Safari.",
+          },
+        ],
+        afternoon: [],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).toContain("• Thưởng thức trái cây theo mùa.");
+    expect(data["morning_block"].text).toContain("• Vườn thú Eco Safari.");
+  });
+
+  it("does not auto-add bullet markers when source uses plain newlines", () => {
+    const draft = {
+      ...sharedDraft,
+      itinerary: {
+        morning: [
+          {
+            timeLabel: "8:30",
+            text:
+              "Quý khách tham quan vui chơi tại Cần Thơ Eco Wonderland:\nThưởng thức trái cây theo mùa.\nVườn thú Eco Safari.",
+          },
+        ],
+        afternoon: [],
+      },
+    };
+    const data = buildOneDayItineraryPayload(draft);
+    expect(data["morning_block"].text).not.toContain("• Thưởng thức trái cây theo mùa.");
+    expect(data["morning_block"].text).not.toContain("• Vườn thú Eco Safari.");
+    expect(data["morning_block"].text).toContain("Thưởng thức trái cây theo mùa.");
+    expect(data["morning_block"].text).toContain("Vườn thú Eco Safari.");
   });
 });
 
@@ -403,7 +444,7 @@ describe("buildTwoDayItineraryPayload", () => {
     expect(matches).toHaveLength(1);
     expect(data["day2_block"].text).toContain("tiếp tục di chuyển về lại điểm đón ban đầu.");
     expect(data["day2_block"].text).not.toContain("Đoàn khởi hành về ACECOOK Vĩnh Long.");
-    expect(data["day2_block"].text).not.toContain("Về đến điểm hẹn");
+    expect(data["day2_block"].text).toContain("Về đến điểm hẹn.");
   });
 });
 
