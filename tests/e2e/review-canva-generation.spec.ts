@@ -422,7 +422,7 @@ test.describe("Review to Canva generation flow", () => {
     );
     expect(initialItineraryPayload["morning_block"].text).not.toContain("Món ăn:");
     expect(initialItineraryPayload["afternoon_block"].text).toContain(
-      "13 giờ 00:\nSau khi dùng bữa, Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
+      "13 giờ 00:\nQuý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
     );
     expect(initialItineraryPayload["afternoon_block"].text).toContain(
       "Giang Sơn Bách Thú.",
@@ -434,7 +434,7 @@ test.describe("Review to Canva generation flow", () => {
       "Các trò chơi tuổi thơ, phổ thông, cảm giác mạnh.",
     );
     expect(initialItineraryPayload["afternoon_block"].text).toContain(
-      "15 giờ 30:\nĐoàn khởi hành về Trường tiểu học Long Tuyền 2.",
+      "15 giờ 30:\nKhởi hành về Trường tiểu học Long Tuyền 2.",
     );
     expect(initialItineraryPayload["afternoon_block"].text).not.toContain("Món ăn:");
 
@@ -458,7 +458,7 @@ test.describe("Review to Canva generation flow", () => {
       "06 giờ 00:\nQuý thầy cô và các bạn học sinh dùng bữa sáng tại nhà hàng.\nMón ăn: Bún bò/ Hủ tiếu nam vang\nNước uống: Trà đá",
     );
     expect(mergedItineraryPayload["afternoon_block"].text).toContain(
-      "13 giờ 00:\nSau khi dùng bữa, Quý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
+      "13 giờ 00:\nQuý thầy cô và các bạn học sinh tự do tham quan và vui chơi tại Công viên văn hóa Suối Tiên:",
     );
     expect(mergedItineraryPayload["afternoon_block"].text).toContain(
       "Món ăn: Cơm trưa, Canh rau",
@@ -467,7 +467,7 @@ test.describe("Review to Canva generation flow", () => {
       "Nước uống: Nước suối",
     );
     expect(mergedItineraryPayload["afternoon_block"].text).toContain(
-      "15 giờ 30:\nĐoàn khởi hành về Trường tiểu học Long Tuyền 2.",
+      "15 giờ 30:\nKhởi hành về Trường tiểu học Long Tuyền 2.",
     );
     expect(
       mergedItineraryPayload["afternoon_block"].text.indexOf("Món ăn: Cơm trưa, Canh rau"),
