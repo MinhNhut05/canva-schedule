@@ -47,6 +47,17 @@ const canvaEnvSchema = z.object({
   CANVA_REFRESH_TOKEN: z.string().min(1).optional(),
 });
 
+const emptyStringToUndefined = (value: unknown) => value === "" ? undefined : value;
+
+const storageEnvSchema = z.object({
+  S3_ENDPOINT: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  S3_REGION: z.preprocess(emptyStringToUndefined, z.string().min(1).default("auto")),
+  S3_BUCKET: z.string().min(1, "S3_BUCKET is required"),
+  S3_ACCESS_KEY_ID: z.string().min(1, "S3_ACCESS_KEY_ID is required"),
+  S3_SECRET_ACCESS_KEY: z.string().min(1, "S3_SECRET_ACCESS_KEY is required"),
+  S3_PUBLIC_URL: z.string().url("S3_PUBLIC_URL must be a valid URL"),
+});
+
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
@@ -113,4 +124,13 @@ export function getAiEnv() {
 export function getCanvaEnv() {
   rejectPublicSecrets();
   return canvaEnvSchema.parse(process.env);
+}
+
+/**
+ * Get S3-compatible storage environment variables.
+ * Server-only — throws if storage env vars are not configured.
+ */
+export function getStorageEnv() {
+  rejectPublicSecrets();
+  return storageEnvSchema.parse(process.env);
 }
