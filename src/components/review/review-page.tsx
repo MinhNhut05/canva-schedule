@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 
 import {
   approveDraft,
@@ -13,9 +13,6 @@ import {
   saveCanvaGenerationOptions,
   saveDraftField,
 } from "@/app/(app)/review/[id]/actions";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { StructuredDraft } from "@/lib/ai/extraction-schema";
 import type { CanvaGenerationOptions } from "@/lib/review/draft";
@@ -32,25 +29,6 @@ import { ReviewActions } from "./review-actions";
 import { ReviewHeader } from "./review-header";
 import { TemplateConfirmation } from "./template-confirmation";
 
-function WarningIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="mt-0.5 size-5 shrink-0"
-    >
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-    </svg>
-  );
-}
-
 export interface ReviewPageUpload {
   id: string;
   originalFileName: string;
@@ -64,6 +42,15 @@ export interface ReviewPageUpload {
 type ReviewArtifactKind = "ITINERARY" | "MENU";
 type ReviewArtifactStatus = "SUCCEEDED" | "FAILED" | "PROCESSING";
 type ReviewDuration = "ONE_DAY" | "TWO_DAY" | "THREE_DAY" | "FOUR_DAY";
+type CanvaShareJobStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "SKIPPED" | "ENQUEUE_FAILED" | "DRY_RUN";
+
+interface CanvaShareJobSummary {
+  id: string;
+  status: CanvaShareJobStatus;
+  targetCount: number;
+  lastError: string | null;
+  updatedAt: Date;
+}
 
 interface InitialCanvaArtifact {
   id: string;
@@ -79,6 +66,7 @@ interface InitialCanvaArtifact {
   editUrl?: string;
   viewUrl?: string;
   thumbnailUrl?: string;
+  shareJob?: CanvaShareJobSummary | null;
 }
 
 interface ReviewArtifact {
@@ -93,6 +81,7 @@ interface ReviewArtifact {
   editUrl?: string;
   viewUrl?: string;
   thumbnailUrl?: string;
+  shareJob?: CanvaShareJobSummary | null;
 }
 
 interface TemplatePairSummary {
@@ -143,6 +132,7 @@ function normalizeArtifact(
     editUrl: artifact.editUrl,
     viewUrl: artifact.viewUrl,
     thumbnailUrl: artifact.thumbnailUrl,
+    shareJob: artifact.shareJob,
   };
 }
 
@@ -228,6 +218,24 @@ export function ReviewPage({
 
     return () => clearInterval(interval);
   }, [router, upload.aiStatus]);
+
+  useEffect(() => {
+    const shouldPollShareStatus = artifacts.some(
+      (artifact) =>
+        artifact.status === "SUCCEEDED" &&
+        (!artifact.shareJob || artifact.shareJob.status === "PENDING" || artifact.shareJob.status === "RUNNING"),
+    );
+
+    if (!shouldPollShareStatus) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 5_000);
+
+    return () => clearInterval(interval);
+  }, [artifacts, router]);
 
   useEffect(() => {
     setCanvaOptions(initialCanvaOptions);
@@ -482,12 +490,15 @@ export function ReviewPage({
 
   if (!draft && upload.aiStatus !== "FAILED") {
     return (
-      <section className="space-y-6">
-        <WorkflowStepper
-          activeStep={computedStep.activeStep}
-          errorStep={computedStep.errorStep}
-          activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting}
-        />
+      <section className="rv-stack">
+        <div className="rv-stepper-card rv-rv">
+          <WorkflowStepper
+            variant="paper"
+            activeStep={computedStep.activeStep}
+            errorStep={computedStep.errorStep}
+            activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting}
+          />
+        </div>
         <ReviewHeader
           fileName={upload.originalFileName}
           tourDuration={upload.tourDuration}
@@ -497,23 +508,36 @@ export function ReviewPage({
           isReExtracting={isReExtracting}
           onReExtract={() => void handleReExtract()}
         />
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 px-6 py-16 text-center">
-          <h2 className="text-xl font-semibold text-foreground">
-            Chưa có nội dung để duyệt
-          </h2>
-          <p className="mt-2 max-w-md text-base text-muted-foreground">
-            Bản trích xuất có cấu trúc chưa sẵn sàng. Hãy thử Trích xuất lại hoặc quay về Tải tài liệu để kiểm tra file nguồn.
+        <div className="rv-state rv-rv">
+          <h2>Chưa có nội dung để duyệt</h2>
+          <p>
+            Bản trích xuất có cấu trúc chưa sẵn sàng. Hãy thử Trích xuất lại hoặc quay
+            về Tải tài liệu để kiểm tra file nguồn.
           </p>
-          <div className="mt-6 flex gap-3">
-            <Button
+          <div className="rv-state-actions">
+            <button
+              type="button"
+              className="rv-btn"
               onClick={() => void handleReExtract()}
               disabled={isReExtracting}
-                          >
-              {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
-            </Button>
-            <Button variant="outline" onClick={() => router.push("/upload")}>
+            >
+              {isReExtracting ? (
+                <>
+                  <Loader2 className="rv-spin" /> Đang trích xuất...
+                </>
+              ) : (
+                <>
+                  <RefreshCw /> Trích xuất lại
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className="rv-btn ghost"
+              onClick={() => router.push("/upload")}
+            >
               Quay về Tải tài liệu
-            </Button>
+            </button>
           </div>
         </div>
       </section>
@@ -522,12 +546,15 @@ export function ReviewPage({
 
   if (upload.aiStatus === "FAILED") {
     return (
-      <section className="space-y-6">
-        <WorkflowStepper
-          activeStep={computedStep.activeStep}
-          errorStep={computedStep.errorStep}
-          activeLoading={isReExtracting}
-        />
+      <section className="rv-stack">
+        <div className="rv-stepper-card rv-rv">
+          <WorkflowStepper
+            variant="paper"
+            activeStep={computedStep.activeStep}
+            errorStep={computedStep.errorStep}
+            activeLoading={isReExtracting}
+          />
+        </div>
         <ReviewHeader
           fileName={upload.originalFileName}
           tourDuration={upload.tourDuration}
@@ -537,50 +564,63 @@ export function ReviewPage({
           isReExtracting={isReExtracting}
           onReExtract={() => void handleReExtract()}
         />
-        <Alert className="border-destructive/50 bg-destructive/5">
-          <div className="flex gap-3">
-            <WarningIcon />
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <AlertTitle className="text-destructive">
-                  Không thể trích xuất nội dung
-                </AlertTitle>
-                <AlertDescription className="text-destructive/80">
-                  {upload.aiErrorMessage ||
-                    "Không thể trích xuất nội dung lúc này. Hãy thử Trích xuất lại. Nếu lỗi vẫn tiếp diễn, hãy quay về Tải tài liệu và kiểm tra chất lượng tài liệu nguồn."}
-                </AlertDescription>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => void handleReExtract()}
-                  disabled={isReExtracting}
-                                  >
-                  {isReExtracting ? "Đang trích xuất..." : "Trích xuất lại"}
-                </Button>
-                <Button variant="outline" onClick={() => router.push("/upload")}>
-                  Quay về Tải tài liệu
-                </Button>
+        <div className="rv-card rv-rv">
+          <div className="rv-alert red">
+            <AlertTriangle />
+            <div>
+              <div className="t">Không thể trích xuất nội dung</div>
+              <div className="d">
+                {upload.aiErrorMessage ||
+                  "Không thể trích xuất nội dung lúc này. Hãy thử Trích xuất lại. Nếu lỗi vẫn tiếp diễn, hãy quay về Tải tài liệu và kiểm tra chất lượng tài liệu nguồn."}
               </div>
             </div>
           </div>
-        </Alert>
+          <div className="rv-state-actions" style={{ justifyContent: "flex-start", marginTop: 14 }}>
+            <button
+              type="button"
+              className="rv-btn"
+              onClick={() => void handleReExtract()}
+              disabled={isReExtracting}
+            >
+              {isReExtracting ? (
+                <>
+                  <Loader2 className="rv-spin" /> Đang trích xuất...
+                </>
+              ) : (
+                <>
+                  <RefreshCw /> Trích xuất lại
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className="rv-btn ghost"
+              onClick={() => router.push("/upload")}
+            >
+              Quay về Tải tài liệu
+            </button>
+          </div>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="space-y-6 pb-24">
+    <section className="rv-stack">
       {/* Global cooldown banner — above everything */}
       {isRateLimited && cooldownMinutes > 0 ? (
         <CooldownBanner cooldownMinutes={cooldownMinutes} />
       ) : null}
 
       {/* Workflow stepper */}
-      <WorkflowStepper
-        activeStep={computedStep.activeStep}
-        errorStep={computedStep.errorStep}
-        activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting || isGenerating}
-      />
+      <div className="rv-stepper-card rv-rv">
+        <WorkflowStepper
+          variant="paper"
+          activeStep={computedStep.activeStep}
+          errorStep={computedStep.errorStep}
+          activeLoading={upload.aiStatus === "PROCESSING" || isReExtracting || isGenerating}
+        />
+      </div>
 
       <ReviewHeader
         fileName={upload.originalFileName}
@@ -592,77 +632,56 @@ export function ReviewPage({
         onReExtract={() => void handleReExtract()}
       />
 
-      <div className="space-y-4">
-        <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
-          <div className="space-y-3">
-            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
-              Giai đoạn 2 · Rà soát và chỉnh sửa nội dung
-            </Badge>
-            <div className="space-y-2">
-              <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
-                Kiểm tra lịch trình và thực đơn trước khi duyệt
-              </h2>
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                Hãy chỉnh lại các phần AI trích xuất chưa chính xác, ưu tiên những trường được đánh dấu cần xem lại. Khi hoàn tất, bạn sẽ xác nhận nội dung để mở rõ giai đoạn Canva.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <ItineraryEditor
-            draft={draft!}
-            uploadId={upload.id}
-            onSaveField={handleSaveField}
-            onSaveSuccess={handleSaveSuccess}
-            onSaveError={handleSaveError}
-          />
-          <MenuEditor
-            draft={draft!}
-            uploadId={upload.id}
-            onSaveField={handleSaveField}
-            onSaveSuccess={handleSaveSuccess}
-            onSaveError={handleSaveError}
-          />
-        </div>
+      <div className="rv-section rv-rv">
+        <span className="rv-stage-pill">Giai đoạn 2 · Rà soát và chỉnh sửa nội dung</span>
+        <h2 className="rv-card-title">Kiểm tra lịch trình và thực đơn trước khi duyệt</h2>
+        <p className="rv-card-desc">
+          Hãy chỉnh lại các phần AI trích xuất chưa chính xác, ưu tiên những trường
+          được đánh dấu cần xem lại. Khi hoàn tất, bạn sẽ xác nhận nội dung để mở rõ
+          giai đoạn Canva.
+        </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
-          <div className="space-y-3">
-            <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
-              Giai đoạn 3 · Xác nhận để mở Canva
-            </Badge>
-            <div className="space-y-2">
-              <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
-                Chốt nội dung trước khi tạo thiết kế
-              </h2>
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                Sau khi xác nhận, hệ thống sẽ nhấn mạnh phần mẫu Canva, các tùy chọn tạo và kết quả thiết kế. Sticky action phía dưới luôn bám theo giai đoạn hiện tại để tránh rối CTA.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ItineraryEditor
+          draft={draft!}
+          uploadId={upload.id}
+          onSaveField={handleSaveField}
+          onSaveSuccess={handleSaveSuccess}
+          onSaveError={handleSaveError}
+        />
+        <MenuEditor
+          draft={draft!}
+          uploadId={upload.id}
+          onSaveField={handleSaveField}
+          onSaveSuccess={handleSaveSuccess}
+          onSaveError={handleSaveError}
+        />
+      </div>
+
+      <div className="rv-section rv-rv">
+        <span className="rv-stage-pill">Giai đoạn 3 · Xác nhận để mở Canva</span>
+        <h2 className="rv-card-title">Chốt nội dung trước khi tạo thiết kế</h2>
+        <p className="rv-card-desc">
+          Sau khi xác nhận, hệ thống sẽ nhấn mạnh phần mẫu Canva, các tùy chọn tạo và
+          kết quả thiết kế. Sticky action phía dưới luôn bám theo giai đoạn hiện tại để
+          tránh rối CTA.
+        </p>
       </div>
 
       {showOneDayCanvaOptions ? (
-        <div className="surface-panel-glass rounded-2xl border border-semantic-light p-5 shadow-semantic-light">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary/75">
-                Tùy chọn Canva 1 ngày
+        <div className="rv-card rv-rv">
+          <div className="rv-toggle">
+            <div className="rv-toggle-tx">
+              <span className="rv-stage-pill">Tùy chọn Canva 1 ngày</span>
+              <h3>Có nhập menu vào lịch trình không?</h3>
+              <p>
+                Khi bật, các dòng menu ngắn sẽ được ghép vào lịch trình 1 ngày trước
+                khi tạo Canva. Tùy chọn này được lưu riêng cho từng tài liệu.
               </p>
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Có nhập menu vào lịch trình không?
-                </h3>
-                <p className="max-w-2xl text-sm text-muted-foreground">
-                  Khi bật, các dòng menu ngắn sẽ được ghép vào lịch trình 1 ngày trước khi tạo Canva. Tùy chọn này được lưu riêng cho từng tài liệu.
-                </p>
-              </div>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-semantic-light bg-surface-panel-glass px-4 py-2 shadow-semantic-light">
-              <span className="text-sm font-medium text-foreground/80">
+            <div className="rv-toggle-ctl">
+              <span className="st">
                 {canvaOptions.mergeMenuIntoItinerary ? "Đang bật" : "Đang tắt"}
               </span>
               <Switch
@@ -674,55 +693,54 @@ export function ReviewPage({
             </div>
           </div>
 
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="rv-card-desc" style={{ marginTop: 12 }}>
             {canvaOptions.mergeMenuIntoItinerary
               ? "Menu sẽ được chèn vào block lịch trình tương ứng khi tạo Canva."
               : "Menu sẽ giữ riêng ở thiết kế thực đơn, không ghép vào lịch trình."}
           </p>
 
           {isSavingCanvaOptions ? (
-            <p className="mt-2 text-sm text-muted-foreground/80">Đang lưu lựa chọn...</p>
+            <p className="rv-card-desc" style={{ marginTop: 8 }}>Đang lưu lựa chọn...</p>
           ) : null}
 
           {menuMergeWarning ? (
-            <Alert className="mt-4 border-amber-300 bg-amber-50">
-              <AlertTriangle className="size-4 text-amber-600" />
-              <AlertTitle className="text-amber-900">Cảnh báo độ dài trước khi tạo Canva</AlertTitle>
-              <AlertDescription className="text-amber-800">
-                {menuMergeWarning}
-              </AlertDescription>
-            </Alert>
+            <div className="rv-alert amber" style={{ marginTop: 14 }}>
+              <AlertTriangle />
+              <div>
+                <div className="t">Cảnh báo độ dài trước khi tạo Canva</div>
+                <div className="d">{menuMergeWarning}</div>
+              </div>
+            </div>
           ) : null}
         </div>
       ) : null}
 
       {isApproved ? (
-        <div className="space-y-6">
-          <div className="surface-panel-glass rounded-[24px] border border-semantic-light p-5 shadow-semantic-light">
-            <div className="space-y-3">
-              <Badge variant="outline" className="w-fit border-primary/15 bg-primary/5 text-primary">
-                Giai đoạn 4 · Xác nhận mẫu và tạo Canva
-              </Badge>
-              <div className="space-y-2">
-                <h2 className="text-[1.5rem] font-semibold leading-tight text-foreground">
-                  Mở phần tạo thiết kế sau khi duyệt xong nội dung
-                </h2>
-                <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                  Ở giai đoạn này, bạn kiểm tra cặp mẫu, lưu tùy chọn Canva nếu có, rồi bắt đầu tạo hoặc tạo lại liên kết thiết kế.
-                </p>
-              </div>
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div className="rv-section rv-rv">
+            <span className="rv-stage-pill">Giai đoạn 4 · Xác nhận mẫu và tạo Canva</span>
+            <h2 className="rv-card-title">Mở phần tạo thiết kế sau khi duyệt xong nội dung</h2>
+            <p className="rv-card-desc">
+              Ở giai đoạn này, bạn kiểm tra cặp mẫu, lưu tùy chọn Canva nếu có, rồi bắt
+              đầu tạo hoặc tạo lại liên kết thiết kế.
+            </p>
           </div>
+
           {/* Completion banner — replaces approved alert when generation is done */}
           {completionVariant ? (
             <CompletionBanner variant={completionVariant} />
           ) : (
-            <Alert className="border-emerald-300 bg-emerald-50">
-              <AlertTitle className="text-emerald-800">Nội dung đã được duyệt</AlertTitle>
-              <AlertDescription className="text-emerald-700">
-                Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.
-              </AlertDescription>
-            </Alert>
+            <div className="rv-card rv-rv">
+              <div className="rv-alert green">
+                <AlertTriangle />
+                <div>
+                  <div className="t">Nội dung đã được duyệt</div>
+                  <div className="d">
+                    Nội dung đã được duyệt. Hãy xác nhận mẫu Canva rồi bắt đầu tạo liên kết.
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Template confirmation — only if not completed */}
@@ -735,20 +753,26 @@ export function ReviewPage({
             />
           ) : null}
 
-          <CanvaGenerationPanel isGenerating={isGenerating} isRateLimited={isRateLimited} />
+          {isGenerating ? (
+            <CanvaGenerationPanel isGenerating={isGenerating} isRateLimited={isRateLimited} />
+          ) : null}
 
           {/* Canva error alert — persistent, replaces toast.error */}
           {canvaError && !isGenerating ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
-              <AlertTitle>{ERROR_MESSAGES.canvaGeneration.title}</AlertTitle>
-              <AlertDescription>{canvaError}</AlertDescription>
-            </Alert>
+            <div className="rv-card rv-rv">
+              <div className="rv-alert red">
+                <AlertTriangle />
+                <div>
+                  <div className="t">{ERROR_MESSAGES.canvaGeneration.title}</div>
+                  <div className="d">{canvaError}</div>
+                </div>
+              </div>
+            </div>
           ) : null}
 
           {hasPersistedResults ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div className="rv-results">
                 {artifacts.map((artifact) => {
                   const isRetrying = pendingRetryKinds.includes(artifact.artifactType);
 
@@ -761,6 +785,7 @@ export function ReviewPage({
                       viewUrl={artifact.viewUrl}
                       thumbnailUrl={artifact.thumbnailUrl}
                       errorMessage={artifact.errorMessage ?? undefined}
+                      shareJob={artifact.shareJob}
                       onRetry={() => void handleRetryArtifact(artifact.artifactType)}
                       onRegenerate={() => void handleGenerate()}
                       disableRetry={isRetrying || isRateLimited || isGenerating}
@@ -772,14 +797,15 @@ export function ReviewPage({
               </div>
 
               {hasCompletedAttempt ? (
-                <div className="flex justify-end">
-                  <Button
+                <div className="rv-actions-end">
+                  <button
+                    type="button"
+                    className="rv-btn"
                     onClick={() => void handleGenerate()}
                     disabled={generationDisabled}
-                    className="glow-accent"
                   >
-                    Tạo lại Canva
-                  </Button>
+                    <RefreshCw /> Tạo lại Canva
+                  </button>
                 </div>
               ) : null}
             </div>

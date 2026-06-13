@@ -31,6 +31,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         return {
           id: user.id,
           username: user.username,
+          email: user.email,
           name: user.name,
           role: (user.role as "admin" | "member") ?? "member",
           mustChangePassword: user.mustChangePassword,

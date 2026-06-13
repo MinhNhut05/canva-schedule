@@ -29,6 +29,17 @@ yarn-error.log*
 # env files (keep .env.example committed)
 .env
 .env*.local
+.*_env.temp
+
+# browser/session auth state
+*.storage-state.json
+playwright/.auth/
+
+# npm lock (migrated to pnpm)
+package-lock.json
+
+# internal docs (may contain sensitive notes / personal content)
+docs/
 
 # vercel
 .vercel
