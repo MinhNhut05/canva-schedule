@@ -105,18 +105,17 @@ describe("CanvaResultCard", () => {
     expect(html).not.toContain("Thử lại");
   });
 
-  it("shows share success status for internal emails", () => {
+  it("shows share success status as anyone-with-link edit", () => {
     const html = renderToStaticMarkup(
       renderResultCard({
         shareJob: {
           status: "SUCCEEDED",
-          targetCount: 3,
           lastError: null,
         },
       }),
     );
 
-    expect(html).toContain("Đã chia sẻ quyền chỉnh sửa cho 3 email nội bộ.");
+    expect(html).toContain("Đã đặt quyền chỉnh sửa cho bất kỳ ai có liên kết.");
   });
 
   it("shows warning-only share failure status", () => {
@@ -124,7 +123,6 @@ describe("CanvaResultCard", () => {
       renderResultCard({
         shareJob: {
           status: "FAILED",
-          targetCount: 2,
           lastError: "Không thể chia sẻ Canva tự động.",
         },
       }),
@@ -139,13 +137,12 @@ describe("CanvaResultCard", () => {
       renderResultCard({
         shareJob: {
           status: "DRY_RUN",
-          targetCount: 2,
           lastError: "Dry-run mode: Canva share was not sent.",
         },
       }),
     );
 
-    expect(html).toContain("Đã mô phỏng chia sẻ cho 2 email nội bộ");
-    expect(html).toContain("chưa gửi quyền Canva thật");
+    expect(html).toContain("Đã mô phỏng chia sẻ");
+    expect(html).toContain("chưa đổi quyền Canva thật");
   });
 });

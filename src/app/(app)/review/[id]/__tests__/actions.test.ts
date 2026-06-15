@@ -497,7 +497,6 @@ describe("review actions canva flow", () => {
           {
             id: "share-job-1",
             status: "PENDING",
-            targetCount: 2,
             lastError: null,
             updatedAt: new Date("2026-06-01T00:00:00.000Z"),
           },
@@ -518,7 +517,6 @@ describe("review actions canva flow", () => {
         shareJob: {
           id: "share-job-1",
           status: "PENDING",
-          targetCount: 2,
           lastError: null,
           updatedAt: new Date("2026-06-01T00:00:00.000Z"),
         },

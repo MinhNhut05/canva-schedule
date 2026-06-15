@@ -1,7 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 
-import { shareCanvaDesignWithEmails } from "../src/lib/canva/share-bot";
+import { shareCanvaDesignViaPublicLink } from "../src/lib/canva/share-bot";
 
 loadEnvConfig(process.cwd());
 
@@ -11,6 +11,8 @@ const LOCK_MS = 5 * 60_000;
 const POLL_MS = Number.parseInt(process.env.CANVA_SHARE_WORKER_POLL_MS ?? "5000", 10);
 const DRY_RUN = process.env.CANVA_SHARE_DRY_RUN !== "false";
 const STORAGE_STATE_PATH = process.env.CANVA_BOT_STORAGE_STATE_PATH;
+const USER_AGENT = process.env.CANVA_BOT_USER_AGENT;
+const HEADLESS = process.env.CANVA_BOT_HEADLESS === "true";
 
 function validateWorkerConfig() {
   if (!DRY_RUN && !STORAGE_STATE_PATH) {
@@ -61,6 +63,7 @@ async function finishJob(
   data: {
     status: "SUCCEEDED" | "FAILED" | "DRY_RUN";
     lastError?: string | null;
+    editUrl?: string | null;
   },
 ) {
   const result = await prisma.canvaShareJob.updateMany({
@@ -74,6 +77,9 @@ async function finishJob(
       lockedUntil: null,
       finishedAt: new Date(),
       lastError: data.lastError ?? null,
+      // On success, store the canonical public edit URL so the app can show a link
+      // that other accounts can actually open (not the private Connect-API URL).
+      ...(data.editUrl ? { editUrl: data.editUrl } : {}),
     },
   });
 
@@ -94,18 +100,19 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
       status: "DRY_RUN",
       lastError: "Dry-run mode: Canva share was not sent.",
     });
-    console.log(`[canva-share-worker] dry-run queued ${job.designId} for ${job.targetEmails.length} emails`);
+    console.log(`[canva-share-worker] dry-run: would set public-link edit for ${job.designId}`);
     return;
   }
 
   try {
-    await shareCanvaDesignWithEmails({
+    const publicEditUrl = await shareCanvaDesignViaPublicLink({
       editUrl: job.editUrl ?? "",
-      targetEmails: job.targetEmails,
       storageStatePath: STORAGE_STATE_PATH,
+      userAgent: USER_AGENT,
+      headless: HEADLESS,
     });
 
-    await finishJob(job, { status: "SUCCEEDED" });
+    await finishJob(job, { status: "SUCCEEDED", editUrl: publicEditUrl ?? undefined });
   } catch (error) {
     console.error("[canva-share-worker] share failed", {
       jobId: job.id,

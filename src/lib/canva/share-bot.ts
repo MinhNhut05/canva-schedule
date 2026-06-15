@@ -1,16 +1,20 @@
-import { chromium } from "@playwright/test";
+import { chromium, type Page } from "@playwright/test";
 
 interface ShareCanvaDesignInput {
   editUrl: string;
-  targetEmails: string[];
   storageStatePath?: string;
+  userAgent?: string;
+  /** Headed (false) is required: Canva blocks share mutations from headless browsers. */
+  headless?: boolean;
 }
 
-const SHARE_BUTTON_NAME = /share|chia sẻ/i;
-const EMAIL_INPUT_NAME = /email|people|người|mời/i;
-const EDIT_PERMISSION_NAME = /can edit|edit|chỉnh sửa/i;
-const SEND_BUTTON_NAME = /send|share|invite|gửi|chia sẻ|mời/i;
 const ALLOWED_CANVA_HOSTS = new Set(["www.canva.com", "canva.com"]);
+
+// Canva UI is bilingual depending on the account language; match EN + VI.
+const SHARE_BUTTON = /^(share|chia sẻ)$/i;
+const ACCESS_LEVEL_COMBO = /access|quyền truy cập|only you|chỉ bạn|anyone with|bất cứ ai/i;
+const ANYONE_WITH_LINK_OPTION = /anyone with (this )?link|bất cứ ai có liên kết/i;
+const PERMISSION_ERROR = /can.?t update|couldn.?t update|không thể cập nhật|cấp độ quyền|permission level/i;
 
 function validateCanvaEditUrl(value: string) {
   const url = new URL(value);
@@ -19,49 +23,91 @@ function validateCanvaEditUrl(value: string) {
     throw new Error("Invalid Canva edit URL host.");
   }
 
-  if (!/^\/design\/[^/]+\/edit(\/|$)/.test(url.pathname)) {
+  // Accept the real Canva edit URL shapes:
+  //   /api/design/<token>/edit        (Connect API edit_url stored in production)
+  //   /design/<id>/<token>/edit       (tokenized UI edit URL)
+  //   /design/<id>/edit               (simple UI edit URL)
+  if (!/^\/(?:api\/)?design\/[^/]+(?:\/[^/]+)?\/edit(?:\/|$)/.test(url.pathname)) {
     throw new Error("Invalid Canva design edit URL path.");
   }
 
   return url.toString();
 }
 
-export async function shareCanvaDesignWithEmails(input: ShareCanvaDesignInput) {
+/** Open the Share panel; the Canva editor is heavy so retry until the access combobox shows. */
+async function openSharePanel(page: Page) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const shareButton = page.getByText(SHARE_BUTTON).first();
+    if (await shareButton.isVisible().catch(() => false)) {
+      await shareButton.click({ timeout: 8_000 }).catch(() => undefined);
+      await page.waitForTimeout(2_500);
+      const combo = page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first();
+      if (await combo.isVisible().catch(() => false)) return;
+    }
+    await page.waitForTimeout(5_000);
+  }
+  throw new Error("Canva Share panel did not load in time.");
+}
+
+/**
+ * Make a generated Canva design editable by anyone with the link.
+ *
+ * Why this instead of inviting internal users by email: the bot account is not a
+ * team admin and target users live in other Canva teams, so per-email invites are
+ * rejected. Setting the design link to "anyone with the link" (defaulting to edit)
+ * lets every internal user open and edit it.
+ *
+ * Must run headed with the automation flag disabled — Canva silently rejects share
+ * mutations ("can't update permission level") from headless / `navigator.webdriver`
+ * browsers, even though reads succeed.
+ */
+export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput): Promise<string | null> {
   if (!input.editUrl) {
     throw new Error("Missing Canva edit URL for sharing.");
   }
 
-  if (input.targetEmails.length === 0) {
-    return;
-  }
-
   const editUrl = validateCanvaEditUrl(input.editUrl);
-  const browser = await chromium.launch({ headless: true });
+
+  const browser = await chromium.launch({
+    headless: input.headless ?? false,
+    args: ["--disable-blink-features=AutomationControlled"],
+    ignoreDefaultArgs: ["--enable-automation"],
+  });
 
   try {
-    const context = await browser.newContext(
-      input.storageStatePath ? { storageState: input.storageStatePath } : undefined,
-    );
+    const context = await browser.newContext({
+      ...(input.storageStatePath ? { storageState: input.storageStatePath } : {}),
+      ...(input.userAgent ? { userAgent: input.userAgent } : {}),
+      viewport: { width: 1440, height: 900 },
+    });
     const page = await context.newPage();
 
     await page.goto(editUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.getByRole("button", { name: SHARE_BUTTON_NAME }).click({ timeout: 30_000 });
+    await openSharePanel(page);
 
-    const emailInput = page.getByRole("textbox", { name: EMAIL_INPUT_NAME }).first();
-    await emailInput.click({ timeout: 30_000 });
+    // Open the access-level dropdown and choose "anyone with the link".
+    // Canva defaults the new permission to "can edit", which is what we want.
+    await page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first().click({ timeout: 15_000 });
+    await page.getByText(ANYONE_WITH_LINK_OPTION).first().click({ timeout: 15_000 });
 
-    for (const email of input.targetEmails) {
-      await emailInput.fill(email);
-      await emailInput.press("Enter");
+    // Canva applies the change immediately; surface its rejection if it fails.
+    await page.waitForTimeout(4_000);
+    const rejected = await page.getByText(PERMISSION_ERROR).first().isVisible().catch(() => false);
+    if (rejected) {
+      throw new Error("Canva rejected the access-level update.");
     }
 
-    const editPermission = page.getByRole("button", { name: EDIT_PERMISSION_NAME }).first();
-    if (await editPermission.isVisible({ timeout: 5_000 }).catch(() => false)) {
-      await editPermission.click();
-    }
+    // Let the mutation settle before tearing the browser down.
+    await page.waitForTimeout(2_000);
 
-    await page.getByRole("button", { name: SEND_BUTTON_NAME }).last().click({ timeout: 30_000 });
-    await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => undefined);
+    // Capture the canonical public edit URL (the one others can open). Opening the
+    // private Connect-API edit_url redirects here: /design/<id>/<token>/edit.
+    // The Connect API only exposes the private /api/design/<JWT>/edit form.
+    const current = new URL(page.url());
+    if (/^\/design\/[^/]+\/[^/]+\/edit$/.test(current.pathname)) {
+      return `${current.origin}${current.pathname}`;
+    }
+    return null;
   } finally {
     await browser.close();
   }

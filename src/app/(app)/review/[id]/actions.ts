@@ -581,13 +581,21 @@ export async function loadCanvaArtifacts(uploadId: string) {
       if (artifact.status === "SUCCEEDED" && artifact.designId) {
         try {
           const urls = await resolveArtifactUrls(artifact.designId);
+          const shareJob = shareJobs.get(shareJobSummaryKey(artifact.artifactType, artifact.designId)) ?? null;
+          // Prefer the bot-captured public link once sharing succeeded: the Connect
+          // API editUrl is private to the API account (other users get 403). Only the
+          // canonical /design/<id>/<token>/edit form is public — older jobs may still
+          // hold the private /api/design form, so guard on the shape.
+          const capturedEditUrl = shareJob?.status === "SUCCEEDED" ? shareJob.editUrl : null;
+          const publicEditUrl =
+            capturedEditUrl && /\/design\/[^/]+\/[^/]+\/edit/.test(capturedEditUrl) ? capturedEditUrl : null;
 
           return {
             ...artifact,
-            editUrl: urls.editUrl,
+            editUrl: publicEditUrl || urls.editUrl,
             viewUrl: urls.viewUrl,
             thumbnailUrl: urls.thumbnailUrl,
-            shareJob: shareJobs.get(shareJobSummaryKey(artifact.artifactType, artifact.designId)) ?? null,
+            shareJob,
           };
         } catch {
           return {

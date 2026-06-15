@@ -18,7 +18,6 @@ type CanvaShareJobStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "SKI
 
 interface CanvaShareJobSummary {
   status: CanvaShareJobStatus;
-  targetCount: number;
   lastError: string | null;
 }
 
@@ -49,21 +48,21 @@ function getStatusLabel(status: ArtifactStatus) {
 }
 
 function getShareStatusText(shareJob?: CanvaShareJobSummary | null) {
-  if (!shareJob) return "Đang chờ xếp hàng chia sẻ Canva cho user nội bộ.";
+  if (!shareJob) return "Đang chờ xếp hàng chia sẻ Canva.";
   if (shareJob.status === "SUCCEEDED") {
-    return `Đã chia sẻ quyền chỉnh sửa cho ${shareJob.targetCount} email nội bộ.`;
+    return "Đã đặt quyền chỉnh sửa cho bất kỳ ai có liên kết.";
   }
   if (shareJob.status === "PENDING" || shareJob.status === "RUNNING") {
-    return `Đang chia sẻ quyền chỉnh sửa cho ${shareJob.targetCount} email nội bộ.`;
+    return "Đang đặt quyền chỉnh sửa cho bất kỳ ai có liên kết…";
   }
   if (shareJob.status === "DRY_RUN") {
-    return `Đã mô phỏng chia sẻ cho ${shareJob.targetCount} email nội bộ; chưa gửi quyền Canva thật.`;
+    return "Đã mô phỏng chia sẻ; chưa đổi quyền Canva thật.";
   }
   if (shareJob.status === "SKIPPED") {
-    return shareJob.lastError ?? "Không có email nội bộ để chia sẻ Canva.";
+    return shareJob.lastError ?? "Đã bỏ qua chia sẻ Canva.";
   }
 
-  return `Thiết kế đã tạo nhưng chưa chia sẻ tự động được: ${shareJob.lastError ?? "vui lòng chia sẻ thủ công trong Canva."}`;
+  return `Thiết kế đã tạo nhưng chưa chia sẻ tự động được: ${shareJob.lastError ?? "vui lòng đặt quyền 'bất kỳ ai có liên kết' thủ công trong Canva."}`;
 }
 
 function getShareTone(shareJob?: CanvaShareJobSummary | null) {

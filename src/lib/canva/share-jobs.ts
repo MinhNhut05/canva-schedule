@@ -17,38 +17,15 @@ interface EnqueueCanvaShareJobInput {
 export interface CanvaShareJobSummary {
   id: string;
   status: ShareJobStatus;
-  targetCount: number;
   lastError: string | null;
   updatedAt: Date;
-}
-
-export function normalizeShareTargetEmails(emails: Array<string | null | undefined>) {
-  return Array.from(
-    new Set(
-      emails
-        .map((email) => email?.trim().toLowerCase())
-        .filter((email): email is string => Boolean(email)),
-    ),
-  );
-}
-
-export async function getInternalShareTargetEmails() {
-  const users = await db.user.findMany({
-    where: {
-      email: { not: null },
-    },
-    select: {
-      email: true,
-    },
-  });
-
-  return normalizeShareTargetEmails(users.map((user) => user.email));
+  /** Canonical public edit URL captured by the bot once sharing SUCCEEDED. */
+  editUrl?: string | null;
 }
 
 async function upsertCanvaShareJob(
   input: EnqueueCanvaShareJobInput,
   status: ShareJobStatus,
-  targetEmails: string[],
   lastError: string | null,
 ) {
   return db.canvaShareJob.upsert({
@@ -64,36 +41,34 @@ async function upsertCanvaShareJob(
       artifactType: input.artifactType,
       designId: input.designId,
       editUrl: input.editUrl,
-      targetEmails,
+      targetEmails: [],
       status,
       lastError,
-      finishedAt: status === "SKIPPED" ? new Date() : null,
+      finishedAt: null,
     },
     update: {
       editUrl: input.editUrl,
-      targetEmails,
       status,
       lastError,
       lockedUntil: null,
       startedAt: null,
-      finishedAt: status === "SKIPPED" ? new Date() : null,
+      finishedAt: null,
     },
   });
 }
 
 export async function enqueueCanvaShareJob(input: EnqueueCanvaShareJobInput) {
-  const targetEmails = await getInternalShareTargetEmails();
-  const status: ShareJobStatus = targetEmails.length > 0 ? "PENDING" : "SKIPPED";
-  const lastError = targetEmails.length > 0 ? null : "Không có email nội bộ để chia sẻ Canva.";
-
-  return upsertCanvaShareJob(input, status, targetEmails, lastError);
+  // Sharing is done by setting the design link to "anyone with the link" (edit),
+  // not by inviting internal users per email, so every successfully generated
+  // design gets a pending share job for the worker to pick up.
+  return upsertCanvaShareJob(input, "PENDING", null);
 }
 
 export async function recordCanvaShareEnqueueFailure(
   input: EnqueueCanvaShareJobInput,
   message: string,
 ) {
-  return upsertCanvaShareJob(input, "ENQUEUE_FAILED", [], message);
+  return upsertCanvaShareJob(input, "ENQUEUE_FAILED", message);
 }
 
 export function shareJobSummaryKey(artifactType: string, designId: string) {
@@ -109,9 +84,9 @@ export async function getLatestShareJobSummaries(uploadId: string) {
       artifactType: true,
       designId: true,
       status: true,
-      targetEmails: true,
       lastError: true,
       updatedAt: true,
+      editUrl: true,
     },
   });
 
@@ -124,9 +99,9 @@ export async function getLatestShareJobSummaries(uploadId: string) {
     summaries.set(key, {
       id: job.id,
       status: job.status as ShareJobStatus,
-      targetCount: job.targetEmails.length,
       lastError: job.lastError,
       updatedAt: job.updatedAt,
+      editUrl: job.editUrl,
     });
   }
 

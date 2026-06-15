@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "canva:probe": "tsx scripts/canva-probe.ts",
     "canva:oauth": "tsx scripts/canva-oauth.ts",
+    "canva:bot-login": "tsx scripts/canva-bot-login.ts",
     "canva:share-worker": "tsx scripts/canva-share-worker.ts"
   },
   "prisma": {

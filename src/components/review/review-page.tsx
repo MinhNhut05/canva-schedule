@@ -47,7 +47,6 @@ type CanvaShareJobStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "SKI
 interface CanvaShareJobSummary {
   id: string;
   status: CanvaShareJobStatus;
-  targetCount: number;
   lastError: string | null;
   updatedAt: Date;
 }
