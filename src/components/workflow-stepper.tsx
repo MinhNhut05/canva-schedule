@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 
@@ -21,6 +22,11 @@ export interface WorkflowStepperProps {
   errorStep?: number | null;
   /** Whether to show a spinner icon in the active step circle */
   activeLoading?: boolean;
+  /**
+   * Visual theme. "cool" (default) keeps the existing app theme used on the
+   * review page; "paper" renders the warm SOHA Travel look used on the upload page.
+   */
+  variant?: "cool" | "paper";
 }
 
 function getStepStatus(
@@ -44,10 +50,73 @@ export function WorkflowStepper({
   activeStep,
   errorStep,
   activeLoading,
+  variant = "cool",
 }: WorkflowStepperProps) {
   const router = useRouter();
 
   const tooltipText = getTooltipText(errorStep);
+
+  if (variant === "paper") {
+    return (
+      <div className="up-stepper">
+        {STEPPER_LABELS.map((label, index) => {
+          const stepNumber = index + 1;
+          const status = getStepStatus(stepNumber, activeStep, errorStep);
+          const showConnector = index > 0;
+          const prevStatus = getStepStatus(index, activeStep, errorStep);
+
+          const dotContent = (
+            <>
+              {status === "completed" && <Check size={18} />}
+              {status === "active" && activeLoading && (
+                <Loader2 size={18} className="up-spin" />
+              )}
+              {status === "active" && !activeLoading && stepNumber}
+              {status === "error" && <AlertTriangle size={18} />}
+              {status === "future" && stepNumber}
+            </>
+          );
+
+          return (
+            <Fragment key={label}>
+              {showConnector && (
+                <div
+                  className={cn("up-step-conn", prevStatus === "completed" && "done")}
+                  aria-hidden="true"
+                />
+              )}
+              <div
+                className={cn(
+                  "up-step",
+                  status === "completed" && "done",
+                  status === "active" && "active",
+                  status === "error" && "error",
+                )}
+              >
+                {status === "error" ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="up-step-dot" aria-label={label}>
+                          {dotContent}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>{tooltipText}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <div className="up-step-dot" aria-label={label}>
+                    {dotContent}
+                  </div>
+                )}
+                <span className="up-step-lbl">{label}</span>
+              </div>
+            </Fragment>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full items-start justify-between px-2 py-3 md:px-4 md:py-4">

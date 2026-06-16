@@ -1,0 +1,114 @@
+import { chromium, type Page } from "@playwright/test";
+
+interface ShareCanvaDesignInput {
+  editUrl: string;
+  storageStatePath?: string;
+  userAgent?: string;
+  /** Headed (false) is required: Canva blocks share mutations from headless browsers. */
+  headless?: boolean;
+}
+
+const ALLOWED_CANVA_HOSTS = new Set(["www.canva.com", "canva.com"]);
+
+// Canva UI is bilingual depending on the account language; match EN + VI.
+const SHARE_BUTTON = /^(share|chia sẻ)$/i;
+const ACCESS_LEVEL_COMBO = /access|quyền truy cập|only you|chỉ bạn|anyone with|bất cứ ai/i;
+const ANYONE_WITH_LINK_OPTION = /anyone with (this )?link|bất cứ ai có liên kết/i;
+const PERMISSION_ERROR = /can.?t update|couldn.?t update|không thể cập nhật|cấp độ quyền|permission level/i;
+
+function validateCanvaEditUrl(value: string) {
+  const url = new URL(value);
+
+  if (url.protocol !== "https:" || !ALLOWED_CANVA_HOSTS.has(url.hostname)) {
+    throw new Error("Invalid Canva edit URL host.");
+  }
+
+  // Accept the real Canva edit URL shapes:
+  //   /api/design/<token>/edit        (Connect API edit_url stored in production)
+  //   /design/<id>/<token>/edit       (tokenized UI edit URL)
+  //   /design/<id>/edit               (simple UI edit URL)
+  if (!/^\/(?:api\/)?design\/[^/]+(?:\/[^/]+)?\/edit(?:\/|$)/.test(url.pathname)) {
+    throw new Error("Invalid Canva design edit URL path.");
+  }
+
+  return url.toString();
+}
+
+/** Open the Share panel; the Canva editor is heavy so retry until the access combobox shows. */
+async function openSharePanel(page: Page) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const shareButton = page.getByText(SHARE_BUTTON).first();
+    if (await shareButton.isVisible().catch(() => false)) {
+      await shareButton.click({ timeout: 8_000 }).catch(() => undefined);
+      await page.waitForTimeout(2_500);
+      const combo = page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first();
+      if (await combo.isVisible().catch(() => false)) return;
+    }
+    await page.waitForTimeout(5_000);
+  }
+  throw new Error("Canva Share panel did not load in time.");
+}
+
+/**
+ * Make a generated Canva design editable by anyone with the link.
+ *
+ * Why this instead of inviting internal users by email: the bot account is not a
+ * team admin and target users live in other Canva teams, so per-email invites are
+ * rejected. Setting the design link to "anyone with the link" (defaulting to edit)
+ * lets every internal user open and edit it.
+ *
+ * Must run headed with the automation flag disabled — Canva silently rejects share
+ * mutations ("can't update permission level") from headless / `navigator.webdriver`
+ * browsers, even though reads succeed.
+ */
+export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput): Promise<string | null> {
+  if (!input.editUrl) {
+    throw new Error("Missing Canva edit URL for sharing.");
+  }
+
+  const editUrl = validateCanvaEditUrl(input.editUrl);
+
+  const browser = await chromium.launch({
+    headless: input.headless ?? false,
+    args: ["--disable-blink-features=AutomationControlled"],
+    ignoreDefaultArgs: ["--enable-automation"],
+  });
+
+  try {
+    const context = await browser.newContext({
+      ...(input.storageStatePath ? { storageState: input.storageStatePath } : {}),
+      ...(input.userAgent ? { userAgent: input.userAgent } : {}),
+      viewport: { width: 1440, height: 900 },
+    });
+    const page = await context.newPage();
+
+    await page.goto(editUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await openSharePanel(page);
+
+    // Open the access-level dropdown and choose "anyone with the link".
+    // Canva defaults the new permission to "can edit", which is what we want.
+    await page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first().click({ timeout: 15_000 });
+    await page.getByText(ANYONE_WITH_LINK_OPTION).first().click({ timeout: 15_000 });
+
+    // Canva applies the change immediately; surface its rejection if it fails.
+    await page.waitForTimeout(4_000);
+    const rejected = await page.getByText(PERMISSION_ERROR).first().isVisible().catch(() => false);
+    if (rejected) {
+      throw new Error("Canva rejected the access-level update.");
+    }
+
+    // Let the mutation settle before tearing the browser down.
+    await page.waitForTimeout(2_000);
+
+    // Capture the canonical public edit URL (the one others can open). Opening the
+    // private Connect-API edit_url redirects here: /design/<id>/<token>/edit.
+    // The Connect API only exposes the private /api/design/<JWT>/edit form.
+    const current = new URL(page.url());
+    if (/^\/design\/[^/]+\/[^/]+\/edit$/.test(current.pathname)) {
+      return `${current.origin}${current.pathname}`;
+    }
+    return null;
+  } finally {
+    await browser.close();
+  }
+}

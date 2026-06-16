@@ -10,6 +10,7 @@ import {
   pollAutofillJob,
   type CreateDesignResult,
 } from "./jobs";
+import { enqueueCanvaShareJob, recordCanvaShareEnqueueFailure } from "./share-jobs";
 import {
   resolveTemplate,
   applyFieldMapping,
@@ -52,7 +53,7 @@ async function persistSuccess(
 ): Promise<ArtifactResult> {
   const urls = await getFreshDesignUrls(result.designId);
 
-  await db.canvaArtifact.update({
+  const artifact = await db.canvaArtifact.update({
     where: artifactWhere(input),
     data: {
       status: "SUCCEEDED",
@@ -60,6 +61,31 @@ async function persistSuccess(
       errorMessage: null,
     },
   });
+
+  const shareJobInput = {
+    canvaArtifactId: artifact.id,
+    uploadId: input.uploadId,
+    artifactType: input.kind,
+    designId: result.designId,
+    editUrl: urls.editUrl,
+  };
+
+  try {
+    await enqueueCanvaShareJob(shareJobInput);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown share enqueue error";
+
+    try {
+      await recordCanvaShareEnqueueFailure(shareJobInput, message);
+    } catch {
+      console.warn("[Canva persistSuccess] share job enqueue failed", {
+        uploadId: input.uploadId,
+        kind: input.kind,
+        designId: result.designId,
+        message,
+      });
+    }
+  }
 
   return {
     artifactType: input.kind,

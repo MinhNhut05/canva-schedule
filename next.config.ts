@@ -17,6 +17,9 @@ function validateStartupEnv(): void {
     "NEXT_PUBLIC_CANVA_ACCESS_TOKEN",
     "NEXT_PUBLIC_CANVA_REFRESH_TOKEN",
     "NEXT_PUBLIC_CANVA_TEMPLATE_ID",
+    "NEXT_PUBLIC_CANVA_SHARE_WORKER_POLL_MS",
+    "NEXT_PUBLIC_CANVA_SHARE_DRY_RUN",
+    "NEXT_PUBLIC_CANVA_BOT_STORAGE_STATE_PATH",
     "NEXT_PUBLIC_DATABASE_URL",
   ];
   const leaked = forbiddenKeys.filter((key) => process.env[key] !== undefined);

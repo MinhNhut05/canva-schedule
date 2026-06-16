@@ -104,4 +104,45 @@ describe("CanvaResultCard", () => {
 
     expect(html).not.toContain("Thử lại");
   });
+
+  it("shows share success status as anyone-with-link edit", () => {
+    const html = renderToStaticMarkup(
+      renderResultCard({
+        shareJob: {
+          status: "SUCCEEDED",
+          lastError: null,
+        },
+      }),
+    );
+
+    expect(html).toContain("Đã đặt quyền chỉnh sửa cho bất kỳ ai có liên kết.");
+  });
+
+  it("shows warning-only share failure status", () => {
+    const html = renderToStaticMarkup(
+      renderResultCard({
+        shareJob: {
+          status: "FAILED",
+          lastError: "Không thể chia sẻ Canva tự động.",
+        },
+      }),
+    );
+
+    expect(html).toContain("Thiết kế đã tạo nhưng chưa chia sẻ tự động được");
+    expect(html).toContain("Không thể chia sẻ Canva tự động.");
+  });
+
+  it("does not report dry-run as a real share", () => {
+    const html = renderToStaticMarkup(
+      renderResultCard({
+        shareJob: {
+          status: "DRY_RUN",
+          lastError: "Dry-run mode: Canva share was not sent.",
+        },
+      }),
+    );
+
+    expect(html).toContain("Đã mô phỏng chia sẻ");
+    expect(html).toContain("chưa đổi quyền Canva thật");
+  });
 });

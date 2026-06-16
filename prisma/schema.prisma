@@ -18,6 +18,7 @@ enum UploadStatus {
 model User {
   id                 String   @id @default(cuid())
   username           String   @unique
+  email              String?  @unique
   name               String
   passwordHash       String
   role               String   @default("member")
@@ -99,10 +100,35 @@ model CanvaArtifact {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  upload Upload @relation(fields: [uploadId], references: [id])
+  upload    Upload          @relation(fields: [uploadId], references: [id])
+  shareJobs CanvaShareJob[]
 
   @@unique([uploadId, artifactType])
   @@map("canva_artifacts")
+}
+
+model CanvaShareJob {
+  id              String    @id @default(cuid())
+  canvaArtifactId String
+  uploadId        String
+  artifactType    String
+  designId        String
+  editUrl         String?
+  targetEmails    String[]
+  status          String    @default("PENDING") // "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "SKIPPED" | "ENQUEUE_FAILED" | "DRY_RUN"
+  attemptCount    Int       @default(0)
+  lastError       String?   @db.Text
+  lockedUntil     DateTime?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  canvaArtifact CanvaArtifact @relation(fields: [canvaArtifactId], references: [id], onDelete: Cascade)
+
+  @@unique([canvaArtifactId, designId])
+  @@index([status, lockedUntil])
+  @@map("canva_share_jobs")
 }
 
 model CompanyRule {

@@ -25,6 +25,9 @@ async function resetTestUserPassword() {
 }
 
 test.describe("Authentication Flow", () => {
+  // Tall viewport so the sidebar footer (logout) is within the clickable area.
+  test.use({ viewport: { width: 1280, height: 1600 } });
+
   test.beforeEach(async ({ page }) => {
     await resetTestUserPassword();
     await page.context().clearCookies();
@@ -92,7 +95,9 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/\/upload/, { timeout: 10000 });
 
     // Logout — button text is "Đăng xuất"
-    await page.getByRole("button", { name: "Đăng xuất" }).click();
+    const logoutButton = page.getByRole("button", { name: "Đăng xuất" });
+    await logoutButton.scrollIntoViewIfNeeded();
+    await logoutButton.click();
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
     // Verify can't access dashboard anymore
@@ -124,7 +129,9 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/\/upload/, { timeout: 10000 });
 
     // Logout
-    await page.getByRole("button", { name: "Đăng xuất" }).click();
+    const logoutButton = page.getByRole("button", { name: "Đăng xuất" });
+    await logoutButton.scrollIntoViewIfNeeded();
+    await logoutButton.click();
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
     // Login again
@@ -138,6 +145,9 @@ test.describe("Authentication Flow", () => {
 });
 
 test.describe("Password Change", () => {
+  // Tall viewport so the sidebar footer (logout) is within the clickable area.
+  test.use({ viewport: { width: 1280, height: 1600 } });
+
   const NEW_PASSWORD = "newpass123";
 
   test.beforeEach(async ({ page }) => {
@@ -177,7 +187,9 @@ test.describe("Password Change", () => {
     ).toBeVisible({ timeout: 15000 });
 
     // Logout
-    await page.getByRole("button", { name: "Đăng xuất" }).click();
+    const logoutButton = page.getByRole("button", { name: "Đăng xuất" });
+    await logoutButton.scrollIntoViewIfNeeded();
+    await logoutButton.click();
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
     // Login with new password should work

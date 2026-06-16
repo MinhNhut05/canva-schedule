@@ -312,6 +312,7 @@ async function seedApprovedReviewUpload() {
     throw new Error("Seed user admin is missing. Run prisma db seed first.");
   }
 
+  await prisma.canvaShareJob.deleteMany({ where: { uploadId: TEST_UPLOAD_ID } });
   await prisma.canvaArtifact.deleteMany({ where: { uploadId: TEST_UPLOAD_ID } });
   await prisma.upload.deleteMany({ where: { id: TEST_UPLOAD_ID } });
 

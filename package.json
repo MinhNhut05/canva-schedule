@@ -19,7 +19,9 @@
     "test:fixtures": "tsx tests/fixtures/documents/create-fixtures.ts",
     "test:e2e": "playwright test",
     "canva:probe": "tsx scripts/canva-probe.ts",
-    "canva:oauth": "tsx scripts/canva-oauth.ts"
+    "canva:oauth": "tsx scripts/canva-oauth.ts",
+    "canva:bot-login": "tsx scripts/canva-bot-login.ts",
+    "canva:share-worker": "tsx scripts/canva-share-worker.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -50,6 +52,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
+    "@next/env": "^15.3.1",
     "@pdf-lib/fontkit": "^1.1.1",
     "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4.2.2",

@@ -9,6 +9,8 @@ const {
   generateArtifact,
   getArtifactsForUpload,
   resolveArtifactUrls,
+  getLatestShareJobSummaries,
+  shareJobSummaryKey,
   resolveTemplatePair,
   buildOneDayItineraryPayload,
   buildOneDayMenuPayload,
@@ -16,7 +18,11 @@ const {
   buildTwoDayMenuPayload,
   buildThreeDayItineraryPayload,
   buildThreeDayMenuPayload,
+  buildFourDayItineraryPayload,
+  buildFourDayMenuPayload,
   getCanvaGenerationOptions,
+  getGlobalCooldown,
+  getRemainingCooldownSeconds,
   getDraft,
   getOneDayMenuMergeWarning,
   parseStructuredDraft,
@@ -30,6 +36,8 @@ const {
   generateArtifact: vi.fn(),
   getArtifactsForUpload: vi.fn(),
   resolveArtifactUrls: vi.fn(),
+  getLatestShareJobSummaries: vi.fn(),
+  shareJobSummaryKey: vi.fn((artifactType: string, designId: string) => `${artifactType}:${designId}`),
   resolveTemplatePair: vi.fn(async (duration: "ONE_DAY" | "TWO_DAY" | "THREE_DAY") => ({
     duration,
     itineraryTemplateId: `${duration}-itinerary-template`,
@@ -47,7 +55,11 @@ const {
   buildTwoDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "two-day-menu" } })),
   buildThreeDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "three-day-itinerary" } })),
   buildThreeDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "three-day-menu" } })),
+  buildFourDayItineraryPayload: vi.fn(() => ({ itinerary: { type: "text", text: "four-day-itinerary" } })),
+  buildFourDayMenuPayload: vi.fn(() => ({ menu: { type: "text", text: "four-day-menu" } })),
   getCanvaGenerationOptions: vi.fn(),
+  getGlobalCooldown: vi.fn(),
+  getRemainingCooldownSeconds: vi.fn(() => 60),
   getDraft: vi.fn(),
   getOneDayMenuMergeWarning: vi.fn(),
   parseStructuredDraft: vi.fn((value) => ({ success: true, data: value })),
@@ -83,6 +95,16 @@ vi.mock("@/lib/canva/adapter", () => ({
   resolveArtifactUrls,
 }));
 
+vi.mock("@/lib/canva/share-jobs", () => ({
+  getLatestShareJobSummaries,
+  shareJobSummaryKey,
+}));
+
+vi.mock("@/lib/canva/cooldown", () => ({
+  getGlobalCooldown,
+  getRemainingCooldownSeconds,
+}));
+
 vi.mock("@/lib/canva/template-resolver", () => ({
   resolveTemplatePair,
 }));
@@ -94,6 +116,8 @@ vi.mock("@/lib/canva/payload", () => ({
   buildTwoDayMenuPayload,
   buildThreeDayItineraryPayload,
   buildThreeDayMenuPayload,
+  buildFourDayItineraryPayload,
+  buildFourDayMenuPayload,
 }));
 
 vi.mock("@/lib/review/draft", () => ({
@@ -170,6 +194,9 @@ describe("review actions canva flow", () => {
     getDraft.mockResolvedValue(oneDayDraft);
     getOneDayMenuMergeWarning.mockReturnValue(null);
     persistCanvaGenerationOptions.mockResolvedValue({ mergeMenuIntoItinerary: false });
+    getLatestShareJobSummaries.mockResolvedValue(new Map());
+    getGlobalCooldown.mockResolvedValue(null);
+    getRemainingCooldownSeconds.mockReturnValue(60);
     findFirst.mockResolvedValue(approvedOneDayUpload);
   });
 
@@ -265,7 +292,9 @@ describe("review actions canva flow", () => {
   });
 
   it("generateCanva uses three-day payload builders", async () => {
-    findFirst.mockResolvedValueOnce(approvedThreeDayUpload);
+    findFirst
+      .mockResolvedValueOnce(approvedThreeDayUpload)
+      .mockResolvedValueOnce(approvedThreeDayUpload);
     getDraft.mockResolvedValueOnce(threeDayDraft);
     generateArtifact
       .mockResolvedValueOnce({
@@ -461,6 +490,19 @@ describe("review actions canva flow", () => {
       viewUrl: "https://canva.com/view/design-1",
       thumbnailUrl: "https://cdn.canva.com/design-1.png",
     });
+    getLatestShareJobSummaries.mockResolvedValue(
+      new Map([
+        [
+          "ITINERARY:design-1",
+          {
+            id: "share-job-1",
+            status: "PENDING",
+            lastError: null,
+            updatedAt: new Date("2026-06-01T00:00:00.000Z"),
+          },
+        ],
+      ]),
+    );
 
     await expect(loadCanvaArtifacts("upload-1")).resolves.toEqual([
       {
@@ -472,6 +514,12 @@ describe("review actions canva flow", () => {
         editUrl: "https://canva.com/edit/design-1",
         viewUrl: "https://canva.com/view/design-1",
         thumbnailUrl: "https://cdn.canva.com/design-1.png",
+        shareJob: {
+          id: "share-job-1",
+          status: "PENDING",
+          lastError: null,
+          updatedAt: new Date("2026-06-01T00:00:00.000Z"),
+        },
       },
       {
         id: "artifact-2",
@@ -482,6 +530,7 @@ describe("review actions canva flow", () => {
         editUrl: "",
         viewUrl: "",
         thumbnailUrl: undefined,
+        shareJob: null,
       },
     ]);
 

@@ -17,6 +17,7 @@ import {
   type TourDuration,
 } from "@/lib/canva/template-resolver";
 import { getGlobalCooldown, getRemainingCooldownSeconds } from "@/lib/canva/cooldown";
+import { getLatestShareJobSummaries, shareJobSummaryKey } from "@/lib/canva/share-jobs";
 import {
   buildOneDayItineraryPayload,
   buildOneDayMenuPayload,
@@ -111,6 +112,19 @@ async function requireAuth() {
   return session.user.id;
 }
 
+async function requireSessionUser() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  return {
+    id: session.user.id,
+    role: session.user.role ?? "member",
+  };
+}
+
 async function getAuthorizedUpload(uploadId: string) {
   const userId = await requireAuth();
 
@@ -131,14 +145,17 @@ async function getAuthorizedUpload(uploadId: string) {
 }
 
 async function getUploadForRead(uploadId: string) {
-  const userId = await requireAuth();
+  const user = await requireSessionUser();
 
-  if (!userId) {
+  if (!user) {
     return { userId: null, upload: null };
   }
 
   const upload = await prisma.upload.findFirst({
-    where: { id: uploadId },
+    where: {
+      id: uploadId,
+      ...(user.role === "admin" ? {} : { userId: user.id }),
+    },
     select: {
       id: true,
       reviewStatus: true,
@@ -147,7 +164,7 @@ async function getUploadForRead(uploadId: string) {
     },
   });
 
-  return { userId, upload };
+  return { userId: user.id, upload };
 }
 
 export async function saveDraftField(
@@ -273,6 +290,32 @@ export async function saveCanvaGenerationOptions(
 }
 
 export async function generateCanva(uploadId: string): Promise<GenerateCanvaResponse> {
+  const { userId, upload } = await getAuthorizedUpload(uploadId);
+
+  if (!userId) {
+    return {
+      success: false,
+      results: [],
+      error: "Phiên đăng nhập hết hạn.",
+    };
+  }
+
+  if (!upload) {
+    return {
+      success: false,
+      results: [],
+      error: "Không tìm thấy tài liệu.",
+    };
+  }
+
+  if (upload.reviewStatus !== "APPROVED") {
+    return {
+      success: false,
+      results: [],
+      error: "Nội dung chưa được duyệt.",
+    };
+  }
+
   const activeRequest = activeCanvaGenerationByUpload.get(uploadId);
 
   if (activeRequest) {
@@ -528,19 +571,31 @@ export async function loadCanvaArtifacts(uploadId: string) {
     return [];
   }
 
-  const artifacts = await getArtifactsForUpload(uploadId);
+  const [artifacts, shareJobs] = await Promise.all([
+    getArtifactsForUpload(uploadId),
+    getLatestShareJobSummaries(uploadId),
+  ]);
 
   return Promise.all(
     artifacts.map(async (artifact) => {
       if (artifact.status === "SUCCEEDED" && artifact.designId) {
         try {
           const urls = await resolveArtifactUrls(artifact.designId);
+          const shareJob = shareJobs.get(shareJobSummaryKey(artifact.artifactType, artifact.designId)) ?? null;
+          // Prefer the bot-captured public link once sharing succeeded: the Connect
+          // API editUrl is private to the API account (other users get 403). Only the
+          // canonical /design/<id>/<token>/edit form is public — older jobs may still
+          // hold the private /api/design form, so guard on the shape.
+          const capturedEditUrl = shareJob?.status === "SUCCEEDED" ? shareJob.editUrl : null;
+          const publicEditUrl =
+            capturedEditUrl && /\/design\/[^/]+\/[^/]+\/edit/.test(capturedEditUrl) ? capturedEditUrl : null;
 
           return {
             ...artifact,
-            editUrl: urls.editUrl,
+            editUrl: publicEditUrl || urls.editUrl,
             viewUrl: urls.viewUrl,
             thumbnailUrl: urls.thumbnailUrl,
+            shareJob,
           };
         } catch {
           return {
@@ -548,6 +603,7 @@ export async function loadCanvaArtifacts(uploadId: string) {
             editUrl: "",
             viewUrl: "",
             thumbnailUrl: undefined,
+            shareJob: shareJobs.get(shareJobSummaryKey(artifact.artifactType, artifact.designId)) ?? null,
           };
         }
       }
@@ -557,6 +613,7 @@ export async function loadCanvaArtifacts(uploadId: string) {
         editUrl: "",
         viewUrl: "",
         thumbnailUrl: undefined,
+        shareJob: null,
       };
     }),
   );
