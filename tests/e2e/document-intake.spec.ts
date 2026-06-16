@@ -56,7 +56,7 @@ test.describe("Document intake flow", () => {
     await chooseDocument(page, PDF_FIXTURE);
 
     await expect(page.getByText("File đã sẵn sàng để xử lý")).toBeVisible();
-    await expect(page.getByText("sample-tour-vi.pdf")).toBeVisible();
+    await expect(page.getByText("sample-tour-vi.pdf").first()).toBeVisible();
     await expect(page.getByText("PDF", { exact: true })).toBeVisible();
     await expect(page.getByText("Sẵn sàng xử lý")).toBeVisible();
     await expect(page.locator("text=/[0-9]+\\.[0-9]{2} (KB|MB)/").first()).toBeVisible();
@@ -66,7 +66,7 @@ test.describe("Document intake flow", () => {
     await chooseDocument(page, DOCX_FIXTURE);
 
     await expect(page.getByText("File đã sẵn sàng để xử lý")).toBeVisible();
-    await expect(page.getByText("sample-tour-vi.docx")).toBeVisible();
+    await expect(page.getByText("sample-tour-vi.docx").first()).toBeVisible();
     await expect(page.getByText("DOCX", { exact: true })).toBeVisible();
     await expect(page.getByText("Sẵn sàng xử lý")).toBeVisible();
   });
@@ -75,9 +75,10 @@ test.describe("Document intake flow", () => {
     await chooseDocument(page, UNSUPPORTED_FIXTURE);
 
     await expect(
-      page.getByText(
-        "Định dạng file không được hỗ trợ. Vui lòng chọn file PDF hoặc DOCX."
-      )
+      page.getByText("Định dạng file không được hỗ trợ.")
+    ).toBeVisible();
+    await expect(
+      page.getByText("Vui lòng chọn file PDF hoặc DOCX.")
     ).toBeVisible();
     await expect(page.getByText("File đã sẵn sàng để xử lý")).not.toBeVisible();
   });
@@ -110,16 +111,16 @@ test.describe("Document intake flow", () => {
     });
 
     await chooseDocument(page, PDF_FIXTURE);
-    await expect(page.getByText("sample-tour-vi.pdf")).toBeVisible();
+    await expect(page.getByText("sample-tour-vi.pdf").first()).toBeVisible();
     await page.getByRole("button", { name: /^Bắt đầu trích xuất$/ }).click();
 
     await expect(page.getByRole("button", { name: "Đang xử lý..." })).toBeVisible();
     await expect(page.getByText("Đang phân tích file và chuẩn bị kết quả xem trước...")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Kết quả trích xuất" })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("Nội dung đã được trích xuất thành công. Bạn có thể đọc nhanh trước khi sang bước duyệt.")).toBeVisible();
+    await expect(page.getByText("Kết quả trích xuất").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Văn bản rõ ràng, đủ cấu trúc để chuyển sang bước duyệt nội dung.")).toBeVisible();
     await expect(page.getByText("sample-tour-vi.pdf").first()).toBeVisible();
-    await expect(page.getByText("Tốt", { exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Nội dung văn bản" })).toBeVisible();
+    await expect(page.getByText("Chất lượng trích xuất tốt")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Văn bản đã được lấy ra" })).toBeVisible();
     await expect(page.getByText("CHƯƠNG TRÌNH TOUR")).toBeVisible();
   });
 
@@ -127,16 +128,16 @@ test.describe("Document intake flow", () => {
     await chooseDocument(page, EMPTY_PDF_FIXTURE);
     await page.getByRole("button", { name: /^Bắt đầu trích xuất$/ }).click();
 
-    await expect(page.getByRole("heading", { name: "Kết quả trích xuất" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Kết quả trích xuất").first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("Chất lượng trích xuất thấp")).toBeVisible();
     await expect(
       page.getByText(
-        "Nội dung lấy ra có thể không chính xác. Bạn có thể tiếp tục kiểm tra hoặc tải file khác để thử lại."
+        "Nội dung lấy ra có thể chưa chính xác. Cân nhắc đọc kỹ hoặc tải lại file gọn hơn trước khi duyệt."
       )
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Đọc preview trước khi sang review" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Tải file khác" }).first()).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Nội dung văn bản" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Sang bước duyệt nội dung/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Chọn file khác" }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Văn bản đã được lấy ra" })).toBeVisible();
     await expect(
       page.getByText("Văn bản trích xuất sẽ hiển thị ở đây sau khi xử lý.")
     ).toBeVisible();
@@ -144,7 +145,7 @@ test.describe("Document intake flow", () => {
 
   test("hành động chọn file khác sẽ đặt lại form tải lên", async ({ page }) => {
     await chooseDocument(page, PDF_FIXTURE);
-    await expect(page.getByText("sample-tour-vi.pdf")).toBeVisible();
+    await expect(page.getByText("sample-tour-vi.pdf").first()).toBeVisible();
 
     await page.getByRole("button", { name: "Chọn file khác" }).click();
 
