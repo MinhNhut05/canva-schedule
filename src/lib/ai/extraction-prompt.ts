@@ -11,15 +11,16 @@ QUY TẮC BẮT BUỘC:
    - Tour 2 ngày (TWO_DAY): có "ngày 1" và "ngày 2" hoặc nhiều ngày rõ ràng
    - Tour 3 ngày (THREE_DAY): có "ngày 1", "ngày 2" và "ngày 3" rõ ràng, KHÔNG có "ngày 4"
    - Tour 4 ngày (FOUR_DAY): có "ngày 4" rõ ràng trong văn bản. Phần đêm khởi hành (tiêu đề "đêm khởi hành", "đêm 1", "tối ngày xuất phát", hoặc tương đương) → map vào key "night1". QUAN TRỌNG: Nếu văn bản có "ngày 4", bắt buộc dùng FOUR_DAY, không dùng THREE_DAY dù ngày 1-3 đều có mặt.
-4. Xác định loại khách:
-   - SCHOOL: có từ khóa trường học (THPT, THCS, tiểu học, trường, học sinh, thầy cô)
-   - GROUP: khách đoàn, công ty, doanh nghiệp, hoặc không phải trường học
+4. Xác định loại khách dựa trên CÁCH XƯNG HÔ với khách trong source:
+   - SCHOOL: source dùng "thầy cô", "Quý thầy cô", "giáo viên", "Quý thầy cô và các bạn học sinh" trong câu kính gửi hoặc xưng hô với đoàn. Hoặc heading kính gửi/dành cho có tên trường rõ (THPT, THCS, Tiểu học, "trường ...").
+   - GROUP: source dùng "Quý khách", "Quý đoàn", "Đoàn", "Quý đơn vị". Đây cũng là DEFAULT khi không có dấu hiệu SCHOOL rõ ràng.
+   - QUAN TRỌNG: Từ "học sinh" trong BẢNG GIÁ, quy định trẻ em, hoặc mô tả đoàn (vd "tour dành cho học sinh", "ĐOÀN 40 KHÁCH HỌC SINH", "930.000đ/học sinh") KHÔNG đủ để kết luận SCHOOL. Phải có cách xưng hô "thầy cô" hoặc tên trường trong context đón rước/kính gửi.
 5. Với tour trường học (SCHOOL):
    - Lời chào: "Quý thầy cô và các bạn học sinh"
    - Tên trường phải giữ nguyên, không tách rời
    - Câu về trường phải kèm tên trường cụ thể
 6. Với tour đoàn/doanh nghiệp (GROUP):
-   - Lời chào: "Quý khách" hoặc "Quý đoàn"
+   - Lời chào: giữ y wording source dùng — "Quý khách" hoặc "Quý đoàn".
 7. Điểm đón/trả (pickupLocation, returnLocation):
    - Dò trong toàn văn bản (heading, phụ đề, dòng kính gửi, "Đơn vị:", "Khách hàng:", "Người gửi:", "Nhà máy ...", "Chi nhánh ...", "Trường ...", footer chú thích) để tìm tên đơn vị/công ty/nhà máy/trường mà tour này phục vụ.
    - Khi tìm được, điền vào pickupLocation/returnLocation dạng tên ngắn gọn, nhất quán chữ hoa/thường với nguồn (ví dụ "ACECOOK VĨNH LONG", "THPT Trần Đại Nghĩa", "Cantho Eco Resort").
@@ -41,6 +42,11 @@ QUY TẮC BẮT BUỘC:
      c. KHÔNG được nối heading với phụ đề chỉ định khách hàng (ví dụ: "DÀNH RIÊNG CÔNG TY ACECOOK VĨNH LONG", "DÀNH CHO TRƯỜNG THPT ...", "KÍNH GỬI ..."). Phần này thuộc "clientName", không thuộc "programName".
      d. Ưu tiên các heading bắt đầu bằng "CHƯƠNG TRÌNH" hoặc mô tả loại hình tour (tham quan, nghỉ dưỡng, hành quân, hướng nghiệp, trải nghiệm, ngoại khóa, học tập, team building, v.v.).
      e. Nếu tài liệu chỉ có khung báo giá mà không có heading "CHƯƠNG TRÌNH ..." rõ ràng, để trống "programName" (null) thay vì bịa thêm hay dùng heading báo giá.
+11. clientName (tên khách hàng): chỉ điền khi source có TÊN ĐƠN VỊ/CÔNG TY/TRƯỜNG cụ thể.
+    - Heading hay dùng: "Kính gửi: [tên]", "Đơn vị: [tên]", "Khách hàng: [tên]", "DÀNH RIÊNG [tên]", "DÀNH CHO [tên]".
+    - Ví dụ tốt: "Công ty ACECOOK Vĩnh Long", "THPT Trần Đại Nghĩa", "Chi nhánh ngân hàng XYZ".
+    - KHÔNG được lấy nhãn từ bảng giá làm clientName: "ĐOÀN 40 KHÁCH HỌC SINH", "ĐOÀN 50 KHÁCH", "TOUR 1 NGÀY" — đây là mô tả số lượng/loại tour, không phải tên khách.
+    - Nếu source chỉ có "Kính gửi: Quý khách hàng" hoặc tương tự generic → clientName = null.
 
 QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo trường "text" cho mỗi activity trong itinerary và item trong menu):
 1. Áp dụng cho mọi loại tour: ưu tiên giữ wording gần văn bản nguồn hoặc phiên bản đã duyệt khi câu nguồn có chi tiết cụ thể. Không được tự thêm, bỏ, đổi thứ tự, đổi bullet thành đoạn văn, hoặc đổi đoạn văn thành bullet nếu việc đó làm khác ý/format nguồn.
@@ -58,22 +64,30 @@ QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo t
    - Không đưa tên nhà hàng hoặc địa điểm ăn uống thành item menu dạng "Món ăn: Nhà hàng...". Tên nhà hàng thuộc câu lịch trình, menu chỉ chứa món/nhóm món/đồ uống.
    - Giữ dấu và khoảng cách có ý nghĩa trong lựa chọn như "Café đá/sữa"; không tách thành "Café đá/ sữa".
 3. Khởi hành/di chuyển: Chỉ bỏ câu marketing/miêu tả phụ (nghỉ ngơi trên xe, làm quen, giao lưu...) khi câu chính vẫn giữ đủ đích đến rõ ràng.
-   - Giữ y nguyên chủ ngữ của câu nguồn ("Khởi hành ...", "Đoàn khởi hành ...", "Quý khách khởi hành ...", "Xe và HDV đưa ..."), không tự đổi chủ ngữ.
-   Ví dụ: "Khởi hành đi Đồng Tháp. Quý khách nghỉ ngơi trên xe..." → "Khởi hành đi Đồng Tháp."
+   - Khi source có chủ ngữ rõ ("Đoàn khởi hành ...", "Quý khách khởi hành ...", "Xe và HDV đưa ..."), giữ y chủ ngữ đó.
+   - Khi source KHÔNG có chủ ngữ (mở đầu trực tiếp "Khởi hành ..." hoặc "Di chuyển ..."), PREPEND "Đoàn" để câu có chủ ngữ tự nhiên.
+   Ví dụ: "Khởi hành đi Vũng Tàu. Quý khách nghỉ ngơi trên xe..." → "Đoàn khởi hành đi Vũng Tàu."
 4. Tham quan 1 địa điểm: Thêm lời chào phù hợp trước "tham quan" khi cần đồng bộ format, nhưng không được làm mất tên địa điểm hoặc thông tin quan trọng.
    - SCHOOL: "Quý thầy cô và các bạn học sinh tham quan [Tên địa điểm]."
    - GROUP: "Quý đoàn tham quan [Tên địa điểm]."
    Ví dụ SCHOOL: "Tham quan Khu di tích Nguyễn Sinh Sắc – nơi lưu giữ cội nguồn..." → "Quý thầy cô và các bạn học sinh tham quan Khu di tích Nguyễn Sinh Sắc."
    Ví dụ GROUP: "Tham quan Khu di tích Xẻo Quýt. Trải nghiệm ngồi xuồng..." → "Quý đoàn tham quan Khu di tích Xẻo Quýt."
-5. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó liệt kê từng hoạt động con trên dòng riêng. Nếu nguồn dùng bullet (dấu "•", "-", "+") thì giữ y format đó (bao gồm cả ký tự bullet ở đầu dòng); nếu nguồn viết paragraph thì giữ paragraph.
+5. Khu du lịch lớn (nhiều hoạt động): Giữ câu mở đầu + tên khu, sau đó mỗi hoạt động con trên dòng riêng (giữ bullet "•", "-", "+" y theo format source dùng).
+   - RÚT GỌN mỗi bullet về TÊN KHU/CỤM/HOẠT ĐỘNG CHÍNH. Cắt bỏ phần mô tả marketing dài (số liệu, "mang đến...", "với những...", "gồm hai đường trượt...").
+   - Lấy noun phrase đầu mỗi bullet, cắt tại "gồm", "với", "nổi bật", "bao gồm", dấu phẩy đầu tiên, hoặc câu phụ.
+   - Ví dụ rút gọn:
+     "- Gồm 3 cụm trò chơi chủ đề Đại Dương Băng Cực, mang đến nhiều trải nghiệm..." → "- Đại Dương Băng Cực."
+     "- Khu biển nhân tạo nổi bật với những ngọn sóng cao đến 4m..." → "- Khu biển nhân tạo."
+     "- Hang Động Kỳ Quan gồm hai đường trượt cảm giác mạnh..." → "- Hang Động Kỳ Quan."
+     "- Tham quan Vườn thú Eco Safari, khu vườn sinh thái với nhiều loài thú..." → "- Vườn thú Eco Safari."
+   - Giữ qualifier ngắn quan trọng đi liền tên khu khi cần ngữ cảnh: "Phim trường lò gạch chụp ảnh check in", "Nhà tranh dân gian Nam Bộ".
    - Không thêm câu mới như "Đến [địa điểm]." nếu phiên bản duyệt không có.
-   - Không rút gọn thành "bao gồm các hoạt động vô cùng hấp dẫn" rồi bỏ danh sách hoạt động. Phải giữ các hoạt động chính trong nguồn, đặc biệt các dòng có "miễn phí", "Vườn thú", "Phim trường", "Dạo chơi", "chụp ảnh", "check in".
-   - Không rút gọn mất các ý như "miễn phí", "dạo chơi và chụp ảnh", "check in tại không gian..." nếu nguồn có.
-   Ví dụ:
+   - Không rút gọn toàn bộ thành "bao gồm các hoạt động vô cùng hấp dẫn" rồi bỏ luôn danh sách hoạt động.
+   Ví dụ hoàn chỉnh:
    "Sau khi dùng bữa trưa, Quý đoàn tự do tham quan và vui chơi tại Khu du lịch Văn Hóa Phương Nam:
 • Xem biểu diễn xiếc thú: Khỉ, Chó, Dê.
 • Vui chơi tại Công viên nước
-• Trải nghiệm trò chơi dân gian, trò chơi liên hoàn nước"
+• Trò chơi dân gian, trò chơi liên hoàn nước"
 6. Khung giờ sau ăn trưa: Chỉ thêm "Sau khi dùng bữa trưa, ..." khi câu nguồn hoặc phương án duyệt thực sự cần cụm đó để tự nhiên. Không coi đây là cụm bắt buộc.
    - GROUP: "Sau khi dùng bữa trưa, Quý đoàn..."
    - SCHOOL: "Sau khi dùng bữa trưa, Quý thầy cô và các bạn học sinh..."
@@ -86,6 +100,34 @@ QUY TẮC GIỮ ĐÚNG NGUỒN VÀ RÚT GỌN NỘI DUNG (áp dụng khi tạo t
    - Tour 3 ngày (THREE_DAY): thêm vào cuối mảng "day3"
    - Tour 4 ngày (FOUR_DAY): thêm vào cuối mảng "day4"
    Ví dụ: {"timeLabel": null, "text": "Kết thúc chương trình!", "sourceConfidence": "high", "needsReview": false}
+9. Label thời gian trong ngày ("Buổi sáng", "Buổi trưa", "Buổi chiều", "Buổi tối"): khi source dùng các nhãn này như HEADING giữa các block giờ cụ thể, tạo activity riêng (không có timeLabel) cho label, theo sau là 1 activity con (cũng không có timeLabel) chứa nội dung mô tả. KHÔNG gộp các label này vào activity giờ trước hoặc sau.
+   Ví dụ source:
+   "Buổi chiều
+   Quý khách tự do tắm biển hoặc nghỉ ngơi tại khách sạn."
+   →
+   [
+     {"timeLabel": null, "text": "Buổi chiều:", "sourceConfidence": "high", "needsReview": false},
+     {"timeLabel": null, "text": "Quý khách tự do tắm biển hoặc nghỉ ngơi tại khách sạn.", "sourceConfidence": "high", "needsReview": false}
+   ]
+10. Nhiều địa điểm cùng 1 timeLabel: khi source có dạng "[Giờ]: [câu mở đầu] tham quan: -X -Y -Z" (1 mốc giờ, nhiều địa điểm/hoạt động con), tạo 1 activity DUY NHẤT với:
+    - timeLabel: giờ đó
+    - text: "[câu mở đầu]:\\n• X.\\n• Y.\\n• Z." (bullet list nằm trong cùng 1 text, mỗi dòng có bullet "•")
+    KHÔNG được tách thành nhiều activity riêng cùng timeLabel.
+    Ví dụ source:
+    "08h30: Xe và HDV đón Quý khách đến tham quan:
+    - Bạch Dinh – dinh thự cổ mang kiến trúc châu Âu...
+    - Tượng đài Chúa Kitô – biểu tượng thiêng liêng...
+    - Di tích Nhà Lớn Long Sơn – là một di tích lịch sử..."
+    →
+    {"timeLabel": "8:30", "text": "Xe và HDV đón Quý khách đến tham quan:\\n• Bạch Dinh.\\n• Tượng đài Chúa Kitô.\\n• Di tích Nhà Lớn Long Sơn.", "sourceConfidence": "high", "needsReview": false}
+11. Cắt câu phụ marketing/diễn giải: rút gọn câu lịch trình để súc tích kiểu tour brochure.
+    - Bỏ secondary clause sau câu chính: "HDV hỗ trợ Quý khách nhận phòng nghỉ ngơi", "Xe đưa Quý khách về phòng", "Quý khách nghỉ ngơi trên xe và làm quen...".
+    - Khi prefix "Xe và HDV đưa Quý khách..." chỉ là động từ vận chuyển làm câu dài, có thể bỏ để gọn (ví dụ "Xe và HDV đưa Quý khách khởi hành về lại Cần Thơ." → "Quý khách khởi hành về lại Cần Thơ.").
+    - Danh sách đặc sản/hoạt động dài (vd "với các hoạt động như: dạo biển, Hải Đăng, bánh bông lan, lẩu cá đuối, bánh khọt, gỏi cá mai, ốc vú nàng..."): rút thành câu tổng quát (vd "Quý khách tự do khám phá Vũng Tàu về đêm.").
+    - NGOẠI LỆ — câu đón rước mở đầu chương trình "Xe và HDV [đơn vị] có mặt đón Quý khách tại điểm hẹn." PHẢI GIỮ NGUYÊN, không cắt prefix "Xe và HDV". Đây là câu mở chương trình bắt buộc.
+12. Điểm về cuối chương trình — substitution "điểm đón ban đầu" → tên thành phố/tỉnh: khi source ghi "về lại điểm đón ban đầu" / "về lại điểm hẹn ban đầu" và title có route dạng "[Thành A] – [Thành B]", AI thay bằng "về lại [Thành A]" (thành phố xuất phát = phần đầu route). Đồng thời set returnLocation = "[Thành A]".
+    - Ví dụ: title "CẦN THƠ – VŨNG TÀU", source "xe tiếp tục đưa Đoàn về lại điểm đón ban đầu" → "xe tiếp tục đưa Đoàn về lại Cần Thơ".
+    - Khi title không có dạng route rõ ràng hoặc không suy luận được, giữ literal "điểm đón ban đầu" / "điểm hẹn ban đầu".
 
 SCHEMA JSON (trả về đúng định dạng này):
 

@@ -12,6 +12,16 @@ function supportsTemperature(model: string): boolean {
   return !model.startsWith("gh/gpt-5");
 }
 
+const VALID_REASONING_EFFORTS = ["low", "medium", "high"] as const;
+type ReasoningEffort = (typeof VALID_REASONING_EFFORTS)[number];
+
+function resolveReasoningEffort(value: string | undefined): ReasoningEffort | undefined {
+  const normalized = value?.trim().toLowerCase() || "medium";
+  return (VALID_REASONING_EFFORTS as readonly string[]).includes(normalized)
+    ? (normalized as ReasoningEffort)
+    : undefined;
+}
+
 function parsePositiveInteger(value: string | undefined, fallback: number): number {
   if (!value) {
     return fallback;
@@ -22,8 +32,9 @@ function parsePositiveInteger(value: string | undefined, fallback: number): numb
 }
 
 const AI_MODEL = normalizeModelName(
-  process.env.AI_MODEL?.trim() || "gh/gpt-5.4-mini",
+  process.env.AI_MODEL?.trim() || "oc/deepseek-v4-flash-free",
 );
+const AI_REASONING_EFFORT = resolveReasoningEffort(process.env.AI_REASONING_EFFORT);
 const MAX_RETRIES = 1;
 const AI_TIMEOUT_MS = 240_000;
 const AI_MAX_COMPLETION_TOKENS = parsePositiveInteger(
@@ -137,6 +148,9 @@ export async function callExtractionApi(
           ],
           max_tokens: AI_MAX_COMPLETION_TOKENS,
           response_format: { type: "json_object" as const },
+          ...(AI_REASONING_EFFORT
+            ? { reasoning_effort: AI_REASONING_EFFORT }
+            : {}),
           ...(supportsTemperature(AI_MODEL) ? { temperature: 0.1 } : {}),
         };
 
@@ -198,4 +212,10 @@ export async function callExtractionApi(
   );
 }
 
-export { AI_MAX_COMPLETION_TOKENS, AI_MODEL, AI_TIMEOUT_MS, MAX_RETRIES };
+export {
+  AI_MAX_COMPLETION_TOKENS,
+  AI_MODEL,
+  AI_REASONING_EFFORT,
+  AI_TIMEOUT_MS,
+  MAX_RETRIES,
+};
