@@ -17,14 +17,22 @@ async function getSessionToken(request: NextRequest) {
   );
 }
 
+/**
+ * Public Front Flow design assets (decorative mascots/logo). Allow these image
+ * files through so next/image can fetch them server-side without being
+ * redirected to /login. Routes under /front-flow (no file extension) stay gated.
+ */
+const FRONT_FLOW_ASSET = /^\/front-flow\/.*\.(?:png|jpg|jpeg|webp|svg)$/;
+
 export async function middleware(request: NextRequest) {
   const { pathname, search, origin } = request.nextUrl;
 
-  // Allow auth API routes, health checks, and login page
+  // Allow auth API routes, health checks, login page, and public design assets
   if (
     pathname.startsWith("/api/auth") ||
     pathname === "/api/health" ||
-    pathname === "/login"
+    pathname === "/login" ||
+    FRONT_FLOW_ASSET.test(pathname)
   ) {
     return NextResponse.next();
   }

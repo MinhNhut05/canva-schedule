@@ -76,7 +76,7 @@ describe("runUploadAiExtraction", () => {
   it("persists a rules-checked draft for extracted upload text", async () => {
     extractTour.mockResolvedValue({
       draft,
-      model: "cx/gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 2,
     });
 
@@ -96,7 +96,7 @@ describe("runUploadAiExtraction", () => {
     expect(saveDraft).toHaveBeenCalledWith(
       "upload-success",
       draft,
-      "cx/gpt-5.4",
+      "oc/deepseek-v4-flash-free",
       2,
       [],
     );

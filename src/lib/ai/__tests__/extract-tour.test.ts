@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 // Mock the extraction client to avoid real API calls
 vi.mock("../extraction-client", () => ({
   callExtractionApi: vi.fn(),
-  AI_MODEL: "gpt-5.4",
+  AI_MODEL: "oc/deepseek-v4-flash-free",
 }));
 
 // Must import after mock setup
@@ -81,7 +81,7 @@ describe("extractTour", () => {
   it("returns parsed StructuredDraft for valid AI response", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: VALID_ONE_DAY_RESPONSE,
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -89,14 +89,14 @@ describe("extractTour", () => {
     expect(result.draft.duration).toBe("ONE_DAY");
     expect(result.draft.programName).toBe("CHƯƠNG TRÌNH HƯỚNG NGHIỆP TÌM HIỂU NGÀNH NGHỀ");
     expect(result.draft.title).toBe("SÓC TRĂNG – CẦN THƠ");
-    expect(result.model).toBe("gpt-5.4");
+    expect(result.model).toBe("oc/deepseek-v4-flash-free");
     expect(result.attemptCount).toBe(1);
   });
 
   it("sends reusable source-fidelity guidance in the extraction prompt", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: VALID_ONE_DAY_RESPONSE,
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -119,10 +119,25 @@ describe("extractTour", () => {
       'giữ literal "điểm hẹn" hoặc "điểm đón ban đầu" theo nguồn',
     );
     expect(systemPrompt).toContain(
-      "Giữ y nguyên chủ ngữ của câu nguồn",
+      "Khi source có chủ ngữ rõ",
+    );
+    expect(systemPrompt).toContain(
+      "PREPEND \"Đoàn\" để câu có chủ ngữ tự nhiên",
     );
     expect(systemPrompt).toContain(
       "Giữ y nguyên separator của nguồn",
+    );
+    expect(systemPrompt).toContain(
+      'Label thời gian trong ngày ("Buổi sáng", "Buổi trưa", "Buổi chiều", "Buổi tối")',
+    );
+    expect(systemPrompt).toContain(
+      "Nhiều địa điểm cùng 1 timeLabel",
+    );
+    expect(systemPrompt).toContain(
+      "Cắt câu phụ marketing",
+    );
+    expect(systemPrompt).toContain(
+      "Điểm về cuối chương trình",
     );
     expect(systemPrompt).toContain(
       "Nếu nguồn có câu \"Về đến [địa điểm]\" / \"Về đến điểm hẹn\"",
@@ -141,7 +156,7 @@ describe("extractTour", () => {
   it("preserves canonical one-day program name and destination-rich wording", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: PHASE7_ONE_DAY_RESPONSE,
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -180,7 +195,7 @@ describe("extractTour", () => {
   it("throws when AI returns invalid JSON", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: "This is not JSON",
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -192,7 +207,7 @@ describe("extractTour", () => {
   it("throws when AI returns JSON that fails schema validation (SAFE-02)", async () => {
     mockCallApi.mockResolvedValueOnce({
       content: JSON.stringify({ duration: "THREE_DAY", itinerary: {} }),
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -214,7 +229,7 @@ describe("extractTour", () => {
 
     mockCallApi.mockResolvedValueOnce({
       content: responseWithFlags,
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 
@@ -242,7 +257,7 @@ describe("extractTour", () => {
 
     mockCallApi.mockResolvedValueOnce({
       content: minimalResponse,
-      model: "gpt-5.4",
+      model: "oc/deepseek-v4-flash-free",
       attemptCount: 1,
     });
 

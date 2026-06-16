@@ -59,6 +59,7 @@ vi.mock("@/lib/ai/server-client", () => ({
 import {
   AI_MAX_COMPLETION_TOKENS,
   AI_MODEL,
+  AI_REASONING_EFFORT,
   AI_TIMEOUT_MS,
   callExtractionApi,
   createExtractionClient,
@@ -112,6 +113,9 @@ describe("extraction-client", () => {
         ],
         max_tokens: AI_MAX_COMPLETION_TOKENS,
         response_format: { type: "json_object" },
+        ...(AI_REASONING_EFFORT
+          ? { reasoning_effort: AI_REASONING_EFFORT }
+          : {}),
         ...(AI_MODEL.startsWith("gh/gpt-5") ? {} : { temperature: 0.1 }),
       },
       { signal: expect.any(AbortSignal) },
@@ -169,14 +173,14 @@ describe("extraction-client", () => {
     }
   });
 
-  it("defaults to provider-prefixed gh/gpt-5.4-mini when AI_MODEL is unset", async () => {
+  it("defaults to provider-prefixed oc/deepseek-v4-flash-free when AI_MODEL is unset", async () => {
     const previousModel = process.env.AI_MODEL;
     delete process.env.AI_MODEL;
     vi.resetModules();
 
     try {
       const reloaded = await import("@/lib/ai/extraction-client");
-      expect(reloaded.AI_MODEL).toBe("gh/gpt-5.4-mini");
+      expect(reloaded.AI_MODEL).toBe("oc/deepseek-v4-flash-free");
     } finally {
       if (previousModel === undefined) {
         delete process.env.AI_MODEL;
