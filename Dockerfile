@@ -6,13 +6,15 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/*
 
+RUN corepack enable && corepack prepare pnpm@11.2.2 --activate
+
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY prisma ./prisma
 
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
@@ -21,12 +23,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN mkdir -p public
 
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 # next.config.ts validates startup secrets during build, so provide dummy values
 # only for this build step.
 RUN AUTH_SECRET=buildtime-auth-secret \
   DATABASE_URL=postgresql://build:build@127.0.0.1:5432/builddb \
-  npm run build
+  pnpm run build
 
 FROM base AS runner
 WORKDIR /app
