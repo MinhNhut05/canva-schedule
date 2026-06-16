@@ -115,7 +115,7 @@ export function CanvaResultCard({
     React.createElement(
       "div",
       { className: "rv-result-h" },
-      React.createElement("span", { className: "rt" }, title),
+      React.createElement("h3", { className: "rt" }, title),
       React.createElement(
         "span",
         { className: `rv-rbadge ${isSucceeded ? "ok" : isFailed ? "fail" : "proc"}` },
