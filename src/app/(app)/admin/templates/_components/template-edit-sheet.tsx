@@ -7,8 +7,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -124,9 +122,9 @@ export function TemplateEditSheet({ template, onClose }: TemplateEditSheetProps)
 
   return (
     <Sheet open={template !== null} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-[560px] overflow-y-auto">
+      <SheetContent className="soha-adm-pane w-full sm:max-w-[560px] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>
+          <SheetTitle className="adm-pane-title">
             {template
               ? `${template.durationLabel} — ${template.artifactLabel}`
               : "Chỉnh sửa mẫu Canva"}
@@ -136,41 +134,39 @@ export function TemplateEditSheet({ template, onClose }: TemplateEditSheetProps)
         {template && (
           <div className="mt-6 space-y-6">
             {/* Template ID */}
-            <div className="space-y-1">
-              <label htmlFor="template-id" className="text-sm font-medium text-foreground">
+            <div className="adm-field">
+              <label htmlFor="template-id" className="adm-label">
                 Canva Template ID
               </label>
-              <Input
+              <input
                 id="template-id"
+                className="adm-input mono"
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
                 disabled={isSubmitting}
                 placeholder="DAG..."
-                className="font-mono"
               />
             </div>
 
             {/* Active status */}
-            <div className="flex items-center gap-3">
-              <label htmlFor="template-active" className="text-sm font-medium text-foreground">
-                Trạng thái hoạt động
-              </label>
+            <div className="adm-check-row">
               <input
                 id="template-active"
                 type="checkbox"
+                className="adm-check"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
                 disabled={isSubmitting}
-                className="h-4 w-4 rounded border-input accent-primary"
               />
-              <span className="text-sm text-muted-foreground">
-                {isActive ? "Đang hoạt động" : "Đã tắt"}
-              </span>
+              <label htmlFor="template-active" className="adm-label">
+                Trạng thái hoạt động
+              </label>
+              <span className="adm-check-state">{isActive ? "Đang hoạt động" : "Đã tắt"}</span>
             </div>
 
             {/* Field mapping explanation */}
-            <div className="surface-panel-cool rounded-[16px] border border-semantic-light p-3">
-              <p className="text-xs text-muted-foreground">
+            <div className="adm-mapnote">
+              <p>
                 Cột bên trái là tên trường dữ liệu từ hệ thống. Cột bên phải là tên text element
                 tương ứng trong mẫu Canva. Chỉnh sửa cột bên phải khi cần cập nhật mapping.
               </p>
@@ -179,28 +175,20 @@ export function TemplateEditSheet({ template, onClose }: TemplateEditSheetProps)
             {/* Two-column field mapping grid */}
             {sourceFields.length > 0 && (
               <div className="space-y-2">
-                {/* Header */}
-                <div className="grid grid-cols-2 gap-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Trường dữ liệu
-                  </p>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Tên text element trong Canva
-                  </p>
+                <div className="adm-maphead">
+                  <p>Trường dữ liệu</p>
+                  <p>Tên text element trong Canva</p>
                 </div>
 
-                {/* Mapping rows */}
-                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+                <div className="adm-maplist">
                   {sourceFields.map((field) => (
-                    <div key={field} className="grid grid-cols-2 gap-2 items-center">
-                      <span className="font-mono text-xs text-muted-foreground truncate">
-                        {field}
-                      </span>
-                      <Input
+                    <div key={field} className="adm-maprow">
+                      <span className="adm-mapkey">{field}</span>
+                      <input
+                        className="adm-input mono sm"
                         value={fieldMapping[field] ?? field}
                         onChange={(e) => updateFieldMapping(field, e.target.value)}
                         disabled={isSubmitting}
-                        className="h-8 text-xs font-mono"
                       />
                     </div>
                   ))}
@@ -209,37 +197,33 @@ export function TemplateEditSheet({ template, onClose }: TemplateEditSheetProps)
             )}
 
             {/* Save status */}
-            {isSubmitting && (
-              <p className="text-sm text-muted-foreground">Đang xác minh mẫu Canva...</p>
-            )}
+            {isSubmitting && <p className="adm-muted">Đang xác minh mẫu Canva...</p>}
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="adm-error">{error}</p>}
 
             {/* Actions */}
             <div className="flex items-center justify-between pt-2">
-              <Button onClick={handleSave} disabled={isSubmitting}>
+              <button type="button" className="adm-btn" onClick={handleSave} disabled={isSubmitting}>
                 {isSubmitting ? "Đang lưu..." : "Lưu cấu hình"}
-              </Button>
+              </button>
 
               {template.isActive && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={isSubmitting}>
+                    <button type="button" className="adm-btn ghost" disabled={isSubmitting}>
                       Vô hiệu hóa
-                    </Button>
+                    </button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="soha-adm-dialog">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Vô hiệu hóa mẫu Canva</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="adm-pane-title">Vô hiệu hóa mẫu Canva</AlertDialogTitle>
+                      <AlertDialogDescription className="adm-pane-desc">
                         Mẫu này sẽ không còn được dùng cho lần tạo Canva tiếp theo. Bạn có chắc chắn muốn vô hiệu hóa?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Hủy</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeactivate}>
+                      <AlertDialogCancel className="adm-btn ghost">Hủy</AlertDialogCancel>
+                      <AlertDialogAction className="adm-btn danger" onClick={handleDeactivate}>
                         Xác nhận vô hiệu hóa
                       </AlertDialogAction>
                     </AlertDialogFooter>

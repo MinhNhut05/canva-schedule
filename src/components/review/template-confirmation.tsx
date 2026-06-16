@@ -1,11 +1,8 @@
 "use client";
 
 import React from "react";
+import { Check, LayoutTemplate, Sparkles } from "lucide-react";
 import type { TemplatePair, TourDuration } from "@/lib/canva/template-resolver";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TemplateConfirmationProps {
   duration: TourDuration;
@@ -27,64 +24,63 @@ export function TemplateConfirmation({
   disabled,
 }: TemplateConfirmationProps) {
   const rows = getTemplateRows(templatePair);
-  const allMissing = rows.every((r) => r.missing);
+  const allMissing = rows.every((row) => row.missing);
 
   return React.createElement(
-    Card,
-    { className: "surface-panel-glass border-semantic-light overflow-hidden shadow-semantic-light" },
+    "div",
+    { className: "rv-card rv-tpl rv-rv" },
     React.createElement(
-      CardHeader,
-      { className: "space-y-3 border-b border-semantic-light bg-surface-panel-cool/60 p-5" },
-      React.createElement(
-        Badge,
-        { variant: "outline", className: "w-fit border-primary/15 bg-primary/5 text-primary" },
-        "Giai đoạn 4 · Xác nhận mẫu Canva",
-      ),
+      "div",
+      { className: "rv-tpl-head" },
       React.createElement(
         "div",
-        { className: "space-y-2" },
+        { className: "rv-tpl-head-row" },
+        React.createElement("span", { className: "rv-stage-pill" }, "Giai đoạn 4 · Xác nhận mẫu Canva"),
         React.createElement(
-          CardTitle,
-          { className: "text-[1.35rem] leading-tight text-foreground" },
-          "Xác nhận mẫu Canva",
+          "span",
+          { className: "rv-tchip" },
+          React.createElement(Check),
+          " Đã duyệt",
         ),
-        React.createElement(
-          "p",
-          { className: "text-base leading-7 text-muted-foreground" },
-          "Nội dung đã được duyệt. Kiểm tra nhanh cặp mẫu bên dưới rồi bắt đầu tạo liên kết Canva.",
-        ),
+      ),
+      React.createElement("h3", { className: "rv-card-title" }, "Xác nhận mẫu Canva"),
+      React.createElement(
+        "p",
+        { className: "rv-card-desc" },
+        "Nội dung đã được duyệt. Kiểm tra nhanh cặp mẫu bên dưới rồi bắt đầu tạo liên kết Canva.",
       ),
     ),
     React.createElement(
-      CardContent,
-      { className: "space-y-5 p-5" },
+      "div",
+      { className: "rv-tpl-body" },
       React.createElement(
         "div",
-        { className: "surface-panel-cool space-y-3 rounded-[24px] border border-semantic-light p-4" },
+        { className: "rv-tpl-rows" },
         ...rows.map((row) =>
           React.createElement(
             "div",
             {
               key: row.label,
-              className: row.missing
-                ? "rounded-[18px] border border-dashed border-muted-foreground/30 px-4 py-3 text-base font-medium text-muted-foreground/60"
-                : "surface-panel-glass rounded-[18px] border border-primary/20 px-4 py-3 text-base font-medium text-foreground",
+              className: row.missing ? "rv-tpl-row missing" : "rv-tpl-row",
             },
+            React.createElement(LayoutTemplate),
             row.missing ? `${row.label} (chưa cấu hình mẫu)` : row.label,
           ),
         ),
       ),
       React.createElement(
         "div",
-        { className: "flex justify-end" },
+        { className: "rv-actions-end" },
         React.createElement(
-          Button,
+          "button",
           {
+            type: "button",
+            className: "rv-btn green",
             onClick: onConfirm,
             disabled: disabled || allMissing,
-            className: "glow-accent focus-ring-premium transition-premium hover-lift-subtle",
           },
-          "Tạo Canva",
+          React.createElement(Sparkles),
+          " Tạo Canva",
         ),
       ),
     ),

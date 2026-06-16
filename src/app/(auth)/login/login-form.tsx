@@ -1,9 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, TriangleAlert, User } from "lucide-react";
 import { loginAction } from "./actions";
 
 interface LoginFormProps {
@@ -15,62 +13,99 @@ export function LoginForm({ callbackUrl, error }: LoginFormProps) {
   const [state, formAction, isPending] = useActionState(loginAction, {
     error: error || null,
   });
+  const [show, setShow] = useState(false);
+  const [shake, setShake] = useState(false);
+  const prevPending = useRef(false);
+
+  useEffect(() => {
+    if (prevPending.current && !isPending && state.error) {
+      setShake(true);
+      const id = setTimeout(() => setShake(false), 450);
+      prevPending.current = isPending;
+      return () => clearTimeout(id);
+    }
+    prevPending.current = isPending;
+  }, [isPending, state.error]);
+
+  const hasError = Boolean(state.error);
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} noValidate>
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-      {state.error ? (
-        <Alert variant="destructive" className="rounded-[20px] border-destructive/35 bg-destructive/5">
-          <AlertDescription>
+      {hasError ? (
+        <div className={`alert${shake ? " shake" : ""}`} role="alert">
+          <TriangleAlert />
+          <span className="body">
             {state.error === "CredentialsSignin"
               ? "Sai tên đăng nhập hoặc mật khẩu. Vui lòng kiểm tra lại thông tin truy cập."
               : state.error}
-          </AlertDescription>
-        </Alert>
+          </span>
+        </div>
       ) : null}
 
-      <div className="space-y-2">
-        <label htmlFor="username" className="text-sm font-semibold text-foreground">
+      <div>
+        <label className="label" htmlFor="username">
           Tên đăng nhập
         </label>
-        <Input
-          id="username"
-          name="username"
-          type="text"
-          required
-          autoComplete="username"
-          className="h-12 rounded-2xl border-semantic-light bg-white text-slate-950 placeholder:text-slate-500"
-        />
+        <div className={`field${hasError ? " err" : ""}`}>
+          <span className="lead">
+            <User />
+          </span>
+          <input
+            id="username"
+            name="username"
+            className="input"
+            type="text"
+            required
+            autoComplete="username"
+            placeholder="Nhập tên đăng nhập"
+            disabled={isPending}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-semibold text-foreground">
+      <div>
+        <label className="label" htmlFor="password">
           Mật khẩu
         </label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="h-12 rounded-2xl border-semantic-light bg-white text-slate-950 placeholder:text-slate-500"
-        />
+        <div className={`field has-toggle${hasError ? " err" : ""}`}>
+          <span className="lead">
+            <Lock />
+          </span>
+          <input
+            id="password"
+            name="password"
+            className="input"
+            type={show ? "text" : "password"}
+            required
+            autoComplete="current-password"
+            placeholder="Nhập mật khẩu"
+            disabled={isPending}
+          />
+          <button
+            type="button"
+            className="peek"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            tabIndex={-1}
+          >
+            {show ? <EyeOff /> : <Eye />}
+          </button>
+        </div>
       </div>
 
-      <div className="rounded-[20px] border border-semantic-light bg-primary/5 p-4">
-        <p className="text-sm leading-6 text-muted-foreground">
-          Sau khi đăng nhập, bạn sẽ vào thẳng luồng tải tài liệu để bắt đầu xử lý nhanh hơn.
-        </p>
-      </div>
-
-      <Button
-        type="submit"
-        disabled={isPending}
-        className="glow-accent focus-ring-premium transition-premium hover-lift-subtle h-12 w-full"
-      >
-        {isPending ? "Đang đăng nhập..." : "Vào không gian làm việc"}
-      </Button>
+      <button className="btn" type="submit" disabled={isPending}>
+        {isPending ? (
+          <>
+            <Loader2 className="spin" /> Đang đăng nhập...
+          </>
+        ) : (
+          <>
+            Vào không gian làm việc <ArrowRight />
+          </>
+        )}
+      </button>
     </form>
   );
 }

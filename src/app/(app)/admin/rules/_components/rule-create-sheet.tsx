@@ -7,9 +7,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { createRule } from "../actions";
 
 interface RuleCreateSheetProps {
@@ -54,18 +51,19 @@ export function RuleCreateSheet({ open, onClose }: RuleCreateSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-[480px] overflow-y-auto">
+      <SheetContent className="soha-adm-pane w-full sm:max-w-[480px] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Thêm quy tắc mới</SheetTitle>
+          <SheetTitle className="adm-pane-title">Thêm quy tắc mới</SheetTitle>
         </SheetHeader>
 
         <div className="mt-6 space-y-4">
-          <div className="space-y-1">
-            <label htmlFor="create-rule-name" className="text-sm font-medium text-foreground">
+          <div className="adm-field">
+            <label htmlFor="create-rule-name" className="adm-label">
               Tên quy tắc
             </label>
-            <Input
+            <input
               id="create-rule-name"
+              className="adm-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={isSubmitting}
@@ -73,12 +71,13 @@ export function RuleCreateSheet({ open, onClose }: RuleCreateSheetProps) {
             />
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="create-rule-description" className="text-sm font-medium text-foreground">
+          <div className="adm-field">
+            <label htmlFor="create-rule-description" className="adm-label">
               Mô tả
             </label>
-            <Textarea
+            <textarea
               id="create-rule-description"
+              className="adm-textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isSubmitting}
@@ -87,12 +86,13 @@ export function RuleCreateSheet({ open, onClose }: RuleCreateSheetProps) {
             />
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="create-rule-category" className="text-sm font-medium text-foreground">
+          <div className="adm-field">
+            <label htmlFor="create-rule-category" className="adm-label">
               Danh mục
             </label>
-            <Input
+            <input
               id="create-rule-category"
+              className="adm-input"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               disabled={isSubmitting}
@@ -100,18 +100,16 @@ export function RuleCreateSheet({ open, onClose }: RuleCreateSheetProps) {
             />
           </div>
 
-          <p className="text-xs text-muted-foreground italic">
+          <p className="adm-note">
             Quy tắc mới chỉ lưu metadata, chưa tự động áp dụng vào pipeline.
           </p>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="adm-error">{error}</p>}
 
           <div className="pt-2">
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <button type="button" className="adm-btn" onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? "Đang thêm..." : "Thêm quy tắc"}
-            </Button>
+            </button>
           </div>
         </div>
       </SheetContent>

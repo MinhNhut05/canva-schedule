@@ -7,9 +7,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -114,28 +111,27 @@ export function RuleEditSheet({ rule, onClose }: RuleEditSheetProps) {
   return (
     <Sheet open={rule !== null} onOpenChange={handleOpenChange}>
       <SheetContent
-        className="w-full sm:max-w-[480px] overflow-y-auto"
+        className="soha-adm-pane w-full sm:max-w-[480px] overflow-y-auto"
         onAnimationEnd={handleRuleChange}
       >
         <SheetHeader>
-          <SheetTitle>Chỉnh sửa quy tắc</SheetTitle>
+          <SheetTitle className="adm-pane-title">Chỉnh sửa quy tắc</SheetTitle>
         </SheetHeader>
 
         {rule && (
           <div className="mt-6 space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">
-                Rule ID
-              </label>
-              <p className="font-mono text-sm text-muted-foreground">{rule.ruleId}</p>
+            <div className="adm-field">
+              <label className="adm-label">Rule ID</label>
+              <p className="adm-ro">{rule.ruleId}</p>
             </div>
 
-            <div className="space-y-1">
-              <label htmlFor="rule-name" className="text-sm font-medium text-foreground">
+            <div className="adm-field">
+              <label htmlFor="rule-name" className="adm-label">
                 Tên quy tắc
               </label>
-              <Input
+              <input
                 id="rule-name"
+                className="adm-input"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isSubmitting}
@@ -143,12 +139,13 @@ export function RuleEditSheet({ rule, onClose }: RuleEditSheetProps) {
               />
             </div>
 
-            <div className="space-y-1">
-              <label htmlFor="rule-description" className="text-sm font-medium text-foreground">
+            <div className="adm-field">
+              <label htmlFor="rule-description" className="adm-label">
                 Mô tả
               </label>
-              <Textarea
+              <textarea
                 id="rule-description"
+                className="adm-textarea"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isSubmitting}
@@ -157,12 +154,13 @@ export function RuleEditSheet({ rule, onClose }: RuleEditSheetProps) {
               />
             </div>
 
-            <div className="space-y-1">
-              <label htmlFor="rule-category" className="text-sm font-medium text-foreground">
+            <div className="adm-field">
+              <label htmlFor="rule-category" className="adm-label">
                 Danh mục
               </label>
-              <Input
+              <input
                 id="rule-category"
+                className="adm-input"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 disabled={isSubmitting}
@@ -170,55 +168,51 @@ export function RuleEditSheet({ rule, onClose }: RuleEditSheetProps) {
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <label htmlFor="rule-active" className="text-sm font-medium text-foreground">
-                Trạng thái hoạt động
-              </label>
+            <div className="adm-check-row">
               <input
                 id="rule-active"
                 type="checkbox"
+                className="adm-check"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
                 disabled={isSubmitting}
-                className="h-4 w-4 rounded border-input accent-primary"
               />
-              <span className="text-sm text-muted-foreground">
-                {isActive ? "Đang hoạt động" : "Đã tắt"}
-              </span>
+              <label htmlFor="rule-active" className="adm-label">
+                Trạng thái hoạt động
+              </label>
+              <span className="adm-check-state">{isActive ? "Đang hoạt động" : "Đã tắt"}</span>
             </div>
 
             {!rule.isSeeded && (
-              <p className="text-xs text-muted-foreground italic">
+              <p className="adm-note">
                 Quy tắc này chỉ lưu metadata, chưa tự động áp dụng vào pipeline.
               </p>
             )}
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="adm-error">{error}</p>}
 
             <div className="flex items-center justify-between pt-2">
-              <Button onClick={handleSave} disabled={isSubmitting}>
+              <button type="button" className="adm-btn" onClick={handleSave} disabled={isSubmitting}>
                 {isSubmitting ? "Đang lưu..." : "Lưu cấu hình"}
-              </Button>
+              </button>
 
               {!rule.isSeeded && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isSubmitting}>
+                    <button type="button" className="adm-btn danger" disabled={isSubmitting}>
                       Tắt quy tắc
-                    </Button>
+                    </button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="soha-adm-dialog">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Tắt quy tắc</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="adm-pane-title">Tắt quy tắc</AlertDialogTitle>
+                      <AlertDialogDescription className="adm-pane-desc">
                         Quy tắc này sẽ ngừng áp dụng cho các lần xử lý mới. Bạn có chắc chắn muốn tắt?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Hủy</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSoftDelete}>
+                      <AlertDialogCancel className="adm-btn ghost">Hủy</AlertDialogCancel>
+                      <AlertDialogAction className="adm-btn danger" onClick={handleSoftDelete}>
                         Xác nhận tắt
                       </AlertDialogAction>
                     </AlertDialogFooter>

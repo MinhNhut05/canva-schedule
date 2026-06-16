@@ -2,10 +2,8 @@
 
 import type * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Pencil } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface EditableFieldProps {
@@ -15,11 +13,11 @@ interface EditableFieldProps {
   uploadId: string;
   multiline?: boolean;
   placeholder?: string;
-  /** Custom render for display mode (styled text with highlights) */
+  /** Custom render for display mode */
   renderValue?: (value: string) => React.ReactNode;
   /** Additional className for the label text */
   labelClassName?: string;
-  /** Additional className for the display button */
+  /** Additional className for the display field */
   displayClassName?: string;
   onSave: (
     uploadId: string,
@@ -84,10 +82,10 @@ export function EditableField({
         setIsEditing(false);
         onSaveSuccess?.();
       } else {
-        onSaveError?.(result.error || "Luu that bai.");
+        onSaveError?.(result.error || "Lưu thất bại.");
       }
     } catch {
-      onSaveError?.("Co loi xay ra khi luu.");
+      onSaveError?.("Có lỗi xảy ra khi lưu.");
     } finally {
       setIsSaving(false);
     }
@@ -110,69 +108,68 @@ export function EditableField({
 
   if (isEditing) {
     return (
-      <div className="space-y-2">
-        <p className={cn("text-sm font-semibold text-muted-foreground", labelClassName)}>{label}</p>
-        <div className="space-y-2">
-          {multiline ? (
-            <Textarea
-              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-              value={editValue}
-              onChange={(event) => setEditValue(event.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSaving}
-              rows={3}
-              className="border-2 border-primary bg-card focus-visible:ring-ring"
-            />
-          ) : (
-            <Input
-              ref={inputRef as React.RefObject<HTMLInputElement>}
-              value={editValue}
-              onChange={(event) => setEditValue(event.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSaving}
-              className="border-2 border-primary bg-card focus-visible:ring-ring"
-            />
-          )}
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => void handleSave()}
-              disabled={isSaving}
-                          >
-              {isSaving ? "Dang luu..." : "Luu"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSaving}
-            >
-              Huy
-            </Button>
-          </div>
+      <div className="rv-field editing">
+        <span className={cn("rv-field-label", labelClassName)}>{label}</span>
+        {multiline ? (
+          <textarea
+            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+            value={editValue}
+            onChange={(event) => setEditValue(event.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isSaving}
+            rows={3}
+            className="rv-edit-input"
+          />
+        ) : (
+          <input
+            ref={inputRef as React.RefObject<HTMLInputElement>}
+            value={editValue}
+            onChange={(event) => setEditValue(event.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isSaving}
+            className="rv-edit-input"
+          />
+        )}
+        <div className="rv-edit-actions">
+          <button
+            type="button"
+            className="rv-btn green sm"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+          >
+            {isSaving ? "Đang lưu..." : "Lưu"}
+          </button>
+          <button
+            type="button"
+            className="rv-btn ghost sm"
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
+            Huỷ
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      <p className={cn("text-sm font-semibold text-muted-foreground", labelClassName)}>{label}</p>
-      <button
-        type="button"
-        onClick={handleStartEdit}
-        className={cn(
-          "w-full cursor-pointer rounded-lg px-3 py-2 text-left text-base transition-colors",
-          !displayClassName && "text-foreground hover:bg-surface-panel-cool/70",
-          displayClassName,
-          !value && "italic text-muted-foreground",
-        )}
-        title="Nhan de chinh sua"
-      >
+    <button
+      type="button"
+      onClick={handleStartEdit}
+      className={cn("rv-field", displayClassName)}
+      title="Nhấn để chỉnh sửa"
+    >
+      <span className={cn("rv-field-label", labelClassName)}>{label}</span>
+      <span className="rv-field-edit" aria-hidden="true">
+        <Pencil />
+      </span>
+      <span className={cn("rv-field-value", !value && "empty")}>
         {value
-          ? (renderValue ? renderValue(value) : value)
-          : (placeholder || "Chua co — nhan de them")}
-      </button>
-    </div>
+          ? renderValue
+            ? renderValue(value)
+            : value
+          : placeholder || "Chưa có — nhấn để thêm"}
+      </span>
+    </button>
   );
 }
