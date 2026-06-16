@@ -1,71 +1,66 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowRight, Award } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { COMPLETION_MESSAGES } from "@/lib/messages";
-import { cn } from "@/lib/utils";
 
 interface CompletionBannerProps {
   variant: "full" | "partial";
 }
 
+const CONFETTI_COLORS = ["#F3C94C", "#D95F3D", "#78A85A", "#5DA9D6", "#1C3F60"];
+const CONFETTI = Array.from({ length: 12 }, (_, index) => ({
+  left: (index * 8.3 + 4) % 100,
+  delay: (index % 6) * 0.22,
+  color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+}));
+
 export function CompletionBanner({ variant }: CompletionBannerProps) {
-  const messages =
-    variant === "full"
-      ? COMPLETION_MESSAGES.fullSuccess
-      : COMPLETION_MESSAGES.partialSuccess;
   const isFull = variant === "full";
+  const messages = isFull
+    ? COMPLETION_MESSAGES.fullSuccess
+    : COMPLETION_MESSAGES.partialSuccess;
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden border shadow-semantic-light",
-        isFull
-          ? "border-emerald-300 bg-emerald-50/80"
-          : "border-amber-300 bg-amber-50/80",
-      )}
-    >
-      <CardContent className="flex items-start gap-4 p-6">
-        <div
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-2xl",
-            isFull ? "bg-emerald-600 text-white" : "bg-amber-400 text-amber-950",
-          )}
-        >
-          <CheckCircle2 className="size-5" />
+    <div className={`rv-win ${isFull ? "full" : "partial"} rv-rv`}>
+      {isFull ? (
+        <div className="rv-confetti" aria-hidden="true">
+          {CONFETTI.map((piece, index) => (
+            <i
+              key={index}
+              style={{
+                left: `${piece.left}%`,
+                background: piece.color,
+                animationDelay: `${piece.delay}s`,
+              }}
+            />
+          ))}
         </div>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Badge
-              className={cn(
-                "w-fit",
-                isFull ? "bg-emerald-600 text-white" : "bg-amber-400 text-amber-950",
-              )}
-            >
-              {isFull ? "Giai đoạn 5 · Hoàn thành" : "Giai đoạn 5 · Hoàn thành một phần"}
-            </Badge>
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-foreground">{messages.heading}</h3>
-              <p className="text-sm leading-6 text-muted-foreground">{messages.body}</p>
-            </div>
-          </div>
+      ) : null}
 
-          {isFull ? (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="glow-accent focus-ring-premium transition-premium hover-lift-subtle">
-                <Link href="/upload">{COMPLETION_MESSAGES.ctaNewTour}</Link>
-              </Button>
-              <Button variant="outline" asChild className="focus-ring-premium">
-                <Link href="/history">{COMPLETION_MESSAGES.ctaHistory}</Link>
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+      <span className="rv-seal" aria-hidden="true">
+        <Award />
+      </span>
+
+      <div className="rv-win-tx">
+        <span className={`rv-stage-pill ${isFull ? "green" : "amber"}`}>
+          {isFull ? "Giai đoạn 5 · Hoàn thành" : "Giai đoạn 5 · Hoàn thành một phần"}
+        </span>
+        <h3>{messages.heading}</h3>
+        <p>{messages.body}</p>
+
+        {isFull ? (
+          <div className="rv-win-cta">
+            <Link className="rv-btn green" href="/upload">
+              {COMPLETION_MESSAGES.ctaNewTour}
+            </Link>
+            <Link className="rv-btn ghost" href="/history">
+              {COMPLETION_MESSAGES.ctaHistory} <ArrowRight />
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }

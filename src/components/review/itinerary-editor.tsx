@@ -1,21 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import {
+  CalendarDays,
+  ListTree,
+  Moon,
+  Sunrise,
+  Sunset,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { Activity, StructuredDraft } from "@/lib/ai/extraction-schema";
-import type { SectionColors } from "@/lib/review/highlight-terms";
-import {
-  extractImportantTerms,
-  PRIMARY_SECTION,
-  SECONDARY_SECTION,
-} from "@/lib/review/highlight-terms";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 import { EditableField } from "./editable-field";
 import { FlaggedField } from "./flagged-field";
-import { HighlightedText } from "./highlighted-text";
 
 interface ItineraryEditorProps {
   draft: StructuredDraft;
@@ -30,24 +27,23 @@ interface ItineraryEditorProps {
 }
 
 const SECTION_LABELS: Record<string, string> = {
-  morning: "Buoi sang",
-  afternoon: "Buoi chieu",
-  night1: "Dem 1",
-  day1: "Ngay 1",
-  day2: "Ngay 2",
-  day3: "Ngay 3",
-  day4: "Ngay 4",
+  morning: "Buổi sáng",
+  afternoon: "Buổi chiều",
+  night1: "Đêm 1",
+  day1: "Ngày 1",
+  day2: "Ngày 2",
+  day3: "Ngày 3",
+  day4: "Ngày 4",
 };
 
-/** Map section keys to their theme variant */
-const SECTION_THEMES: Record<string, SectionColors> = {
-  morning: PRIMARY_SECTION,
-  day1: PRIMARY_SECTION,
-  night1: SECONDARY_SECTION,
-  afternoon: SECONDARY_SECTION,
-  day2: SECONDARY_SECTION,
-  day3: PRIMARY_SECTION,
-  day4: SECONDARY_SECTION,
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  morning: Sunrise,
+  afternoon: Sunset,
+  night1: Moon,
+  day1: CalendarDays,
+  day2: CalendarDays,
+  day3: CalendarDays,
+  day4: CalendarDays,
 };
 
 function ActivityItem({
@@ -55,8 +51,6 @@ function ActivityItem({
   index,
   sectionKey,
   uploadId,
-  colors,
-  importantTerms,
   onSaveField,
   onSaveSuccess,
   onSaveError,
@@ -65,8 +59,6 @@ function ActivityItem({
   index: number;
   sectionKey: string;
   uploadId: string;
-  colors: SectionColors;
-  importantTerms: string[];
   onSaveField: ItineraryEditorProps["onSaveField"];
   onSaveSuccess: () => void;
   onSaveError: (error: string) => void;
@@ -79,47 +71,28 @@ function ActivityItem({
       helperText={
         activity.needsReview
           ? activity.sourceConfidence === "low"
-            ? "Do tin cay thap — hay kiem tra lai noi dung nay."
-            : "Thong tin can duoc xac nhan."
+            ? "Độ tin cậy thấp — hãy kiểm tra lại nội dung này."
+            : "Thông tin cần được xác nhận."
           : undefined
       }
     >
-      <div className="space-y-2">
+      <div className="rv-fieldset">
         <EditableField
-          label={activity.timeLabel ? `Thoi gian (${activity.timeLabel})` : "Thoi gian"}
+          label={activity.timeLabel ? `Thời gian (${activity.timeLabel})` : "Thời gian"}
           value={activity.timeLabel || ""}
           fieldPath={`${basePath}.timeLabel`}
           uploadId={uploadId}
           placeholder="VD: 6:00, 7:30 - 8:00"
-          labelClassName={`text-xs opacity-70`}
-          displayClassName="hover:bg-primary/10"
-          renderValue={(val) => (
-            <HighlightedText
-              text={val}
-              importantTerms={[]}
-              colors={colors}
-              isTimeLabel
-            />
-          )}
           onSave={onSaveField}
           onSaveSuccess={onSaveSuccess}
           onSaveError={onSaveError}
         />
         <EditableField
-          label="Hoat dong"
+          label="Hoạt động"
           value={activity.text}
           fieldPath={`${basePath}.text`}
           uploadId={uploadId}
           multiline
-          labelClassName={`text-xs opacity-70`}
-          displayClassName="hover:bg-primary/10"
-          renderValue={(val) => (
-            <HighlightedText
-              text={val}
-              importantTerms={importantTerms}
-              colors={colors}
-            />
-          )}
           onSave={onSaveField}
           onSaveSuccess={onSaveSuccess}
           onSaveError={onSaveError}
@@ -136,8 +109,6 @@ export function ItineraryEditor({
   onSaveSuccess,
   onSaveError,
 }: ItineraryEditorProps) {
-  const importantTerms = useMemo(() => extractImportantTerms(draft), [draft]);
-
   const sections =
     draft.duration === "ONE_DAY"
       ? [
@@ -164,136 +135,117 @@ export function ItineraryEditor({
             ];
 
   return (
-    <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
-      <CardHeader>
-        <CardTitle>Lich trinh</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Shared fields — no theming */}
-        <div className="space-y-3">
-          <EditableField
-            label="Ten chuong trinh"
-            value={draft.programName || ""}
-            fieldPath="programName"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          <EditableField
-            label="Tieu de tuyen / truong"
-            value={draft.title || ""}
-            fieldPath="title"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          <EditableField
-            label="Ten khach hang"
-            value={draft.clientName || ""}
-            fieldPath="clientName"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          {draft.clientType === "SCHOOL" ? (
-            <EditableField
-              label="Ten truong"
-              value={draft.schoolName || ""}
-              fieldPath="schoolName"
-              uploadId={uploadId}
-              onSave={onSaveField}
-              onSaveSuccess={onSaveSuccess}
-              onSaveError={onSaveError}
-            />
-          ) : null}
-          <EditableField
-            label="Ngay khoi hanh"
-            value={draft.tourDate || ""}
-            fieldPath="tourDate"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          <EditableField
-            label="Loi chao"
-            value={draft.greetingText || ""}
-            fieldPath="greetingText"
-            uploadId={uploadId}
-            multiline
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          <EditableField
-            label="Diem don"
-            value={draft.pickupLocation || ""}
-            fieldPath="pickupLocation"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-          <EditableField
-            label="Diem tra"
-            value={draft.returnLocation || ""}
-            fieldPath="returnLocation"
-            uploadId={uploadId}
-            onSave={onSaveField}
-            onSaveSuccess={onSaveSuccess}
-            onSaveError={onSaveError}
-          />
-        </div>
+    <div className="rv-card rv-editor rv-rv">
+      <div className="rv-editor-h">
+        <ListTree /> Lịch trình
+      </div>
 
-        {/* Themed itinerary sections */}
-        {sections.map((section) => {
-          const colors = SECTION_THEMES[section.key] || PRIMARY_SECTION;
+      <div className="rv-fieldset">
+        <EditableField
+          label="Tên chương trình"
+          value={draft.programName || ""}
+          fieldPath="programName"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        <EditableField
+          label="Tiêu đề tuyến / trường"
+          value={draft.title || ""}
+          fieldPath="title"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        <EditableField
+          label="Tên khách hàng"
+          value={draft.clientName || ""}
+          fieldPath="clientName"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        {draft.clientType === "SCHOOL" ? (
+          <EditableField
+            label="Tên trường"
+            value={draft.schoolName || ""}
+            fieldPath="schoolName"
+            uploadId={uploadId}
+            onSave={onSaveField}
+            onSaveSuccess={onSaveSuccess}
+            onSaveError={onSaveError}
+          />
+        ) : null}
+        <EditableField
+          label="Ngày khởi hành"
+          value={draft.tourDate || ""}
+          fieldPath="tourDate"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        <EditableField
+          label="Lời chào"
+          value={draft.greetingText || ""}
+          fieldPath="greetingText"
+          uploadId={uploadId}
+          multiline
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        <EditableField
+          label="Điểm đón"
+          value={draft.pickupLocation || ""}
+          fieldPath="pickupLocation"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+        <EditableField
+          label="Điểm trả"
+          value={draft.returnLocation || ""}
+          fieldPath="returnLocation"
+          uploadId={uploadId}
+          onSave={onSaveField}
+          onSaveSuccess={onSaveSuccess}
+          onSaveError={onSaveError}
+        />
+      </div>
 
-          return (
-            <div
-              key={section.key}
-              className={cn(
-                "rounded-xl p-4 space-y-3 transition-colors",
-                colors.bg,
-              )}
-            >
-              <h3
-                className="text-lg font-bold"
-                style={{ color: colors.headingColor }}
-              >
-                {SECTION_LABELS[section.key] || section.key}
-              </h3>
-              <div className="space-y-4">
-                {section.activities.map((activity, index) => (
-                  <ActivityItem
-                    key={`${section.key}-${index}`}
-                    activity={activity}
-                    index={index}
-                    sectionKey={section.key}
-                    uploadId={uploadId}
-                    colors={colors}
-                    importantTerms={importantTerms}
-                    onSaveField={onSaveField}
-                    onSaveSuccess={onSaveSuccess}
-                    onSaveError={onSaveError}
-                  />
-                ))}
-                {section.activities.length === 0 ? (
-                  <p
-                    className="py-4 text-center text-sm italic opacity-60"
-                    style={{ color: colors.textColor }}
-                  >
-                    Chua co hoat dong nao.
-                  </p>
-                ) : null}
-              </div>
+      {sections.map((section) => {
+        const Icon = SECTION_ICONS[section.key] || CalendarDays;
+
+        return (
+          <div key={section.key} className="rv-group">
+            <div className="rv-group-h">
+              <Icon /> {SECTION_LABELS[section.key] || section.key}
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+            <div className="rv-fieldset">
+              {section.activities.map((activity, index) => (
+                <ActivityItem
+                  key={`${section.key}-${index}`}
+                  activity={activity}
+                  index={index}
+                  sectionKey={section.key}
+                  uploadId={uploadId}
+                  onSaveField={onSaveField}
+                  onSaveSuccess={onSaveSuccess}
+                  onSaveError={onSaveError}
+                />
+              ))}
+              {section.activities.length === 0 ? (
+                <p className="rv-empty">Chưa có hoạt động nào.</p>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

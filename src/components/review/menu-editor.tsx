@@ -1,9 +1,8 @@
 "use client";
 
-import type { MenuItem, StructuredDraft } from "@/lib/ai/extraction-schema";
+import { UtensilsCrossed, Utensils } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import type { MenuItem, StructuredDraft } from "@/lib/ai/extraction-schema";
 
 import { EditableField } from "./editable-field";
 import { FlaggedField } from "./flagged-field";
@@ -21,21 +20,21 @@ interface MenuEditorProps {
 }
 
 const MENU_SECTION_LABELS: Record<string, string> = {
-  morning: "Sang",
-  lunch: "Trua",
-  afternoon: "Chieu",
-  morning_day1: "Sang - Ngay 1",
-  lunch_day1: "Trua - Ngay 1",
-  afternoon_day1: "Chieu - Ngay 1",
-  morning_day2: "Sang - Ngay 2",
-  lunch_day2: "Trua - Ngay 2",
-  afternoon_day2: "Chieu - Ngay 2",
-  morning_day3: "Sang - Ngay 3",
-  lunch_day3: "Trua - Ngay 3",
-  afternoon_day3: "Chieu - Ngay 3",
-  morning_day4: "Sang - Ngay 4",
-  lunch_day4: "Trua - Ngay 4",
-  afternoon_day4: "Chieu - Ngay 4",
+  morning: "Sáng",
+  lunch: "Trưa",
+  afternoon: "Chiều",
+  morning_day1: "Sáng - Ngày 1",
+  lunch_day1: "Trưa - Ngày 1",
+  afternoon_day1: "Chiều - Ngày 1",
+  morning_day2: "Sáng - Ngày 2",
+  lunch_day2: "Trưa - Ngày 2",
+  afternoon_day2: "Chiều - Ngày 2",
+  morning_day3: "Sáng - Ngày 3",
+  lunch_day3: "Trưa - Ngày 3",
+  afternoon_day3: "Chiều - Ngày 3",
+  morning_day4: "Sáng - Ngày 4",
+  lunch_day4: "Trưa - Ngày 4",
+  afternoon_day4: "Chiều - Ngày 4",
 };
 
 function MenuItemRow({
@@ -60,10 +59,10 @@ function MenuItemRow({
   return (
     <FlaggedField
       isFlagged={item.needsReview}
-      helperText={item.needsReview ? "Mon an can duoc xac nhan." : undefined}
+      helperText={item.needsReview ? "Món ăn cần được xác nhận." : undefined}
     >
       <EditableField
-        label={`Mon ${index + 1}`}
+        label={`Món ${index + 1}`}
         value={item.text}
         fieldPath={`${basePath}.text`}
         uploadId={uploadId}
@@ -126,39 +125,35 @@ export function MenuEditor({
             ];
 
   return (
-    <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
-      <CardHeader>
-        <CardTitle>Thuc don</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {sections.map((section) => (
-          <div key={section.key} className="space-y-3">
-            <h3 className="text-lg font-semibold text-foreground">
-              {MENU_SECTION_LABELS[section.key] || section.key}
-            </h3>
-            <div className="space-y-3">
-              {section.items.map((item, index) => (
-                <MenuItemRow
-                  key={`${section.key}-${index}`}
-                  item={item}
-                  index={index}
-                  sectionKey={section.key}
-                  uploadId={uploadId}
-                  onSaveField={onSaveField}
-                  onSaveSuccess={onSaveSuccess}
-                  onSaveError={onSaveError}
-                />
-              ))}
-              {section.items.length === 0 ? (
-                <p className="py-4 text-center text-sm italic text-muted-foreground">
-                  Chua co thuc don.
-                </p>
-              ) : null}
-            </div>
-            <Separator />
+    <div className="rv-card rv-editor rv-rv">
+      <div className="rv-editor-h">
+        <UtensilsCrossed /> Thực đơn
+      </div>
+
+      {sections.map((section) => (
+        <div key={section.key} className="rv-group">
+          <div className="rv-group-h">
+            <Utensils /> {MENU_SECTION_LABELS[section.key] || section.key}
           </div>
-        ))}
-      </CardContent>
-    </Card>
+          <div className="rv-fieldset">
+            {section.items.map((item, index) => (
+              <MenuItemRow
+                key={`${section.key}-${index}`}
+                item={item}
+                index={index}
+                sectionKey={section.key}
+                uploadId={uploadId}
+                onSaveField={onSaveField}
+                onSaveSuccess={onSaveSuccess}
+                onSaveError={onSaveError}
+              />
+            ))}
+            {section.items.length === 0 ? (
+              <p className="rv-empty">Chưa có thực đơn.</p>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -1,17 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Plus } from "lucide-react";
 import { RuleEditSheet } from "./rule-edit-sheet";
 import { RuleCreateSheet } from "./rule-create-sheet";
 import { RuleActiveToggle } from "./rule-active-toggle";
@@ -39,63 +29,64 @@ export function RulesTable({ rules }: RulesTableProps) {
 
   return (
     <>
-      <div className="flex justify-end">
-        <Button onClick={() => setShowCreate(true)}>Thêm quy tắc</Button>
+      <div className="adm-toolbar">
+        <button type="button" className="adm-btn" onClick={() => setShowCreate(true)}>
+          <Plus /> Thêm quy tắc
+        </button>
       </div>
 
-      <Card className="surface-panel-glass border-semantic-light shadow-semantic-light">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Rule ID</TableHead>
-                <TableHead>Tên quy tắc</TableHead>
-                <TableHead className="w-[120px]">Danh mục</TableHead>
-                <TableHead className="w-[140px]">Trạng thái</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rules.map((rule) => (
-                <TableRow
-                  key={rule.ruleId}
-                  className="cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  tabIndex={0}
-                  role="button"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setEditRule(rule);
-                    }
-                  }}
-                  onClick={(e) => {
-                    // Don't open sheet if toggle was clicked
-                    if ((e.target as HTMLElement).closest("[data-toggle-zone]")) return;
+      <div className="adm-tablecard">
+        <table className="adm-table">
+          <thead>
+            <tr>
+              <th>Rule ID</th>
+              <th>Tên quy tắc</th>
+              <th>Danh mục</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rules.map((rule) => (
+              <tr
+                key={rule.ruleId}
+                tabIndex={0}
+                role="button"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     setEditRule(rule);
-                  }}
-                >
-                  <TableCell className="font-mono text-sm">{rule.ruleId}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span>{rule.name}</span>
-                      {rule.isSeeded ? (
-                        <Badge variant="secondary">Quy tắc gốc</Badge>
-                      ) : (
-                        <Badge variant="outline">Theo dõi</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{rule.category}</TableCell>
-                  <TableCell>
-                    <div data-toggle-zone="">
-                      <RuleActiveToggle ruleId={rule.ruleId} isActive={rule.isActive} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  }
+                }}
+                onClick={(e) => {
+                  // Don't open sheet if toggle was clicked
+                  if ((e.target as HTMLElement).closest("[data-toggle-zone]")) return;
+                  setEditRule(rule);
+                }}
+              >
+                <td data-label="Rule ID">
+                  <span className="adm-mono">{rule.ruleId}</span>
+                </td>
+                <td data-label="Tên quy tắc">
+                  <div className="adm-rulename">
+                    <span className="nm">{rule.name}</span>
+                    {rule.isSeeded ? (
+                      <span className="adm-tag seed">Quy tắc gốc</span>
+                    ) : (
+                      <span className="adm-tag track">Theo dõi</span>
+                    )}
+                  </div>
+                </td>
+                <td data-label="Danh mục">{rule.category}</td>
+                <td data-label="Trạng thái">
+                  <div data-toggle-zone="">
+                    <RuleActiveToggle ruleId={rule.ruleId} isActive={rule.isActive} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <RuleEditSheet rule={editRule} onClose={() => setEditRule(null)} />
       <RuleCreateSheet open={showCreate} onClose={() => setShowCreate(false)} />

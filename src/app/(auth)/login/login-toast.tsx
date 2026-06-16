@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { Clock, X } from "lucide-react";
 
 export function LoginToast() {
-  const searchParams = useSearchParams();
-  const reason = searchParams.get("reason");
-  const shown = useRef(false);
+  const reason = useSearchParams().get("reason");
+  const [open, setOpen] = useState(true);
 
-  useEffect(() => {
-    if (reason === "auth-required" && !shown.current) {
-      shown.current = true;
-      // Small delay to ensure Toaster is mounted
-      setTimeout(() => {
-        toast.info("Vui lòng đăng nhập");
-      }, 100);
-    }
-  }, [reason]);
+  if (!reason || !open) {
+    return null;
+  }
 
-  return null;
+  return (
+    <div className="toast" role="status">
+      <Clock className="lead" />
+      <span className="body">Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</span>
+      <button type="button" className="x" onClick={() => setOpen(false)} aria-label="Đóng">
+        <X />
+      </button>
+    </div>
+  );
 }
