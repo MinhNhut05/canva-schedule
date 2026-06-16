@@ -51,3 +51,11 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+
+# local tooling / scratch (not part of the app)
+.claude/
+.codex
+checkpoints/
+plans/
+src/assets/blueprint/
+test.txt
