@@ -1,0 +1,30 @@
+[Unit]
+Description=Canva auto-share worker (headed Playwright under Xvfb)
+Documentation=file:/opt/canva-schedule/worker/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Run as the non-root deploy user that owns the checkout + the bot session file.
+# (Headed Chrome must NOT run as root.) Replace before `systemctl enable`.
+User=REPLACE_DEPLOY_USER
+WorkingDirectory=/opt/canva-schedule/worker/app
+
+# 1) Staging runtime env: DATABASE_URL (reachable from the host), AUTH_SECRET,
+#    AI_*, CANVA_* — same contents as the app's .env.runtime.
+EnvironmentFile=/opt/canva-schedule/worker/.env.runtime
+# 2) Worker-specific overrides: CANVA_BOT_*, CANVA_SHARE_DRY_RUN, poll interval.
+EnvironmentFile=/opt/canva-schedule/worker/.worker.env
+
+ExecStart=/opt/canva-schedule/worker/run-worker.sh
+
+Restart=always
+RestartSec=10
+# Headed Chrome can accumulate memory over days; uncomment to recycle daily.
+# Restart=always makes systemd relaunch it; in-flight jobs are retried after the
+# DB lock (lockedUntil) expires.
+# RuntimeMaxSec=86400
+
+[Install]
+WantedBy=multi-user.target
