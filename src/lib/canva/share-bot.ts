@@ -36,15 +36,24 @@ function validateCanvaEditUrl(value: string) {
 
 /** Open the Share panel; the Canva editor is heavy so retry until the access combobox shows. */
 async function openSharePanel(page: Page) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const shareButton = page.getByText(SHARE_BUTTON).first();
+  const shareButton = page.getByText(SHARE_BUTTON).first();
+
+  // The editor is a heavy SPA; on a slow/headed-Xvfb host the Share button can
+  // take tens of seconds to mount. Wait for it explicitly before polling so a
+  // cold load does not exhaust the retry budget immediately.
+  await shareButton.waitFor({ state: "visible", timeout: 60_000 }).catch(() => undefined);
+
+  for (let attempt = 0; attempt < 8; attempt++) {
     if (await shareButton.isVisible().catch(() => false)) {
-      await shareButton.click({ timeout: 8_000 }).catch(() => undefined);
-      await page.waitForTimeout(2_500);
+      await shareButton.click({ timeout: 10_000 }).catch(() => undefined);
       const combo = page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first();
-      if (await combo.isVisible().catch(() => false)) return;
+      const opened = await combo
+        .waitFor({ state: "visible", timeout: 7_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (opened) return;
     }
-    await page.waitForTimeout(5_000);
+    await page.waitForTimeout(4_000);
   }
   throw new Error("Canva Share panel did not load in time.");
 }
