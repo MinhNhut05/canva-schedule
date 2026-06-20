@@ -1,7 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 
-import { shareCanvaDesignViaPublicLink } from "../src/lib/canva/share-bot";
+import { CanvaBotBlockedError, shareCanvaDesignViaPublicLink } from "../src/lib/canva/share-bot";
 
 loadEnvConfig(process.cwd());
 
@@ -145,6 +145,13 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
       attempt: job.attemptCount,
       message,
     });
+
+    // A Cloudflare block won't clear by retrying — fail fast so an operator
+    // re-logs-in the bot (refreshes cf_clearance) instead of burning attempts.
+    if (error instanceof CanvaBotBlockedError) {
+      await finishJob(job, { status: "FAILED", lastError: message });
+      return;
+    }
 
     if (job.attemptCount < MAX_SHARE_ATTEMPTS) {
       await requeueJob(job, message);
