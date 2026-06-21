@@ -15,6 +15,34 @@ const SHARE_BUTTON = /^(share|chia sẻ)$/i;
 const ACCESS_LEVEL_COMBO = /access|quyền truy cập|only you|chỉ bạn|anyone with|bất cứ ai/i;
 const ANYONE_WITH_LINK_OPTION = /anyone with (this )?link|bất cứ ai có liên kết/i;
 const PERMISSION_ERROR = /can.?t update|couldn.?t update|không thể cập nhật|cấp độ quyền|permission level/i;
+const CLOUDFLARE_CHALLENGE =
+  /verify you are human|we['’]ll have you designing again soon|needs to review the security/i;
+
+/** Thrown when Cloudflare challenges the bot — retrying won't help; the bot session must be re-logged-in. */
+export class CanvaBotBlockedError extends Error {
+  constructor(
+    message = "Canva chặn bot (Cloudflare) — cần đăng nhập lại bot Canva (cf_clearance hết hạn).",
+  ) {
+    super(message);
+    this.name = "CanvaBotBlockedError";
+  }
+}
+
+/**
+ * If Cloudflare is challenging the bot (expired/flagged cf_clearance), the editor
+ * never loads — bail out immediately with an actionable error instead of waiting
+ * out the whole Share-panel retry budget.
+ */
+async function assertNotCloudflareChallenged(page: Page) {
+  await page.waitForTimeout(4_000);
+  const title = (await page.title().catch(() => "")) ?? "";
+  const challenged =
+    /just a moment|attention required/i.test(title) ||
+    (await page.getByText(CLOUDFLARE_CHALLENGE).first().isVisible().catch(() => false));
+  if (challenged) {
+    throw new CanvaBotBlockedError();
+  }
+}
 
 function validateCanvaEditUrl(value: string) {
   const url = new URL(value);
@@ -36,15 +64,24 @@ function validateCanvaEditUrl(value: string) {
 
 /** Open the Share panel; the Canva editor is heavy so retry until the access combobox shows. */
 async function openSharePanel(page: Page) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const shareButton = page.getByText(SHARE_BUTTON).first();
+  const shareButton = page.getByText(SHARE_BUTTON).first();
+
+  // The editor is a heavy SPA; on a slow/headed-Xvfb host the Share button can
+  // take tens of seconds to mount. Wait for it explicitly before polling so a
+  // cold load does not exhaust the retry budget immediately.
+  await shareButton.waitFor({ state: "visible", timeout: 60_000 }).catch(() => undefined);
+
+  for (let attempt = 0; attempt < 8; attempt++) {
     if (await shareButton.isVisible().catch(() => false)) {
-      await shareButton.click({ timeout: 8_000 }).catch(() => undefined);
-      await page.waitForTimeout(2_500);
+      await shareButton.click({ timeout: 10_000 }).catch(() => undefined);
       const combo = page.getByRole("combobox", { name: ACCESS_LEVEL_COMBO }).first();
-      if (await combo.isVisible().catch(() => false)) return;
+      const opened = await combo
+        .waitFor({ state: "visible", timeout: 7_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (opened) return;
     }
-    await page.waitForTimeout(5_000);
+    await page.waitForTimeout(4_000);
   }
   throw new Error("Canva Share panel did not load in time.");
 }
@@ -83,6 +120,7 @@ export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput
     const page = await context.newPage();
 
     await page.goto(editUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await assertNotCloudflareChallenged(page);
     await openSharePanel(page);
 
     // Open the access-level dropdown and choose "anyone with the link".

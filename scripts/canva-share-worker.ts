@@ -1,13 +1,17 @@
 import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 
-import { shareCanvaDesignViaPublicLink } from "../src/lib/canva/share-bot";
+import { CanvaBotBlockedError, shareCanvaDesignViaPublicLink } from "../src/lib/canva/share-bot";
 
 loadEnvConfig(process.cwd());
 
 const prisma = new PrismaClient();
 
 const LOCK_MS = 5 * 60_000;
+// Canva's editor UI is flaky under headed Xvfb; retry a transient share failure
+// a few times (with a short backoff) before giving up and marking it FAILED.
+const MAX_SHARE_ATTEMPTS = 3;
+const RETRY_BACKOFF_MS = 30_000;
 const POLL_MS = Number.parseInt(process.env.CANVA_SHARE_WORKER_POLL_MS ?? "5000", 10);
 const DRY_RUN = process.env.CANVA_SHARE_DRY_RUN !== "false";
 const STORAGE_STATE_PATH = process.env.CANVA_BOT_STORAGE_STATE_PATH;
@@ -92,6 +96,26 @@ async function finishJob(
   }
 }
 
+// Release a transiently-failed job back to PENDING with a short backoff so the
+// loop retries it later, instead of marking it FAILED on the first hiccup.
+async function requeueJob(
+  job: NonNullable<Awaited<ReturnType<typeof claimJob>>>,
+  lastError: string,
+) {
+  await prisma.canvaShareJob.updateMany({
+    where: {
+      id: job.id,
+      status: "RUNNING",
+      lockedUntil: job.lockedUntil,
+    },
+    data: {
+      status: "PENDING",
+      lockedUntil: new Date(Date.now() + RETRY_BACKOFF_MS),
+      lastError,
+    },
+  });
+}
+
 async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
   if (!job) return;
 
@@ -114,16 +138,32 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
 
     await finishJob(job, { status: "SUCCEEDED", editUrl: publicEditUrl ?? undefined });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Canva UI sharing bot failed.";
     console.error("[canva-share-worker] share failed", {
       jobId: job.id,
       designId: job.designId,
-      message: error instanceof Error ? error.message : "Canva UI sharing bot failed.",
+      attempt: job.attemptCount,
+      message,
     });
 
-    await finishJob(job, {
-      status: "FAILED",
-      lastError: "Không thể chia sẻ Canva tự động. Vui lòng chia sẻ thủ công trong Canva.",
-    });
+    // A Cloudflare block won't clear by retrying — fail fast so an operator
+    // re-logs-in the bot (refreshes cf_clearance) instead of burning attempts.
+    if (error instanceof CanvaBotBlockedError) {
+      await finishJob(job, { status: "FAILED", lastError: message });
+      return;
+    }
+
+    if (job.attemptCount < MAX_SHARE_ATTEMPTS) {
+      await requeueJob(job, message);
+      console.warn(
+        `[canva-share-worker] retry scheduled for ${job.designId} (attempt ${job.attemptCount}/${MAX_SHARE_ATTEMPTS})`,
+      );
+    } else {
+      await finishJob(job, {
+        status: "FAILED",
+        lastError: "Không thể chia sẻ Canva tự động. Vui lòng chia sẻ thủ công trong Canva.",
+      });
+    }
   }
 }
 
