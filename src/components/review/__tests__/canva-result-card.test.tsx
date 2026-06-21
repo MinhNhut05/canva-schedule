@@ -68,11 +68,20 @@ describe("CanvaResultCard", () => {
     expect(html).toContain("Thực đơn");
   });
 
-  it("shows Mở trong Canva link when editUrl provided", () => {
-    const html = renderToStaticMarkup(renderResultCard());
+  it("shows Mở trong Canva link only after share succeeds", () => {
+    const html = renderToStaticMarkup(
+      renderResultCard({ shareJob: { status: "SUCCEEDED", lastError: null } }),
+    );
 
     expect(html).toContain("Mở trong Canva");
     expect(html).toContain("https://canva.com/edit/itinerary");
+  });
+
+  it("locks Mở trong Canva while share is still pending", () => {
+    const html = renderToStaticMarkup(renderResultCard());
+
+    expect(html).toContain("Đang chuẩn bị liên kết…");
+    expect(html).not.toContain('href="https://canva.com/edit/itinerary"');
   });
 
   it("shows Sao chép link button", () => {

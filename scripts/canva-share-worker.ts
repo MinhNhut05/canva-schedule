@@ -14,13 +14,17 @@ const MAX_SHARE_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = 30_000;
 const POLL_MS = Number.parseInt(process.env.CANVA_SHARE_WORKER_POLL_MS ?? "5000", 10);
 const DRY_RUN = process.env.CANVA_SHARE_DRY_RUN !== "false";
-const STORAGE_STATE_PATH = process.env.CANVA_BOT_STORAGE_STATE_PATH;
-const USER_AGENT = process.env.CANVA_BOT_USER_AGENT;
-const HEADLESS = process.env.CANVA_BOT_HEADLESS === "true";
+// Real sharing connects to a persistent Chrome via CDP using a logged-in profile dir.
+const CHROME_PROFILE_DIR = process.env.CANVA_BOT_CHROME_PROFILE_DIR;
+const RELOGIN_HINT =
+  "Re-login bot: ssh -X canva@<vps> rồi chạy `pnpm canva:bot-login` (xem deploy/worker/README.md).";
 
 function validateWorkerConfig() {
-  if (!DRY_RUN && !STORAGE_STATE_PATH) {
-    throw new Error("CANVA_BOT_STORAGE_STATE_PATH is required when CANVA_SHARE_DRY_RUN=false.");
+  if (!DRY_RUN && !CHROME_PROFILE_DIR) {
+    throw new Error(
+      "CANVA_BOT_CHROME_PROFILE_DIR is required when CANVA_SHARE_DRY_RUN=false " +
+        "(thư mục profile Chrome đã đăng nhập Canva).",
+    );
   }
 }
 
@@ -131,9 +135,6 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
   try {
     const publicEditUrl = await shareCanvaDesignViaPublicLink({
       editUrl: job.editUrl ?? "",
-      storageStatePath: STORAGE_STATE_PATH,
-      userAgent: USER_AGENT,
-      headless: HEADLESS,
     });
 
     await finishJob(job, { status: "SUCCEEDED", editUrl: publicEditUrl ?? undefined });
@@ -149,7 +150,10 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
     // A Cloudflare block won't clear by retrying — fail fast so an operator
     // re-logs-in the bot (refreshes cf_clearance) instead of burning attempts.
     if (error instanceof CanvaBotBlockedError) {
-      await finishJob(job, { status: "FAILED", lastError: message });
+      // Cloudflare blocked — tell the operator explicitly what to do.
+      const hint = `${message}\n${RELOGIN_HINT}`;
+      await finishJob(job, { status: "FAILED", lastError: hint });
+      console.error(`[canva-share-worker] ⚠️ ${hint}`);
       return;
     }
 
@@ -169,7 +173,10 @@ async function processJob(job: Awaited<ReturnType<typeof claimJob>>) {
 
 async function loop() {
   validateWorkerConfig();
-  console.log(`[canva-share-worker] starting; dryRun=${DRY_RUN}`);
+  console.log(
+    `[canva-share-worker] starting; dryRun=${DRY_RUN}` +
+      (DRY_RUN ? "" : `; chromeProfile=${CHROME_PROFILE_DIR}`),
+  );
 
   while (true) {
     try {

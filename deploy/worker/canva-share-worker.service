@@ -1,5 +1,5 @@
 [Unit]
-Description=Canva auto-share worker (headed Playwright under Xvfb)
+Description=Canva auto-share worker (real Chrome via CDP + Xvfb)
 Documentation=file:/opt/canva-schedule/worker/README.md
 After=network-online.target
 Wants=network-online.target
