@@ -6,6 +6,8 @@ import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 
+import { setGlobalCooldown } from "./cooldown";
+import { CanvaRateLimitError } from "./errors";
 import { getCanvaConfig } from "./server-client";
 
 const CANVA_AUTH_URL = "https://www.canva.com/api/oauth/authorize";
@@ -290,6 +292,19 @@ async function requestToken(params: URLSearchParams): Promise<TokenResponse> {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "unknown");
+
+    // Canva also rate-limits the OAuth token endpoint. Treat 429 like an API 429:
+    // set a global cooldown and throw CanvaRateLimitError so the caller surfaces a
+    // "retry after N seconds" message instead of letting the user hammer refresh
+    // (parallel itinerary+menu generation both refresh → easy to trip 429).
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After");
+      const parsed = retryAfter ? Number.parseInt(retryAfter, 10) : 60;
+      const cooldownSeconds = Number.isNaN(parsed) ? 60 : parsed;
+      await setGlobalCooldown(cooldownSeconds).catch(() => undefined);
+      throw new CanvaRateLimitError(cooldownSeconds);
+    }
+
     throw new Error(
       `Canva token refresh failed (${response.status}): ${errorText}`
     );

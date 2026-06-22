@@ -48,6 +48,7 @@ vi.mock("@/lib/canva/server-client", () => ({
 }));
 
 import { CanvaReconnectRequiredError, getValidAccessToken } from "@/lib/canva/oauth";
+import { CanvaRateLimitError } from "@/lib/canva/errors";
 
 function createTokenResponse(overrides?: Partial<Record<string, unknown>>) {
   return {
@@ -207,6 +208,29 @@ describe("getValidAccessToken", () => {
           status: "NEEDS_RECONNECT",
           refreshLockedUntil: null,
         }),
+      }),
+    );
+  });
+
+  it("throws CanvaRateLimitError + sets cooldown when refresh endpoint returns 429", async () => {
+    findFirst.mockResolvedValue(
+      createStoredToken({
+        accessToken: "expired-access-token",
+        expiresAt: new Date(Date.now() - 1_000),
+      }),
+    );
+    fetchMock.mockResolvedValue(
+      new Response('{"statusCode":429,"error":"bad request"}', {
+        status: 429,
+        headers: { "Retry-After": "42" },
+      }),
+    );
+
+    await expect(getValidAccessToken()).rejects.toBeInstanceOf(CanvaRateLimitError);
+    // Global cooldown is written so the action gate blocks repeated retries.
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ cooldownUntil: expect.any(Date) }),
       }),
     );
   });

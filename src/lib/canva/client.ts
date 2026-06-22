@@ -1,16 +1,12 @@
 import "server-only";
 
+import { CanvaRateLimitError } from "./errors";
 import { getValidAccessToken } from "./oauth";
 
 const CANVA_API_BASE =
   process.env.CANVA_API_BASE_URL || "https://api.canva.com/rest/v1";
 
-export class CanvaRateLimitError extends Error {
-  constructor(public cooldownSeconds: number) {
-    super(`Canva rate limited. Retry after ${cooldownSeconds} seconds.`);
-    this.name = "CanvaRateLimitError";
-  }
-}
+export { CanvaRateLimitError };
 
 export async function canvaFetch(
   path: string,
