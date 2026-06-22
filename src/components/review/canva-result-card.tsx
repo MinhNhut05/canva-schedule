@@ -95,6 +95,12 @@ export function CanvaResultCard({
   const title = getArtifactTitle(artifactType);
   const isSucceeded = status === "SUCCEEDED";
   const isFailed = status === "FAILED";
+  // editUrl is the private Connect-API URL (/api/design/<JWT>/edit) until the
+  // share worker overwrites it with the public /design/<id>/<token>/edit link.
+  // Only then can other accounts open it — so keep open/copy locked until then.
+  const shareReady = shareJob?.status === "SUCCEEDED";
+  const shareInProgress =
+    !shareJob || shareJob.status === "PENDING" || shareJob.status === "RUNNING";
   const helperText = isSucceeded
     ? "Liên kết Canva đã sẵn sàng."
     : errorMessage || "Không thể tạo Canva lúc này. Hãy thử lại.";
@@ -146,21 +152,30 @@ export function CanvaResultCard({
     React.createElement(
       "div",
       { className: "rv-result-actions" },
-      editUrl
+      editUrl && shareReady
         ? React.createElement(
             "a",
             { className: "rv-btn sm", href: editUrl, target: "_blank", rel: "noreferrer" },
             React.createElement(ExternalLink),
             " Mở trong Canva",
           )
-        : null,
+        : isSucceeded
+          ? React.createElement(
+              "button",
+              { type: "button", className: "rv-btn sm", disabled: true },
+              shareInProgress
+                ? React.createElement(Loader2, { className: "rv-spin" })
+                : React.createElement(ExternalLink),
+              shareInProgress ? " Đang chuẩn bị liên kết…" : " Mở trong Canva",
+            )
+          : null,
       React.createElement(
         "button",
         {
           type: "button",
           className: "rv-btn ghost sm",
           onClick: () => void handleCopy(),
-          disabled: disableCopy,
+          disabled: disableCopy || (isSucceeded && !shareReady),
         },
         React.createElement(Copy),
         " Sao chép link",

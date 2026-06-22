@@ -343,6 +343,19 @@ async function seedApprovedReviewUpload() {
   });
 }
 
+/**
+ * Simulate the auto-share worker finishing: mark every share job for the upload as
+ * SUCCEEDED. The review card keeps the "Mở trong Canva" link locked behind a spinner
+ * until the share job succeeds, so without this the link never renders in tests
+ * (no worker runs in CI).
+ */
+async function markShareJobsShared() {
+  await prisma.canvaShareJob.updateMany({
+    where: { uploadId: TEST_UPLOAD_ID },
+    data: { status: "SUCCEEDED", lastError: null, finishedAt: new Date() },
+  });
+}
+
 test.describe("Review to Canva generation flow", () => {
   test.beforeAll(async () => {
     await backupCanvaTokens();
@@ -482,7 +495,10 @@ test.describe("Review to Canva generation flow", () => {
     );
 
     const canvaLinks = page.getByRole("link", { name: "Mở trong Canva" });
-    await expect(canvaLinks).toHaveCount(2);
+    // No worker runs in CI; mark share jobs SUCCEEDED so the card unlocks the link,
+    // then let the review page's poll (router.refresh) pick up the new status.
+    await markShareJobsShared();
+    await expect(canvaLinks).toHaveCount(2, { timeout: 15000 });
     const canvaHrefs = await canvaLinks.evaluateAll((elements) =>
       elements.map((element) => element.getAttribute("href") ?? ""),
     );

@@ -1,62 +1,68 @@
-# Canva auto-share worker — VPS runbook (host systemd + Xvfb)
+# Canva auto-share worker — VPS runbook
 
-The web app deploys to the VPS as a Docker container. The **auto-share worker** is
-different: it drives a **headed** Chromium through the Canva web UI, so it runs as a
-**systemd service on the VPS host** under a virtual display (`Xvfb`), not in a
-container. This makes the interactive bot login and the persistent session far
-easier to manage.
+The web app runs in Docker. The **auto-share worker** is different: it
+drives a real Google Chrome through the Canva web UI via Chrome DevTools Protocol (CDP), so it runs as a **systemd service on the VPS host** under Xvfb — not in a container.
 
-## Why login must happen ON the VPS
+## Architecture
 
-Cloudflare's `cf_clearance` cookie is bound to **User-Agent + IP**. The
-`storageState` captured on your laptop is invalid from the VPS IP → Canva returns
-`403 / "Just a moment"`. Therefore the bot **must be logged in from the VPS itself**
-so the saved cookies + UA match the VPS IP. A `403` later almost always means the
-session/IP/UA drifted → re-login from the VPS.
+```
+Cloudflare (canva.com)
+  ↑ cf_clearance survives because login + share use the SAME Chrome profile
+  ↕ (same --user-data-dir + --remote-debugging-port)
+Chrome --user-data-dir=<profile> --remote-debugging-port=9222
+  ↑ (SSH -X / VNC login once/month)
+  |
+  └─ CDP ──► share-bot.ts (tsx scripts/canva-share-worker.ts) → sets "anyone·edit" → writes public URL → DB
+```
+
+The login script (`pnpm canva:bot-login`) and the worker share **one Chrome user profile directory**.
+Because the session fingerprint (cookies, cf_clearance, IP, UA) is identical across login and share, Cloudflare
+sees a regular browser and almost never challenges the bot.
+
+**When does re-login matter?** Only when Cloudflare expires cf_clearance (~1/month) or flags the IP.
+The worker logs a hint when that happens.
 
 ## Layout
 
 ```
 /opt/canva-schedule/worker/
-├── app/                         # repo checkout (this codebase)
-├── run-worker.sh                # xvfb-run wrapper (from deploy/worker/)
-├── .env.runtime                 # same as the staging app runtime env
-├── .worker.env                  # CANVA_BOT_* + CANVA_SHARE_DRY_RUN
-├── canva-bot.storage-state.json # bot session (created on the VPS, chmod 600)
-└── worker.log                   # optional; default logs go to journald
+├── app/                         # git checkout (this codebase)
+├── chrome-profile/               # persistent Chrome user profile (logged-in once / monthly)
+│   └── Default/
+├── .env.runtime                # DATABASE_URL + app secrets (same as staging)
+└── .worker.env                 # CANVA_SHARE_DRY_RUN + CANVA_BOT_CHROME_PROFILE_DIR
+    (no STORAGE_STATE_PATH or USER_AGENT needed)
 ```
 
 ## 1. Prerequisites (Debian/Ubuntu VPS)
 
 ```bash
 # Node 22 + corepack/pnpm 11.2.2
-node -v   # expect v22.x  (install via nodesource if missing)
+node -v   # expect v22.x
 corepack enable && corepack prepare pnpm@11.2.2 --activate
 
-# Xvfb + fonts, Google Chrome (for the login flow), git
-sudo apt-get update
-sudo apt-get install -y xvfb fonts-liberation fonts-noto-color-emoji git
-# Google Chrome stable (the login script attaches to real Chrome via CDP)
-wget -qO /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+# Google Chrome (the actual bot browser — Chromium bundled with Playwright won't work for Canva)
+# Option A: Chrome from Debian (stable)
+sudo apt-get install -y google-chrome-stable
+# Option B: .deb from Google (always latest)
+wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.deb
 sudo apt-get install -y /tmp/chrome.deb
 
-# A way to SEE Chrome during the interactive Google login. Either:
-#  a) SSH X11 forwarding:  ssh -X user@vps   (then DISPLAY is set), or
-#  b) a VNC server (e.g. x11vnc/TigerVNC) + a lightweight desktop.
+# Xvfb (virtual display) + fonts
+sudo apt-get install -y xvfb fonts-liberation fonts-noto-color-emoji git
+
+# A way to SEE Chrome during the FIRST interactive login (X11 forwarding is fine):
+#   ssh -X canva@<vps>   (or a VNC server)
 ```
 
 ## 2. Checkout + install
 
 ```bash
 sudo mkdir -p /opt/canva-schedule/worker
-sudo chown "$USER":"$USER" /opt/canva-schedule/worker
+sudo chown "$USER" /opt/canva-schedule/worker
 cd /opt/canva-schedule/worker
-git clone <REPO_URL> app
-cd app
-pnpm install --frozen-lockfile
-pnpm exec prisma generate
-# Playwright's bundled Chromium (used for the actual share automation) + libs
-pnpm exec playwright install --with-deps chromium
+git clone <your-repo> app
+cd app && pnpm install --frozen-lockfile && pnpm exec prisma generate
 ```
 
 ## 3. Env files
@@ -64,37 +70,33 @@ pnpm exec playwright install --with-deps chromium
 ```bash
 cd /opt/canva-schedule/worker
 
-# (a) Reuse the staging runtime env. DATABASE_URL must be reachable FROM THE HOST
-#     (e.g. 127.0.0.1:<published-port> or the docker network address of postgres).
-cp /opt/canva-schedule/staging/.env.runtime ./.env.runtime   # adjust DATABASE_URL if needed
-chmod 600 ./.env.runtime
+# DATABASE_URL must point to the DB reachable from the host (container host bridge or published port)
+cp /path/to/.env .env.runtime
+chmod 600 .env.runtime
 
-# (b) Worker-specific overrides
-cat > ./.worker.env <<'EOF'
-CANVA_SHARE_DRY_RUN=true
-CANVA_BOT_HEADLESS=false
-CANVA_BOT_STORAGE_STATE_PATH=/opt/canva-schedule/worker/canva-bot.storage-state.json
-CANVA_BOT_USER_AGENT=
+cat > .worker.env <<'EOF'
+CANVA_SHARE_DRY_RUN=true          # start with dry-run; switch to false when ready
+CANVA_BOT_CHROME_PROFILE_DIR=/opt/canva-schedule/worker/chrome-profile
+CANVA_BOT_CHROME_PORT=9222
 CANVA_SHARE_WORKER_POLL_MS=15000
 EOF
-chmod 600 ./.worker.env
+chmod 600 .worker.env
 ```
 
-## 4. Bot login FROM the VPS (interactive, one-time / monthly)
-
-With a display available (X11-forward or VNC):
+## 4. One-time bot login (from the VPS, with X11 forwarding)
 
 ```bash
 cd /opt/canva-schedule/worker/app
-CANVA_BOT_STORAGE_STATE_PATH=/opt/canva-schedule/worker/canva-bot.storage-state.json \
+
+# The script auto-detects CANVA_BOT_CHROME_PROFILE_DIR from env or defaults to /opt/…/chrome-profile
+CANVA_BOT_CHROME_PROFILE_DIR=/opt/canva-schedule/worker/chrome-profile \
   pnpm canva:bot-login
 ```
 
-- A real Chrome window opens. Complete the Google → Canva login.
-- Press Enter when prompted; the script writes `canva-bot.storage-state.json` and
-  prints `CANVA_BOT_USER_AGENT=...` (a **Linux** UA).
-- Copy that UA into `.worker.env` (`CANVA_BOT_USER_AGENT=...`) and `chmod 600` the
-  session file. The cookies are now bound to the VPS IP + this UA.
+- Chrome opens. Log in with the Canva account that creates designs (Continue with Google / email+password).
+- If Cloudflare shows "Verify you are human", tick the challenge then log in normally.
+- Press Enter when you reach the Canva home page.
+- The script prints `CANVA_BOT_CHROME_PROFILE_DIR=…` — **add that to `.worker.env`** if it differs from the default.
 
 ## 5. Install the systemd service
 
@@ -102,7 +104,7 @@ CANVA_BOT_STORAGE_STATE_PATH=/opt/canva-schedule/worker/canva-bot.storage-state.
 cd /opt/canva-schedule/worker
 cp app/deploy/worker/run-worker.sh ./run-worker.sh && chmod 700 ./run-worker.sh
 sudo cp app/deploy/worker/canva-share-worker.service /etc/systemd/system/
-sudoedit /etc/systemd/system/canva-share-worker.service   # set User=<deploy user>, check paths
+sudoedit /etc/systemd/system/canva-share-worker.service  # set User=canva, check paths
 sudo systemctl daemon-reload
 sudo systemctl enable --now canva-share-worker
 ```
@@ -110,25 +112,22 @@ sudo systemctl enable --now canva-share-worker
 ## 6. Verify
 
 ```bash
-# Dry run first (.worker.env has CANVA_SHARE_DRY_RUN=true):
+# Watch the worker log
 journalctl -u canva-share-worker -f
-#   → should claim PENDING jobs and log a dry-run (no Canva window write).
 
-# Then enable real sharing:
-sudo sed -i 's/^CANVA_SHARE_DRY_RUN=true/CANVA_SHARE_DRY_RUN=false/' /opt/canva-schedule/worker/.worker.env
+# Switch to real sharing
+sudo sed -i 's/CANVA_SHARE_DRY_RUN=true/CANVA_SHARE_DRY_RUN=false/' /opt/canva-schedule/worker/.worker.env
 sudo systemctl restart canva-share-worker
-#   → generate a real design in the app, watch the worker set "anyone with link",
-#     then confirm a DIFFERENT Canva account can open the captured /design/<id>/<token>/edit link.
+
+# Create a design in the app → worker should pick it up and set "anyone·edit" → link appears in a DIFFERENT Canva account.
 ```
 
 ## Operations
 
-- **Logs:** `journalctl -u canva-share-worker -f`
-- **Restart:** `sudo systemctl restart canva-share-worker`
-- **Update code:** `cd /opt/canva-schedule/worker/app && git pull && pnpm install --frozen-lockfile && sudo systemctl restart canva-share-worker`
-- **Monthly re-login:** repeat step 4 from the VPS before the session expires.
-- **Seeing `403` / "Just a moment":** the session/UA/IP drifted → re-login from the
-  VPS (step 4) and update `CANVA_BOT_USER_AGENT`.
-- **Staging vs production:** this runbook targets **staging** (point `.env.runtime`
-  `DATABASE_URL` at the staging DB). For production, repeat under
-  `/opt/canva-schedule/worker-prod/` with the production DB + a separate session.
+| Task | Command |
+|------|---------|
+| Watch logs | `journalctl -u canva-share-worker -f` |
+| Restart worker | `sudo systemctl restart canva-share-worker` |
+| Update code | `cd /opt/canva-schedule/worker/app && git pull && pnpm install --frozen-lockfile && sudo systemctl restart canva-share-worker` |
+| Re-login (cf_clearance expired / "Just a moment" challenge) | SSH in with X11 forwarding, run step 4 again |
+| Switch DB (staging ↔ prod) | Edit `.env.runtime` DATABASE_URL then `systemctl restart canva-share-worker` |

@@ -38,10 +38,11 @@ loadEnvConfig(process.cwd());
 const DEFAULT_OUTPUT = "canva-bot.storage-state.json";
 const LOGIN_URL = "https://www.canva.com/login";
 const DEBUG_PORT = Number.parseInt(process.env.CANVA_BOT_CHROME_PORT ?? "9222", 10);
-// Profile riêng BẮT BUỘC: Chrome (>=136) tắt --remote-debugging-port trên profile
-// mặc định vì lý do bảo mật. Dùng thư mục riêng để cờ debug có hiệu lực và không
-// đụng vào profile Chrome hằng ngày của bạn.
-const PROFILE_DIR = join(tmpdir(), "canva-bot-chrome-profile");
+// Persistent profile dir — the SHARE WORKER connects to a Chrome started on this SAME
+// dir via CDP, so login + share share one browser fingerprint (keeps cf_clearance alive).
+// Default to a stable on-disk path; falls back to /tmp only if env is unset AND not on the VPS.
+const PROFILE_DIR =
+  process.env.CANVA_BOT_CHROME_PROFILE_DIR || join(tmpdir(), "canva-bot-chrome-profile");
 
 const CHROME_CANDIDATES = [
   process.env.CANVA_BOT_CHROME_PATH,
@@ -153,16 +154,34 @@ async function main(): Promise<void> {
     );
   }
 
+  const hasClearance = (() => {
+    try {
+      const parsed = JSON.parse(readFileSync(outputPath, "utf8")) as {
+        cookies?: Array<{ name?: string }>;
+      };
+      return (parsed.cookies ?? []).some((c) => c.name === "cf_clearance");
+    } catch {
+      return false;
+    }
+  })();
+  if (!hasClearance) {
+    console.warn(
+      "\n⚠️  KHÔNG thấy cookie cf_clearance — Cloudflare có thể chặn worker. " +
+        "Nếu trong lúc đăng nhập gặp trang 'Verify you are human', hãy tick rồi đăng nhập lại.",
+    );
+  }
+
   console.log("");
-  console.log(`✅ Đã lưu phiên đăng nhập! (${canvaCookies} cookie canva.com)`);
+  console.log(`✅ Đã lưu phiên đăng nhập! (${canvaCookies} cookie canva.com, cf_clearance=${hasClearance})`);
   console.log("══════════════════════════════════════════");
-  console.log("   Thêm dòng sau vào .env (giữ file phiên bí mật):");
+  console.log("   PROFILE bền vững (worker dùng chung qua CDP):");
+  console.log(`   CANVA_BOT_CHROME_PROFILE_DIR=${PROFILE_DIR}`);
   console.log("");
-  console.log(`   CANVA_BOT_STORAGE_STATE_PATH=${outputPath}`);
+  console.log("   Worker mới KHÔNG cần storageState — chỉ cần profile dir trên + Chrome chạy với:");
+  console.log(`   google-chrome --remote-debugging-port=${DEBUG_PORT} --user-data-dir=${PROFILE_DIR}`);
   if (userAgent) {
-    console.log(`   CANVA_BOT_USER_AGENT=${userAgent}`);
-  } else {
-    console.warn("   ⚠️  Không lấy được User-Agent — worker headless có thể bị Cloudflare chặn.");
+    console.log("");
+    console.log(`   (tham khảo) User-Agent: ${userAgent}`);
   }
   console.log("");
   console.log("   Sau đó đặt CANVA_SHARE_DRY_RUN=false rồi chạy worker:");

@@ -1,11 +1,8 @@
 import { chromium, type Page } from "@playwright/test";
 
 interface ShareCanvaDesignInput {
+  /** Edit URL to open. Private Connect-API URLs (/api/design/<JWT>/edit) are accepted; the public URL is captured after sharing. */
   editUrl: string;
-  storageStatePath?: string;
-  userAgent?: string;
-  /** Headed (false) is required: Canva blocks share mutations from headless browsers. */
-  headless?: boolean;
 }
 
 const ALLOWED_CANVA_HOSTS = new Set(["www.canva.com", "canva.com"]);
@@ -89,14 +86,14 @@ async function openSharePanel(page: Page) {
 /**
  * Make a generated Canva design editable by anyone with the link.
  *
- * Why this instead of inviting internal users by email: the bot account is not a
- * team admin and target users live in other Canva teams, so per-email invites are
- * rejected. Setting the design link to "anyone with the link" (defaulting to edit)
- * lets every internal user open and edit it.
+ * Architecture: connects to an already-running real Google Chrome via CDP. Chrome must be
+ * started with --remote-debugging-port + --user-data-dir pointing at the logged-in profile.
+ * Using the real Chrome profile (not a fresh Playwright context) keeps the browser
+ * fingerprint stable across login + share, so cf_clearance survives and Cloudflare is far
+ * less likely to challenge the bot.
  *
- * Must run headed with the automation flag disabled — Canva silently rejects share
- * mutations ("can't update permission level") from headless / `navigator.webdriver`
- * browsers, even though reads succeed.
+ * Why "anyone with the link": the bot account is not a team admin and target users live in
+ * other Canva teams, so per-email invites are rejected — public link is the only reliable path.
  */
 export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput): Promise<string | null> {
   if (!input.editUrl) {
@@ -104,20 +101,25 @@ export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput
   }
 
   const editUrl = validateCanvaEditUrl(input.editUrl);
+  const port = Number.parseInt(process.env.CANVA_BOT_CHROME_PORT ?? "9222", 10);
 
-  const browser = await chromium.launch({
-    headless: input.headless ?? false,
-    args: ["--disable-blink-features=AutomationControlled"],
-    ignoreDefaultArgs: ["--enable-automation"],
-  });
+  let browser: Awaited<ReturnType<typeof chromium.connectOverCDP>>;
+  try {
+    // Attach to the real Chrome that the worker keeps running on the logged-in profile.
+    browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+  } catch {
+    throw new Error(
+      `Không kết nối được Chrome qua CDP (port ${port}). Chrome phải đang chạy với ` +
+        "--remote-debugging-port=" + port + " --user-data-dir=$CANVA_BOT_CHROME_PROFILE_DIR",
+    );
+  }
 
   try {
-    const context = await browser.newContext({
-      ...(input.storageStatePath ? { storageState: input.storageStatePath } : {}),
-      ...(input.userAgent ? { userAgent: input.userAgent } : {}),
-      viewport: { width: 1440, height: 900 },
-    });
-    const page = await context.newPage();
+    const context = browser.contexts()[0];
+    if (!context) {
+      throw new Error("Chrome không có context — bot đã đăng nhập Canva chưa?");
+    }
+    const page = context.pages()[0] ?? (await context.newPage());
 
     await page.goto(editUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await assertNotCloudflareChallenged(page);
@@ -135,18 +137,21 @@ export async function shareCanvaDesignViaPublicLink(input: ShareCanvaDesignInput
       throw new Error("Canva rejected the access-level update.");
     }
 
-    // Let the mutation settle before tearing the browser down.
+    // Let the mutation settle.
     await page.waitForTimeout(2_000);
 
     // Capture the canonical public edit URL (the one others can open). Opening the
     // private Connect-API edit_url redirects here: /design/<id>/<token>/edit.
     // The Connect API only exposes the private /api/design/<JWT>/edit form.
     const current = new URL(page.url());
-    if (/^\/design\/[^/]+\/[^/]+\/edit$/.test(current.pathname)) {
+    if (/^\/design\/[^/]+(?:\/[^/]+)?\/edit$/.test(current.pathname)) {
       return `${current.origin}${current.pathname}`;
     }
     return null;
   } finally {
+    // Close only this CDP connection — for connectOverCDP, browser.close() drops the
+    // connection without terminating the underlying Chrome process, so the persistent
+    // logged-in profile keeps running for the next job.
     await browser.close();
   }
 }
