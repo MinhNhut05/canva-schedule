@@ -1,10 +1,11 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { createCanvaAuthorizationUrl } from "@/lib/canva/oauth";
+import { getAppUrl } from "@/lib/env";
 
 const CANVA_OAUTH_STATE_COOKIE = "canva_oauth_state";
 const CANVA_OAUTH_VERIFIER_COOKIE = "canva_oauth_verifier";
@@ -18,7 +19,7 @@ export async function startCanvaConnect() {
     throw new Error("Bạn không có quyền kết nối Canva.");
   }
 
-  const redirectUri = await getCanvaRedirectUri();
+  const redirectUri = getCanvaRedirectUri();
   const { authorizeUrl, verifier, state } = createCanvaAuthorizationUrl(redirectUri);
   const cookieStore = await cookies();
   const secure = redirectUri.startsWith("https://");
@@ -54,7 +55,7 @@ export async function getCanvaOAuthSession() {
   return {
     state: cookieStore.get(CANVA_OAUTH_STATE_COOKIE)?.value ?? null,
     verifier: cookieStore.get(CANVA_OAUTH_VERIFIER_COOKIE)?.value ?? null,
-    redirectUri: cookieStore.get(CANVA_OAUTH_REDIRECT_URI_COOKIE)?.value ?? await getCanvaRedirectUri(),
+    redirectUri: cookieStore.get(CANVA_OAUTH_REDIRECT_URI_COOKIE)?.value ?? getCanvaRedirectUri(),
   };
 }
 
@@ -66,17 +67,6 @@ export async function clearCanvaOAuthSession() {
   cookieStore.delete(CANVA_OAUTH_REDIRECT_URI_COOKIE);
 }
 
-async function getCanvaRedirectUri() {
-  const headerStore = await headers();
-  const origin = headerStore.get("origin");
-  const referer = headerStore.get("referer");
-  const fallbackHost = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  const fallbackProto = headerStore.get("x-forwarded-proto") ?? "http";
-  const baseUrl = origin ?? (referer ? new URL(referer).origin : null) ?? (fallbackHost ? `${fallbackProto}://${fallbackHost}` : null);
-
-  if (!baseUrl) {
-    throw new Error("Không xác định được host để tạo Canva callback URL.");
-  }
-
-  return `${baseUrl}/admin/canva/callback`;
+function getCanvaRedirectUri() {
+  return new URL("/admin/canva/callback", getAppUrl()).toString();
 }
