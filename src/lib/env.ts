@@ -50,6 +50,14 @@ const canvaEnvSchema = z.object({
   CANVA_REFRESH_TOKEN: z.string().min(1).optional(),
 });
 
+const appUrlSchema = z
+  .string()
+  .url("AUTH_URL must be a valid absolute URL")
+  .refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "http:" || protocol === "https:";
+  }, "AUTH_URL must use http or https");
+
 const emptyStringToUndefined = (value: unknown) => value === "" ? undefined : value;
 
 const storageEnvSchema = z.object({
@@ -79,6 +87,7 @@ export function validateStartupEnv(): void {
   const missing: string[] = [];
   if (!process.env.AUTH_SECRET) missing.push("AUTH_SECRET");
   if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!process.env.AUTH_URL) missing.push("AUTH_URL");
 
   if (missing.length > 0) {
     throw new Error(
@@ -127,6 +136,17 @@ export function getAiEnv() {
 export function getCanvaEnv() {
   rejectPublicSecrets();
   return canvaEnvSchema.parse(process.env);
+}
+
+export function getAppUrl(): string {
+  const url = new URL(appUrlSchema.parse(process.env.AUTH_URL));
+  if (process.env.NODE_ENV === "production" && url.protocol !== "https:") {
+    throw new Error("AUTH_URL must use https in production");
+  }
+  url.pathname = "/";
+  url.search = "";
+  url.hash = "";
+  return url.origin;
 }
 
 /**

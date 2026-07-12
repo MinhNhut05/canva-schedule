@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { connectCanvaWithAuthorizationCode } from "@/lib/canva/oauth";
+import { getAppUrl } from "@/lib/env";
 
 import { getCanvaOAuthSession } from "../actions";
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   const session = await auth();
 
   if (session?.user?.role !== "admin") {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", getAppUrl()));
   }
 
   const error = request.nextUrl.searchParams.get("error");
@@ -21,7 +22,6 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return clearCookiesAndRedirect(
-      request,
       `/admin/canva?error=${encodeURIComponent(errorDescription ?? error)}`,
     );
   }
@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
 
   if (!code || !state) {
     return clearCookiesAndRedirect(
-      request,
       "/admin/canva?error=Canva callback thiếu authorization code hoặc state.",
     );
   }
@@ -40,7 +39,6 @@ export async function GET(request: NextRequest) {
 
   if (!oauthSession.state || !oauthSession.verifier || oauthSession.state !== state) {
     return clearCookiesAndRedirect(
-      request,
       "/admin/canva?error=Canva OAuth state không hợp lệ. Vui lòng thử kết nối lại.",
     );
   }
@@ -54,17 +52,15 @@ export async function GET(request: NextRequest) {
   } catch (exchangeError) {
     const message = exchangeError instanceof Error ? exchangeError.message : "Không thể đổi authorization code lấy token.";
     return clearCookiesAndRedirect(
-      request,
       `/admin/canva?error=${encodeURIComponent(message)}`,
     );
   }
 
-  return clearCookiesAndRedirect(request, "/admin/canva?connected=1");
+  return clearCookiesAndRedirect("/admin/canva?connected=1");
 }
 
-function clearCookiesAndRedirect(request: NextRequest, path: string) {
-  const baseUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? request.nextUrl.origin;
-  const response = NextResponse.redirect(new URL(path, baseUrl));
+function clearCookiesAndRedirect(path: string) {
+  const response = NextResponse.redirect(new URL(path, getAppUrl()));
 
   response.cookies.delete(CANVA_OAUTH_STATE_COOKIE);
   response.cookies.delete(CANVA_OAUTH_VERIFIER_COOKIE);

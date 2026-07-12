@@ -34,6 +34,17 @@ function validateStartupEnv(): void {
   const missing: string[] = [];
   if (!process.env.AUTH_SECRET) missing.push("AUTH_SECRET");
   if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!process.env.AUTH_URL) missing.push("AUTH_URL");
+
+  if (process.env.AUTH_URL) {
+    const authUrl = new URL(process.env.AUTH_URL);
+    if (!["http:", "https:"].includes(authUrl.protocol)) {
+      throw new Error("AUTH_URL must use http or https");
+    }
+    if (process.env.NODE_ENV === "production" && authUrl.protocol !== "https:") {
+      throw new Error("AUTH_URL must use https in production");
+    }
+  }
 
   if (missing.length > 0) {
     throw new Error(
